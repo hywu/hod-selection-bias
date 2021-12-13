@@ -1,0 +1,90 @@
+#!/usr/bin/env python
+import h5py as h5
+import numpy as np
+# import argparse
+
+# parser = argparse.ArgumentParser()
+
+# parser.add_argument('boxsize')
+# parser.add_argument('Nslices')
+# parser.add_argument('min_mass')
+# parser.add_argument('outfile')
+
+
+# args = parser.parse_args()
+
+
+#min_mass = float(args.min_mass)
+
+depth = 15 #60 #30
+
+def merge_richness_files(phase, run_name):
+    #out_loc = f'/bsuhome/hwu/scratch/Projection_Effects/output/richness/{run_name}/'
+    out_loc = f'/bsuhome/hwu/scratch/Projection_Effects/output/richness/fiducial-{phase}/z0p3/{run_name}/'
+    
+    boxsize  = 1100 #float(args.boxsize)
+    Nslices  = 11 #int(args.Nslices)
+    outfile = out_loc + run_name+ f'.richness_d{depth}.hdf5'
+
+
+    dummy_array = np.array([[], [], [], [], [], [], []]) #gid mass px py pz rlam lam
+
+
+    i = 0
+    while i < Nslices:
+        fname = out_loc+'richness_'+str(int(i*boxsize/Nslices))+"_"+str(int((i+1)*boxsize/Nslices))+f"_d{depth}.dat"
+        dummy = np.genfromtxt(fname)
+
+        dummy_array = np.concatenate( (dummy_array, np.transpose(dummy)), axis=1)
+        i += 1
+
+    #np.savetxt(out_loc+run_name+"_d30_ascii.dat", np.transpose(dummy_array), header="#gid mass px py pz rlam lam")
+
+    N_out = len(dummy_array[0])
+
+    out_dtype  = np.dtype([("gid",      np.int32,   1),
+                           ("mass",     np.float32, 1),
+                           ("x",        np.float32, 1),
+                           ("y",        np.float32, 1),
+                           ("z",        np.float32, 1),
+                           ("R_lambda", np.float32, 1),
+                           ("lambda",   np.int32,   1)])
+
+    out_array = np.empty((N_out,), dtype=out_dtype)
+
+    out_array['gid']      = dummy_array[0]
+    out_array['mass']     = dummy_array[1]
+    out_array['x']        = dummy_array[2]
+    out_array['y']        = dummy_array[3]
+    out_array['z']        = dummy_array[4]
+    out_array['R_lambda'] = dummy_array[5]
+    out_array['lambda']   = dummy_array[6]
+
+    outfile = h5.File(outfile, 'w')
+    outfile.create_dataset('halos', (N_out,), dtype=out_dtype, data=out_array, chunks=True, compression="gzip") #halos or clusters for dataset name
+    outfile.close()
+
+
+import os, glob
+
+for phase in range(0, 20):
+    loc_out = f'/bsuhome/hwu/scratch/Projection_Effects/output/richness/fiducial-{phase}/z0p3/' # output location
+
+    loc_in = f'/bsuhome/hwu/scratch/Projection_Effects/Catalogs/fiducial-{phase}/z0p3/' # data location
+    os.chdir(loc_in)
+    hod_list = glob.glob('memHOD*z0p3.hdf5')
+
+    os.chdir('/bsuhome/hwu/work/cylinder_projection/repo/richness') # current location
+    print('phase', phase)
+
+    #hod_list = ['memHOD_11.2_12.4_0.65_1.0_0.2_0.0_0_z0p3_noperc.hdf5']
+    hod_list = [f'memHOD_11.2_12.4_0.65_1.0_0.2_0.0_{phase}_z0p3.hdf5'] # fid
+    for hod in hod_list:
+        hod = hod[:-5]
+        ofname = loc_out + hod + '/'+ hod + f'.richness_d{depth}.hdf5'
+        #print(ofname)
+        if os.path.exists(ofname):
+            print('done '+hod)
+        else:
+            print('doing '+hod)
+            merge_richness_files(phase, hod)
