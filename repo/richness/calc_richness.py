@@ -10,53 +10,33 @@ import os, sys
 # method = 'cylinder'
 boxsize = 1100
 perc = True
-radius = 'rlambda'
+radius = 'rlambda' #1 #
+Mmin = 10**12.5
 
-#loc = '/users/PAS0023/osu0218/Project/For_Heidi/'
-#loc = '/bsuhome/hwu/work/For_Heidi/'
-# halo_fname = loc + 'RShalos-fid0cosmo2-z0p3.hdf5'
-# gal_fname = loc + '%s_HOD_catalog.hdf5'%(sample)
+phase = sys.argv[1] 0  #
+run_name = sys.argv[2] 'memHOD_11.2_12.4_0.65_1.0_0.2_0.0_0_z0p3' # 
+depth = int(sys.argv[3])
 
-phase = sys.argv[1]
-run_name = sys.argv[2] #'memHOD_11.2_12.4_0.65_1.0_0.2_0.0_0_z0p3'
-depth = int(sys.argv[3]) #60
+in_loc = f'/bsuhome/hwu/scratch/Projection_Effects/Catalogs/fiducial-{phase}/z0p3/'
 
-loc = f'/bsuhome/hwu/scratch/Projection_Effects/Catalogs/fiducial-{phase}/z0p3/'
-
-
-
-
-halo_fname = loc + f'RShalos-fid{phase}cosmo2-z0p3.hdf5'
-gal_fname = loc + run_name + '.hdf5'
+halo_fname = in_loc + f'RShalos-fid{phase}cosmo2-z0p3.hdf5'
+gal_fname = in_loc + run_name + '.hdf5'
 
 out_loc = f'/bsuhome/hwu/scratch/Projection_Effects/output/richness/fiducial-{phase}/z0p3/{run_name}'
 if perc == False:
     out_loc += '_noperc'
+if radius != 'rlambda':
+    out_loc += f'_r{radius}'
 
-print(loc)
+
+print(in_loc)
 print(out_loc)
-
-Mmin = 10**12.5
-
-
-
-
-# if np.isclose(Mmin, 10**12.5):
-#     out_loc += 'M_{Mmin:.2e}_{Mmax:.2e}'
-
 
 if os.path.isdir(out_loc)==False:
     os.makedirs(out_loc)
 
 ############################################
 
-
-#run_name = f'{sample}_{method}_d{depth}'
-
-
-
-# if os.path.isdir(out_loc)==False:
-#     os.makedirs(out_loc)
 
 #### read in halos ####
 f = h5py.File(halo_fname,'r')
@@ -67,8 +47,8 @@ sel = (mass > Mmin)
 x_halo = halos['x'][sel]
 y_halo = halos['y'][sel]
 z_halo = halos['z'][sel]
-rvir = halos['rvir'][sel]/1e3
-mass = mass[sel]
+#rvir = halos['rvir'][sel]/1e3 # rvir is wrong in this file
+mass = mass[sel] # R200m
 gid = halos['gid'][sel] # use gid as halo id
 
 index = np.argsort(-mass)
@@ -77,7 +57,7 @@ y_halo = y_halo[index]
 z_halo = z_halo[index]
 mass = mass[index]
 gid = gid[index]
-print('finished halos')
+print('finished reading halos')
 
 
 #### read in galaxies ####
@@ -89,29 +69,8 @@ y_gal = particles['y']
 z_gal = particles['z']
 print('finished galaxies')
 
-'''
-#### periodic boundary conditions ####  TODO
 
-pad = 10
-sel = (x > -pad)&(x < boxsize - pad)&(y < -pad)&(z < boxsize - pad)
-x_all = x_all[sel]
-y_all = y_all[sel]
-z_all = z_all[sel]
-
-
-sel = (z_gal < depth) 
-x_gal_append1 = x_gal[sel]
-y_gal_append1 = y_gal[sel]
-z_gal_append1 = z_gal[sel] + boxsize
-
-sel = (z_gal > boxsize - depth) 
-x_gal_append2 = x_gal[sel]
-y_gal_append2 = y_gal[sel]
-z_gal_append2 = z_gal[sel] - boxsize
-'''
-
-
-class CalcRichness(object):
+class CalcRichness(object): # one pz slice at a time
     def __init__(self, pz_min, pz_max):
         self.pz_min = pz_min
         self.pz_max = pz_max
@@ -119,6 +78,7 @@ class CalcRichness(object):
 
         # periodic boundary condition in pz direction
         if pz_min < depth: # near the lower boundary
+            # for galaxies
             sel_pz1 = (z_gal < pz_max + 1.2*depth) 
             sel_pz2 = (z_gal > boxsize - 1.2*depth)
             x_gal_slice = np.append(x_gal[sel_pz1], x_gal[sel_pz2]) # oh well...
@@ -134,8 +94,8 @@ class CalcRichness(object):
             self.mass_padded = np.append(mass[sel_pz1], mass[sel_pz2])
             self.gid_padded = np.append(gid[sel_pz1], gid[sel_pz2])
 
-
         elif pz_max > boxsize - depth: # near the upper boundary
+            # for galaxies
             sel_pz1 = (z_gal > pz_min - 1.2*depth)
             sel_pz2 = (z_gal < 1.2*depth) 
             x_gal_slice = np.append(x_gal[sel_pz1], x_gal[sel_pz2])
@@ -212,9 +172,6 @@ class CalcRichness(object):
         plt.savefig('pbc.png')
 
 
-
-
-
     def get_richness_cone(self, x_cen, y_cen, z_cen):
         r = (self.x_gal - x_cen)**2 + (self.y_gal - y_cen)**2 
         r = np.sqrt(r)
@@ -231,8 +188,10 @@ class CalcRichness(object):
                 #print(rlam, rlam_old)
                 if abs(rlam - rlam_old) < 1e-5:
                     break
+        else:
+            rlam = radius
 
-        sel_mem = (r < rlam)&(d < depth) # a generous cut before perc
+        sel_mem = (r < rlam)&(d < depth) # cut after perc
         lam = len(r[sel_mem])
 
         if perc == True:
@@ -243,10 +202,6 @@ class CalcRichness(object):
         return rlam, lam
 
     def measure_richness(self):
-        #sel_pz = (z_halo > self.pz_min)&(z_halo < self.pz_max)
-        #self.x_halo_padded = x_halo[sel_pz]
-        #self.y_halo_padded = y_halo[sel_pz]
-        #self.z_halo_padded = z_halo[sel_pz]
 
         nh = len(self.x_halo_padded)
         print('nh =', nh)
@@ -280,11 +235,7 @@ class CalcRichness(object):
 def calc_one_bin(ibin):
     cr = CalcRichness(pz_min=ibin*100, pz_max=(ibin+1)*100)
     cr.measure_richness()
-    #if ibin < len(zmin_list):
-    # zmin = zmin_list[ibin]
-    # zmax = zmin + dz
-    # crc = AlternativeRichness(zmin=zmin, zmax=zmin+0.01, sample=sample, method=method, radius=radius_input, depth=depth, chisq_cut=chisq_cut)
-    # crc.measure_richness()
+
 
 
 if __name__ == '__main__':
@@ -295,68 +246,9 @@ if __name__ == '__main__':
     #     #cr.plot_check_pbc()
     #     
 
-    
     # parallel
     from multiprocessing import Pool
-    #for i_round in range(n_round):
     n_job2 = 11
     p = Pool(n_job2)
     p.map(calc_one_bin, range(n_job2))
-    
 
-
-
-
-
-
-'''
-def rlambda(r, rlam_ini):
-    rlam = rlam_ini
-    for iteration in range(10):
-        sel = (r < rlam)
-        ngal = len(r[sel])
-        rlam_old = rlam
-        rlam = (ngal/100.)**0.2
-        #print(rlam, rlam_old)
-        if abs(rlam - rlam_old) < 1e-5:
-            break
-    return rlam, len(r < rlam)
-'''
-
-
-# print(len(d[sel]))
-
-
-# data = np.array([x_halo[ih], y_halo[ih], z_halo[ih]]).transpose()
-# np.savetxt('halo.dat', data, fmt='%-12g')
-
-# data = np.array([x_gal[sel], y_gal[sel], z_gal[sel]]).transpose()
-# np.savetxt('gal.dat', data, fmt='%-12g')
-
-
-# plt.hist(r[r<10])
-
-
-
-# make HDF5 
-# richness, px, py, pz, in the same order of halo catalog
-
-
-# len(r[r < rvir[ih]*1e-3])
-
-
-# sel=  (abs(x_gal - x_halo[ih]) < 2)&(abs(y_gal - y_halo[ih]) < 2 ) & (abs(z_gal - z_halo[ih]) < 2)
-# len(r[sel])
-
-# plt
-
-# r = (x_gal - x_halo[ih])**2 + (y_gal - y_halo[ih])**2
-# r = np.sqrt(r)
-# d = abs(z_gal - z_halo[ih])
-# sel = (r < rlam)&(d < 60)
-# print(len(x_gal[sel]))
-
-# nh = len(x_gal[sel])
-
-#     #outfile.write('%i %e %i \n'%())
-# outfile.close()

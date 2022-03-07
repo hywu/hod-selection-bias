@@ -12,7 +12,7 @@ def run_model(phase, model, depth):
 #SBATCH --time={time}:00:00
 #SBATCH --job-name={model[7:]}
 #SBATCH --output={fname}.out
-#SBATCH --exclusive
+##SBATCH --exclusive
 ./calc_richness.py {phase} {model} {depth} 2>&1 | tee {fname}.out'''
     f = open(fname, 'w')
     f.write(script)
