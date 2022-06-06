@@ -9,36 +9,33 @@ import numpy as np
 # parser.add_argument('Nslices')
 # parser.add_argument('min_mass')
 # parser.add_argument('outfile')
-
-
 # args = parser.parse_args()
-
-
 #min_mass = float(args.min_mass)
 
-depth = 15 #60 #30
 
-def merge_richness_files(phase, run_name):
-    #out_loc = f'/bsuhome/hwu/scratch/Projection_Effects/output/richness/{run_name}/'
-    out_loc = f'/bsuhome/hwu/scratch/Projection_Effects/output/richness/fiducial-{phase}/z0p3/{run_name}/'
+
+# depth = 30 #60 #30
+# radius = 1.0
+def merge_richness_files(phase, run_name, out_path, ofname_base):
+    #out_path = f'/bsuhome/hwu/scratch/Projection_Effects/output/richness/fiducial-{phase}/z0p3/{run_name}/'
     
     boxsize  = 1100 #float(args.boxsize)
     Nslices  = 11 #int(args.Nslices)
-    outfile = out_loc + run_name+ f'.richness_d{depth}.hdf5'
-
+    outfile = out_path + f'/{ofname_base}.hdf5' #+ run_name
+    print(outfile)
 
     dummy_array = np.array([[], [], [], [], [], [], []]) #gid mass px py pz rlam lam
 
 
     i = 0
     while i < Nslices:
-        fname = out_loc+'richness_'+str(int(i*boxsize/Nslices))+"_"+str(int((i+1)*boxsize/Nslices))+f"_d{depth}.dat"
+        fname = out_path+f"/{ofname_base}_"+str(int(i*boxsize/Nslices))+"_"+str(int((i+1)*boxsize/Nslices))+".dat"
         dummy = np.genfromtxt(fname)
 
         dummy_array = np.concatenate( (dummy_array, np.transpose(dummy)), axis=1)
         i += 1
 
-    #np.savetxt(out_loc+run_name+"_d30_ascii.dat", np.transpose(dummy_array), header="#gid mass px py pz rlam lam")
+    #np.savetxt(out_path+run_name+"_d30_ascii.dat", np.transpose(dummy_array), header="#gid mass px py pz rlam lam")
 
     N_out = len(dummy_array[0])
 
@@ -65,26 +62,29 @@ def merge_richness_files(phase, run_name):
     outfile.close()
 
 
-import os, glob
 
-for phase in range(0, 20):
-    loc_out = f'/bsuhome/hwu/scratch/Projection_Effects/output/richness/fiducial-{phase}/z0p3/' # output location
+if __name__ == '__main__':
 
-    loc_in = f'/bsuhome/hwu/scratch/Projection_Effects/Catalogs/fiducial-{phase}/z0p3/' # data location
-    os.chdir(loc_in)
-    hod_list = glob.glob('memHOD*z0p3.hdf5')
+    import os, glob
 
-    os.chdir('/bsuhome/hwu/work/cylinder_projection/repo/richness') # current location
-    print('phase', phase)
+    for phase in [0]:#range(0, 20):
+        loc_out = f'/bsuhome/hwu/scratch/Projection_Effects/output/richness/fiducial-{phase}/z0p3/' # output location
 
-    #hod_list = ['memHOD_11.2_12.4_0.65_1.0_0.2_0.0_0_z0p3_noperc.hdf5']
-    hod_list = [f'memHOD_11.2_12.4_0.65_1.0_0.2_0.0_{phase}_z0p3.hdf5'] # fid
-    for hod in hod_list:
-        hod = hod[:-5]
-        ofname = loc_out + hod + '/'+ hod + f'.richness_d{depth}.hdf5'
-        #print(ofname)
-        if os.path.exists(ofname):
-            print('done '+hod)
-        else:
-            print('doing '+hod)
-            merge_richness_files(phase, hod)
+        loc_in = f'/bsuhome/hwu/scratch/Projection_Effects/Catalogs/fiducial-{phase}/z0p3/' # data location
+        os.chdir(loc_in)
+        hod_list = glob.glob('memHOD*z0p3.hdf5')
+
+        os.chdir('/bsuhome/hwu/work/hod-selection-bias/repo/richness') # current location
+        print('phase', phase)
+
+        #hod_list = ['memHOD_11.2_12.4_0.65_1.0_0.2_0.0_0_z0p3_noperc.hdf5']
+        hod_list = [f'memHOD_11.2_12.4_0.65_1.0_0.2_0.0_{phase}_z0p3.hdf5'] # fid
+        for hod in hod_list:
+            hod = hod[:-5]
+            ofname = loc_out + hod + '/'+ hod + f'.richness_d{depth}_r{radius}.hdf5'
+            #print(ofname)
+            if os.path.exists(ofname):
+                print('done '+hod)
+            else:
+                print('doing '+hod)
+                merge_richness_files(phase, hod)

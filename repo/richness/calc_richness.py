@@ -1,43 +1,132 @@
 #!/usr/bin/env python
+import timeit
+start = timeit.default_timer()
+
 import numpy as np
 import matplotlib.pyplot as plt
 import h5py
 import os, sys
+from distutils import util
+
+
+import argparse
+
+
+'TODO'
+'probabilistic percolation'
+
+# example
+# ./calc_richness.py --phase 0 --run_name memHOD_11.2_12.4_0.65_1.0_0.2_0.0_0_z0p3 --use_pmem
+# ./calc_richness.py --phase 0 --run_name memHOD_11.2_12.4_0.65_1.0_0.2_0.0_0_z0p3 --use_cylinder --depth 1
+
+## required
+parser = argparse.ArgumentParser()
+parser.add_argument('--phase', type=int, required=True, help='e.g. 0. Your file name should be e.g. RShalos-fid0cosmo2-z0p3.hdf5') # 0
+parser.add_argument('--run_name', required=True, help='e.g. memHOD_11.2_12.4_0.65_1.0_0.2_0.0_0_z0p3') # 
+
+group = parser.add_mutually_exclusive_group() # cylinder or pmem?
+group.add_argument('--use_cylinder', action='store_true', help='choose either use_cylidner or use_pmem')
+group.add_argument('--use_pmem', action='store_true', help='choose either use_cylinder or use_pmem')
+
+
+## optional
+parser.add_argument('--depth', type=int, help='required if use_cylinder==True') # 30
+
+parser.add_argument('--input_path', help='path to your input hdf5 files')
+parser.add_argument('--output_path', help='path to your output hdf5 files')
+
+parser.add_argument('--fix_radius', action='store_true', help='whether we use rlambda or fixed radius')
+parser.add_argument('--radius', type=float, help='required if fix_radius == True')
+
+parser.add_argument('--noperc', action='store_true', help='turn off percolation')
+
+
+args = parser.parse_args()
+
+phase = args.phase
+run_name = args.run_name
+use_cylinder = args.use_cylinder
+use_pmem = args.use_pmem
+
+## cylinder or pmem?
+if args.use_cylinder == True:
+    depth = args.depth
+    print('using cylinder with depth', depth)
+
+if args.use_pmem == True:
+    use_pmem = True
+    print('using pmem')
+
+
+## rlambda or fixed radius?
+if args.fix_radius == True:
+    use_rlambda = False
+    radius = args.radius
+    print('using fixed radius ', radius, 'cMpc/h')
+else:
+    use_rlambda = True
+    print('use rlambda')
+
+ofname_base = f'richness'
+if use_cylinder == True:
+    ofname_base  += f'_d{depth}'
+if args.fix_radius == True:
+    ofname_base += f'_r{radius}'
+if args.noperc == True:
+    ofname_base += '_noperc'
+
+
+
+
+## input & output paths
+if args.input_path:
+    in_path = args.input_path
+else:
+    in_path = f'/bsuhome/hwu/scratch/Projection_Effects/Catalogs/fiducial-{phase}/z0p3/'
+
+if args.output_path:
+    out_path = args.output_path
+else:
+    out_path = f'/bsuhome/hwu/scratch/Projection_Effects/output/richness/fiducial-{phase}/z0p3/{run_name}'
+
+if args.noperc == True:
+    no_perc = args.noperc
+    perc = False
+else:
+    perc = True
+
+if os.path.isdir(out_path)==False:
+    os.makedirs(out_path)
+
+print('input path', in_path)
+print('output path', out_path)
 
 
 #### things can be moved to yml files ####
-# sample = 'fid'
-# method = 'cylinder'
 boxsize = 1100
-perc = True
-radius = 'rlambda' #1 #
+redshift = 0.3
+scale_fac = 1/(1+redshift)
+
+OmegaM = 0.314 
+OmegaDE = 1 - OmegaM
+hubble = 0.67
+Ez = np.sqrt(OmegaM * (1+redshift)**3 + OmegaDE)
+dz_max = 0.15
+
+run_parallel = True
+#perc = False
 Mmin = 10**12.5
 
-phase = sys.argv[1] 0  #
-run_name = sys.argv[2] 'memHOD_11.2_12.4_0.65_1.0_0.2_0.0_0_z0p3' # 
-depth = int(sys.argv[3])
-
-in_loc = f'/bsuhome/hwu/scratch/Projection_Effects/Catalogs/fiducial-{phase}/z0p3/'
-
-halo_fname = in_loc + f'RShalos-fid{phase}cosmo2-z0p3.hdf5'
-gal_fname = in_loc + run_name + '.hdf5'
-
-out_loc = f'/bsuhome/hwu/scratch/Projection_Effects/output/richness/fiducial-{phase}/z0p3/{run_name}'
-if perc == False:
-    out_loc += '_noperc'
-if radius != 'rlambda':
-    out_loc += f'_r{radius}'
+halo_fname = in_path + f'RShalos-fid{phase}cosmo2-z0p3.hdf5'
+gal_fname = in_path + run_name + '.hdf5'
 
 
-print(in_loc)
-print(out_loc)
+# from merge_richness_files import merge_richness_files
+# merge_richness_files(phase, run_name, out_path, ofname_base)
+# exit()
 
-if os.path.isdir(out_loc)==False:
-    os.makedirs(out_loc)
 
 ############################################
-
-
 #### read in halos ####
 f = h5py.File(halo_fname,'r')
 halos = f['halos']
@@ -48,7 +137,7 @@ x_halo = halos['x'][sel]
 y_halo = halos['y'][sel]
 z_halo = halos['z'][sel]
 #rvir = halos['rvir'][sel]/1e3 # rvir is wrong in this file
-mass = mass[sel] # R200m
+mass = mass[sel]
 gid = halos['gid'][sel] # use gid as halo id
 
 index = np.argsort(-mass)
@@ -68,6 +157,9 @@ x_gal = particles['x']
 y_gal = particles['y']
 z_gal = particles['z']
 print('finished galaxies')
+
+from scipy import spatial
+rmax_tree = 2
 
 
 class CalcRichness(object): # one pz slice at a time
@@ -145,6 +237,14 @@ class CalcRichness(object): # one pz slice at a time
         self.y_gal = y_all[sel]
         self.z_gal = z_all[sel]
 
+        gal_position = np.dstack([self.x_gal, self.y_gal])[0]
+        gal_tree = spatial.cKDTree(gal_position)
+
+        halo_position = np.dstack([self.x_halo_padded, self.y_halo_padded])[0]
+        halo_tree = spatial.cKDTree(halo_position)
+
+        self.indexes_tree = halo_tree.query_ball_tree(gal_tree, r=rmax_tree)
+        self.gal_taken = np.zeros(len(self.x_gal)) # for percolation
 
     def plot_check_pbc(self):
         plt.figure(figsize=(21,7))
@@ -171,65 +271,75 @@ class CalcRichness(object): # one pz slice at a time
 
         plt.savefig('pbc.png')
 
+    def get_richness(self, i_halo):
+        gal_ind = self.indexes_tree[i_halo]
+        x_cen = self.x_halo_padded[i_halo]
+        y_cen = self.y_halo_padded[i_halo]
+        z_cen = self.z_halo_padded[i_halo]
 
-    def get_richness_cone(self, x_cen, y_cen, z_cen):
-        r = (self.x_gal - x_cen)**2 + (self.y_gal - y_cen)**2 
+        # cut the LOS first!
+        d = self.z_gal[gal_ind] - z_cen
+        if use_cylinder == True: 
+            sel_z = (np.abs(d) < depth)&(self.gal_taken[gal_ind] < 1e-4)
+        elif use_pmem == True:
+            dz = d / 3000. * Ez 
+            sel_z = (np.abs(dz) < dz_max)&(self.gal_taken[gal_ind] < 1e-4) # TODO: probabilistic percolation
+            dz = dz[sel_z]
+        else:
+            print('BUG!!')
+
+        r = (self.x_gal[gal_ind][sel_z] - x_cen)**2 + (self.y_gal[gal_ind][sel_z] - y_cen)**2 
         r = np.sqrt(r)
-        d = np.abs(self.z_gal - z_cen)
-        r_z = r[(r < 3)&(d < depth)]  # a generous cut before perc
 
-        if radius == 'rlambda':
+        if use_rlambda == True:
             rlam_ini = 1
             rlam = rlam_ini
             for iteration in range(100):
-                ngal = len(r_z[(r_z < rlam)])
+                if use_cylinder == True:
+                    ngal = len(r[r < rlam])
+                elif use_pmem == True:
+                    ngal = np.sum(pmem_weights(dz, r/rlam))
+                else:
+                    print('BUG!!')
+
                 rlam_old = rlam
-                rlam = (ngal/100.)**0.2
+                rlam = (ngal/100.)**0.2 / scale_fac # phys -> comoving
                 #print(rlam, rlam_old)
                 if abs(rlam - rlam_old) < 1e-5:
                     break
         else:
             rlam = radius
 
-        sel_mem = (r < rlam)&(d < depth) # cut after perc
-        lam = len(r[sel_mem])
-
+        sel_mem = (r < rlam)&(self.gal_taken[gal_ind][sel_z] < 1e-4)
+            
         if perc == True:
-            self.x_gal = self.x_gal[~sel_mem]
-            self.y_gal = self.y_gal[~sel_mem]
-            self.z_gal = self.z_gal[~sel_mem]
-        #print('len(self.x_gal > 0)', len(self.x_gal > 0), rlam, lam)
+            self.gal_taken[np.array(gal_ind)[sel_z][sel_mem]] = 1
+            # otherwise, all gal_taken elements remain zero
+             
+        if use_cylinder == True:
+            lam = len(r[sel_mem])
+        elif use_pmem == True:
+            lam = np.sum(pmem_weights(dz, r/rlam))
+        else:
+            print('bug!!')
+        #print(lam, len(self.gal_taken[self.gal_taken==1]))
         return rlam, lam
 
     def measure_richness(self):
-
         nh = len(self.x_halo_padded)
         print('nh =', nh)
 
-        ofname = f'{out_loc}/richness_{self.pz_min}_{self.pz_max}_d{depth}.dat'
-
-        if os.path.exists(ofname) == False:
-            id_to_start = 0
-        else:
-            d = np.loadtxt(ofname)
-            if len(d) == 0:
-                id_to_start = 0
-            else:
-                id_to_start = len(d[:,0])
-        print('id_to_start', id_to_start)
-
-        for ih in range(id_to_start, nh):
-
-            outfile = open(ofname, 'a')
-            if ih == 0: outfile.write('#gid, mass, px, py, pz, rlam, lam \n')
-
-
-            rlam, lam = self.get_richness_cone(self.x_halo_padded[ih], self.y_halo_padded[ih], self.z_halo_padded[ih]) # use padded halos
-
+        ofname = f'{out_path}/' + ofname_base + f'_{self.pz_min}_{self.pz_max}.dat'
+        outfile = open(ofname, 'w')
+        outfile.write('#gid, mass, px, py, pz, rlam, lam \n')
+        for ih in range(nh):
+            rlam, lam = self.get_richness(ih)
             if self.z_halo_padded[ih] > self.pz_min and self.z_halo_padded[ih] < self.pz_max: # discard padded halos
-
                 outfile.write('%12i %15e %12g %12g %12g %12g %12g \n'%(self.gid_padded[ih], self.mass_padded[ih], self.x_halo_padded[ih], self.y_halo_padded[ih], self.z_halo_padded[ih], rlam, lam))
-            outfile.close()
+        outfile.close()
+
+
+
 
 
 def calc_one_bin(ibin):
@@ -238,17 +348,40 @@ def calc_one_bin(ibin):
 
 
 
+
+
 if __name__ == '__main__':
-    # cr = CalcRichness(pz_min=100, pz_max=200)
-    # cr.measure_richness()
+    
+    if run_parallel == False:
+        cr = CalcRichness(pz_min=0, pz_max=100)
+        stop = timeit.default_timer()
+        print('prep took', stop - start, 'seconds')
+        
+        start = stop
+        cr.measure_richness()
+        stop = timeit.default_timer()
+        print('richness took', stop - start, 'seconds')
+
     # for i in [0]:#range(12):
     #     cr = CalcRichness(pz_min=i*100, pz_max=(i+1)*100)
     #     #cr.plot_check_pbc()
     #     
 
-    # parallel
-    from multiprocessing import Pool
-    n_job2 = 11
-    p = Pool(n_job2)
-    p.map(calc_one_bin, range(n_job2))
 
+    stop = timeit.default_timer()
+    print('prep took', stop - start, 'seconds')
+    
+    if run_parallel == True:
+        
+        start = timeit.default_timer()
+        # parallel
+        from multiprocessing import Pool
+        n_job2 = 11
+        p = Pool(n_job2)
+        p.map(calc_one_bin, range(n_job2))
+        stop = timeit.default_timer()
+        print('richness took', stop - start, 'seconds')
+    
+    # merge files
+    from merge_richness_files import merge_richness_files
+    merge_richness_files(phase, run_name, out_path, ofname_base)

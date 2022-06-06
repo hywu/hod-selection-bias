@@ -4,9 +4,11 @@ import matplotlib.pyplot as plt
 
 import os, h5py, glob
 
-depth = 15 #60 #30
+depth = 30#15 #60 #30
 
-for phase in range(1,20):
+radius = 1.0
+
+for phase in [0]:#range(1,20):
 
     loc_out = f'/bsuhome/hwu/scratch/Projection_Effects/output/richness/fiducial-{phase}/z0p3/' # output location
 
@@ -15,7 +17,7 @@ for phase in range(1,20):
     #hod_list = glob.glob('memHOD*z0p3.hdf5')
     hod_list = [f'memHOD_11.2_12.4_0.65_1.0_0.2_0.0_{phase}_z0p3.hdf5'] # fid
 
-    os.chdir('/bsuhome/hwu/work/cylinder_projection/repo/richness') # current location
+    os.chdir('/bsuhome/hwu/work/hod-selection-bias/repo/richness') # current location
 
     for hod in hod_list:
         plt.figure()
@@ -23,7 +25,7 @@ for phase in range(1,20):
         loc = f'/bsuhome/hwu/scratch/Projection_Effects/output/richness/fiducial-{phase}/z0p3/'
 
         #cl_fname = loc + 'memHOD_11.2_12.4_0.65_1.0_0.2_0.0_0_z0p3.richness_d30.hdf5'
-        cl_fname = loc + hod + '/'+ hod + f'.richness_d{depth}.hdf5'
+        cl_fname = loc + hod + '/'+ hod + f'.richness_d{depth}_r{radius}.hdf5'
 
         f = h5py.File(cl_fname,'r')
         halos = f['halos']
