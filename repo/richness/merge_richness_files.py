@@ -1,26 +1,9 @@
 #!/usr/bin/env python
 import h5py as h5
 import numpy as np
-# import argparse
 
-# parser = argparse.ArgumentParser()
-
-# parser.add_argument('boxsize')
-# parser.add_argument('Nslices')
-# parser.add_argument('min_mass')
-# parser.add_argument('outfile')
-# args = parser.parse_args()
-#min_mass = float(args.min_mass)
-
-
-
-# depth = 30 #60 #30
-# radius = 1.0
-def merge_richness_files(phase, run_name, out_path, ofname_base):
-    #out_path = f'/bsuhome/hwu/scratch/Projection_Effects/output/richness/fiducial-{phase}/z0p3/{run_name}/'
-    
-    boxsize  = 1100 #float(args.boxsize)
-    Nslices  = 11 #int(args.Nslices)
+def merge_richness_files(out_path, ofname_base, boxsize):    
+    Nslices  = int(boxsize / 100.0) #Assumes boxsize is a multiple of 100.0 Mpc/h
     outfile = out_path + f'/{ofname_base}.hdf5' #+ run_name
     print(outfile)
 
@@ -34,8 +17,6 @@ def merge_richness_files(phase, run_name, out_path, ofname_base):
 
         dummy_array = np.concatenate( (dummy_array, np.transpose(dummy)), axis=1)
         i += 1
-
-    #np.savetxt(out_path+run_name+"_d30_ascii.dat", np.transpose(dummy_array), header="#gid mass px py pz rlam lam")
 
     N_out = len(dummy_array[0])
 

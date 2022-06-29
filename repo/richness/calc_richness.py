@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import h5py
 import os, sys
 from distutils import util
-
+import config
 
 import argparse
 
@@ -21,13 +21,13 @@ import argparse
 
 ## required
 parser = argparse.ArgumentParser()
-parser.add_argument('--phase', type=int, required=True, help='e.g. 0. Your file name should be e.g. RShalos-fid0cosmo2-z0p3.hdf5') # 0
-parser.add_argument('--run_name', required=True, help='e.g. memHOD_11.2_12.4_0.65_1.0_0.2_0.0_0_z0p3') # 
+parser.add_argument('--halos', required=True, help='File name of halo hdf5 file')
+parser.add_argument('--members', required=True, help='File name of mock member galaxies hdf5 file')
+parser.add_argument('--header', required=True, help='Header file name for simulation')
 
 group = parser.add_mutually_exclusive_group() # cylinder or pmem?
 group.add_argument('--use_cylinder', action='store_true', help='choose either use_cylidner or use_pmem')
 group.add_argument('--use_pmem', action='store_true', help='choose either use_cylinder or use_pmem')
-
 
 ## optional
 parser.add_argument('--depth', type=int, help='required if use_cylinder==True') # 30
@@ -43,8 +43,9 @@ parser.add_argument('--noperc', action='store_true', help='turn off percolation'
 
 args = parser.parse_args()
 
-phase = args.phase
-run_name = args.run_name
+halo_file   = args.halos
+memgal_file = args.members
+
 use_cylinder = args.use_cylinder
 use_pmem = args.use_pmem
 
@@ -103,13 +104,22 @@ print('output path', out_path)
 
 
 #### things can be moved to yml files ####
-boxsize = 1100
-redshift = 0.3
-scale_fac = 1/(1+redshift)
 
-OmegaM = 0.314 
+#boxsize = 1100
+#redshift = 0.3
+#scale_fac = 1/(1+redshift)
+#OmegaM = 0.314 
+#hubble = 0.67
+
+cf = config.AbacusConfigFile(args.header)
+
+boxsize   = cf.boxSize
+redshift  = cf.redshift
+scale_fac = 1./(1.+redshift)
+
+OmegaM  = cf.Omega_M
 OmegaDE = 1 - OmegaM
-hubble = 0.67
+hubble  = cf.H0 / 100.0
 Ez = np.sqrt(OmegaM * (1+redshift)**3 + OmegaDE)
 dz_max = 0.15
 
@@ -117,8 +127,8 @@ run_parallel = True
 #perc = False
 Mmin = 10**12.5
 
-halo_fname = in_path + f'RShalos-fid{phase}cosmo2-z0p3.hdf5'
-gal_fname = in_path + run_name + '.hdf5'
+halo_fname = in_path + halo_file
+gal_fname = in_path + memgal_file
 
 
 # from merge_richness_files import merge_richness_files
@@ -376,7 +386,8 @@ if __name__ == '__main__':
         start = timeit.default_timer()
         # parallel
         from multiprocessing import Pool
-        n_job2 = 11
+        #n_job2 = int(boxsize/100.0)
+        n_job2 = 20
         p = Pool(n_job2)
         p.map(calc_one_bin, range(n_job2))
         stop = timeit.default_timer()
@@ -384,4 +395,5 @@ if __name__ == '__main__':
     
     # merge files
     from merge_richness_files import merge_richness_files
-    merge_richness_files(phase, run_name, out_path, ofname_base)
+    #ofname_base = memgal_file.replace(".hdf5", "")
+    merge_richness_files(out_path, ofname_base, boxsize)

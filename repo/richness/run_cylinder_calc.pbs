@@ -1,0 +1,72 @@
+#!/bin/bash
+#PBS -A PAS0023
+#PBS -l walltime=10:00:00
+#PBS -l mem=400gb
+#PBS -l nodes=1:ppn=48
+#PBS -N cylinder_richness_calculation
+#PBS -m abe
+#PBS -j oe
+
+set -x
+
+cd /users/PAS0023/osu0218/Project/hod-selection-bias/repo/richness
+
+
+for phase in 0 1 2 3 4 5
+do
+	#python calc_richness.py --halos "halo_base_c000_ph00"$phase"_z0p500.h5" --members "NHOD_0.10_11.7_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.hdf5" --header "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/header" --use_cylinder --depth 30 --input_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/" --output_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/"
+	#rm "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/*.dat"
+	#mv "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/richness_d30.hdf5" "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/NHOD_0.10_11.7_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.richness_d30.hdf5"
+
+	python calc_richness.py --halos "halo_base_c000_ph00"$phase"_z0p500.h5" --members "NHOD_0.10_11.7_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.hdf5" --header "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/header" --use_cylinder --depth 10 --input_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/" --output_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/"
+	rm "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/*.dat"
+	mv "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/richness_d10.hdf5" "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/NHOD_0.10_11.7_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.richness_d10.hdf5"
+
+	python calc_richness.py --halos "halo_base_c000_ph00"$phase"_z0p500.h5" --members "NHOD_0.10_11.7_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.hdf5" --header "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/header" --use_cylinder --depth 20 --input_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/" --output_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/"
+	rm "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/*.dat"
+	mv "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/richness_d20.hdf5" "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/NHOD_0.10_11.7_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.richness_d20.hdf5"
+
+	python calc_richness.py --halos "halo_base_c000_ph00"$phase"_z0p500.h5" --members "NHOD_0.10_11.7_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.hdf5" --header "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/header" --use_cylinder --depth 40 --input_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/" --output_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/"
+	rm "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/*.dat"
+	mv "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/richness_d40.hdf5" "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/NHOD_0.10_11.7_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.richness_d40.hdf5"
+
+	python calc_richness.py --halos "halo_base_c000_ph00"$phase"_z0p500.h5" --members "NHOD_0.10_11.7_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.hdf5" --header "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/header" --use_cylinder --depth 50 --input_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/" --output_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/"
+	rm "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/*.dat"
+	mv "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/richness_d50.hdf5" "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/NHOD_0.10_11.7_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.richness_d50.hdf5"
+
+	python calc_richness.py --halos "halo_base_c000_ph00"$phase"_z0p500.h5" --members "NHOD_0.10_11.7_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.hdf5" --header "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/header" --use_cylinder --depth 60 --input_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/" --output_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/"
+	rm "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/*.dat"
+	mv "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/richness_d60.hdf5" "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/NHOD_0.10_11.7_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.richness_d60.hdf5"
+
+	#python calc_richness.py --halos "halo_base_c000_ph00"$phase"_z0p500.h5" --members "NHOD_0.05_11.7_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.hdf5" --header "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/header" --use_cylinder --depth 30 --input_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/" --output_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/"
+	#rm "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/*.dat"
+	#mv "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/richness_d30.hdf5" "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/NHOD_0.05_11.7_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.richness_d30.hdf5"
+
+	#python calc_richness.py --halos "halo_base_c000_ph00"$phase"_z0p500.h5" --members "NHOD_0.15_11.7_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.hdf5" --header "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/header" --use_cylinder --depth 30 --input_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/" --output_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/"
+	#rm "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/*.dat"
+	#mv "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/richness_d30.hdf5" "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/NHOD_0.15_11.7_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.richness_d30.hdf5"
+
+	#python calc_richness.py --halos "halo_base_c000_ph00"$phase"_z0p500.h5" --members "NHOD_0.10_11.6_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.hdf5" --header "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/header" --use_cylinder --depth 30 --input_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/" --output_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/"
+	#rm "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/*.dat"
+	#mv "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/richness_d30.hdf5" "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/NHOD_0.10_11.6_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.richness_d30.hdf5"
+
+	#python calc_richness.py --halos "halo_base_c000_ph00"$phase"_z0p500.h5" --members "NHOD_0.10_11.8_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.hdf5" --header "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/header" --use_cylinder --depth 30 --input_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/" --output_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/"
+	#rm "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/*.dat"
+	#mv "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/richness_d30.hdf5" "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/NHOD_0.10_11.8_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.richness_d30.hdf5"
+
+	#python calc_richness.py --halos "halo_base_c000_ph00"$phase"_z0p500.h5" --members "NHOD_0.10_11.7_11.7_12.8_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.hdf5" --header "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/header" --use_cylinder --depth 30 --input_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/" --output_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/"
+	#rm "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/*.dat"
+	#mv "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/richness_d30.hdf5" "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/NHOD_0.10_11.7_11.7_12.8_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.richness_d30.hdf5"
+
+	#python calc_richness.py --halos "halo_base_c000_ph00"$phase"_z0p500.h5" --members "NHOD_0.10_11.7_11.7_13.0_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.hdf5" --header "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/header" --use_cylinder --depth 30 --input_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/" --output_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/"
+	#rm "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/*.dat"
+	#mv "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/richness_d30.hdf5" "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/NHOD_0.10_11.7_11.7_13.0_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.richness_d30.hdf5"
+
+	#python calc_richness.py --halos "halo_base_c000_ph00"$phase"_z0p500.h5" --members "NHOD_0.10_11.7_11.7_12.9_0.90_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.hdf5" --header "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/header" --use_cylinder --depth 30 --input_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/" --output_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/"
+	#rm "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/*.dat"
+	#mv "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/richness_d30.hdf5" "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/NHOD_0.10_11.7_11.7_12.9_0.90_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.richness_d30.hdf5"
+
+	#python calc_richness.py --halos "halo_base_c000_ph00"$phase"_z0p500.h5" --members "NHOD_0.10_11.7_11.7_12.9_1.10_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.hdf5" --header "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/header" --use_cylinder --depth 30 --input_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/" --output_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/"
+	#rm "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/*.dat"
+	#mv "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/richness_d30.hdf5" "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph00"$phase"/z0p500/NHOD_0.10_11.7_11.7_12.9_1.10_0.0_0.0_1.0_1.0_0.0_c000_ph00"$phase"_z0p500.richness_d30.hdf5"
+done
