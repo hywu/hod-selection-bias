@@ -40,7 +40,7 @@ parser.add_argument('--radius', type=float, help='required if fix_radius == True
 
 parser.add_argument('--noperc', action='store_true', help='turn off percolation')
 
-parser.add_argument('--ID_str', action='store_true', help='Unique identifying string for parallel computations')
+parser.add_argument('--ID_str', help='Unique identifying string for parallel computations')
 
 
 args = parser.parse_args()
