@@ -30,7 +30,7 @@ group.add_argument('--use_cylinder', action='store_true', help='choose either us
 group.add_argument('--use_pmem', action='store_true', help='choose either use_cylinder or use_pmem')
 
 ## optional
-parser.add_argument('--depth', type=int, help='required if use_cylinder==True') # 30
+parser.add_argument('--depth', type=float, help='required if use_cylinder==True') # 30
 
 parser.add_argument('--input_path', help='path to your input hdf5 files')
 parser.add_argument('--output_path', help='path to your output hdf5 files')
