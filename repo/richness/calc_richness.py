@@ -40,6 +40,8 @@ parser.add_argument('--radius', type=float, help='required if fix_radius == True
 
 parser.add_argument('--noperc', action='store_true', help='turn off percolation')
 
+parser.add_argument('--ID_str', action='store_true', help='Unique identifying string for parallel computations')
+
 
 args = parser.parse_args()
 
@@ -68,7 +70,11 @@ else:
     use_rlambda = True
     print('use rlambda')
 
-ofname_base = f'richness'
+if args.ID_str:
+    ofname_base = str(args.ID_str)+f'_richness'
+else:
+    ofname_base = f'richness'
+    
 if use_cylinder == True:
     ofname_base  += f'_d{depth}'
 if args.fix_radius == True:
