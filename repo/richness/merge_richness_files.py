@@ -4,7 +4,7 @@ import numpy as np
 
 def merge_richness_files(out_path, ofname_base, boxsize):    
     Nslices  = int(boxsize / 100.0) #Assumes boxsize is a multiple of 100.0 Mpc/h
-    outfile = out_path + f'/{ofname_base}.hdf5' #+ run_name
+    outfile = out_path + f'/{ofname_base}.h5' #+ run_name
     print(outfile)
 
     dummy_array = np.array([[], [], [], [], [], [], []]) #gid mass px py pz rlam lam
