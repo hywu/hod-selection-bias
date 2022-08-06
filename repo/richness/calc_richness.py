@@ -76,7 +76,7 @@ else:
     ofname_base = f'richness'
     
 if use_cylinder == True:
-    ofname_base  += '{:.2f}'.format(depth)
+    ofname_base  += '_d'+'{:.2f}'.format(depth)
 if args.fix_radius == True:
     ofname_base += f'_r{radius}'
 if args.noperc == True:
