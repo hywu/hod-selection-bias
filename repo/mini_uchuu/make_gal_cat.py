@@ -7,61 +7,47 @@ import h5py
 from multiprocessing import Pool
 from astropy.io import fits
 import pandas as pd
-import os, sys, glob, argparse
+import os, sys, glob 
+
 #### my functions ####
 sys.path.append('../utils')
 from fid_hod import Ngal_S20_poisson
 from fid_hod import Ngal_S20_gauss
 from draw_sat_position import draw_sat_position
+from read_yml import ReadYML
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--which_sim', type=str, required=True, help='')
-parser.add_argument('--model_id', type=int, required=True, help='')
-args = parser.parse_args()
+#### read in the yaml file  ####
+yml_fname = sys.argv[1]
+model_id = int(sys.argv[2])
 
-model_list = pd.read_csv('model_list.csv')
-model = model_list.iloc[args.model_id]
-#print(model)
+#./make_gal_cat.py yml/mini_uchuu_grid.yml 0
+
+para = ReadYML(yml_fname)
+out_path = f'{para.output_loc}/model_{para.model_set}_{model_id}/'
+redshift = para.redshift
+
+#### read in the parameter to run ####
+model_list = pd.read_csv(f'csv/model_list_{para.model_set}.csv')
+model = model_list.iloc[model_id]
 alpha = model['alpha']
 lgM1 = model['lgM1']
-kappa = model['kappa']
+lgkappa = model['lgkappa']
 lgMcut = model['lgMcut']
 sigmalogM = model['sigmalogM']
-sigma_intr = model['sigma_intr']
+sigma_intr = model['sigmaintr']
 
-if args.which_sim == 'mini_uchuu':
-    output_loc = '/bsuhome/hwu/scratch/hod-selection-bias/output_mini_uchuu/'
+kappa = 10**lgkappa
 
-out_path = f'{output_loc}/model_{args.model_id}/'
 if os.path.isdir(out_path)==False: os.makedirs(out_path)
 if os.path.isdir(out_path+'/temp/')==False: os.makedirs(out_path+'/temp/')
-
 
 ## save the model to a one-row csv
 df_save = pd.DataFrame(columns=list(model.keys()))
 df_save.loc[0] = model
 df_save.to_csv(f'{out_path}/model.csv', index=False)
 
-
-
-## read in halo catalog
-redshift = 0.3
-
-
-# input_loc = '/bsuhome/hwu/scratch/uchuu/MiniUchuu/'
-# data = h5py.File(input_loc+f'MiniUchuu_halolist_z0p30.h5', 'r')
-# hid = np.array(data['id'])
-# pid = np.array(data['pid'])
-# sel1 = (pid == -1)
-# M200m = np.array(data['M200b'])[sel1]
-# sel2 = M200m > 1e11
-# M200m_all = M200m[sel2]
-# gid_all = hid[sel1][sel2]
-# x_halo_all = np.array(data['x'])[sel1][sel2]
-# y_halo_all = np.array(data['y'])[sel1][sel2]
-# z_halo_all = np.array(data['z'])[sel1][sel2]
-if args.which_sim == 'mini_uchuu':
+if para.which_sim == 'mini_uchuu':
     from read_mini_uchuu import ReadMiniUchuu
     rmu = ReadMiniUchuu()
     rmu.read_halos()
@@ -70,7 +56,7 @@ if args.which_sim == 'mini_uchuu':
     y_halo_all = rmu.yh
     z_halo_all = rmu.zh
     M200m_all = rmu.M200m
-    gid_all = rmu.gid
+    hid_all = rmu.hid
 
 def calc_one_layer(pz_min, pz_max):
     sel = (z_halo_all >= pz_min)&(z_halo_all < pz_max)
@@ -78,7 +64,7 @@ def calc_one_layer(pz_min, pz_max):
     y_halo_sub = y_halo_all[sel]
     z_halo_sub = z_halo_all[sel]
     M200m_sub = M200m_all[sel]
-    gid_sub = gid_all[sel]
+    hid_sub = hid_all[sel]
     nhalo = len(x_halo_sub)
 
     print('nhalo', nhalo)
@@ -96,7 +82,7 @@ def calc_one_layer(pz_min, pz_max):
             Ntot = Ngal_S20_gauss(M200m_sub[ih], alpha=alpha, lgM1=lgM1, kappa=kappa, lgMcut=lgMcut, sigmalogM=sigmalogM, sigma_intr=sigma_intr)
 
         if Ntot >= (1-1e-6):
-            hid_out.append(gid_sub[ih])
+            hid_out.append(hid_sub[ih])
             m_out.append(M200m_sub[ih])
             x_out.append(x_halo_sub[ih])
             y_out.append(y_halo_sub[ih])
@@ -105,7 +91,7 @@ def calc_one_layer(pz_min, pz_max):
             Nsat = Ntot - 1
             if Nsat > 1e-4:
                 px, py, pz = draw_sat_position(redshift, M200m_sub[ih], Nsat)
-                hid_out.extend(np.zeros(len(px)) + gid_sub[ih])
+                hid_out.extend(np.zeros(len(px)) + hid_sub[ih])
                 m_out.extend(np.zeros(len(px)) + M200m_sub[ih])
                 x_out.extend(x_halo_sub[ih] + px)
                 y_out.extend(y_halo_sub[ih] + py)
@@ -167,6 +153,8 @@ def merge_files():
     coldefs = fits.ColDefs(cols)
     tbhdu = fits.BinTableHDU.from_columns(coldefs)
     tbhdu.writeto(f'{out_path}/gals.fit', overwrite=True)
+
+    os.system(f'rm -rf {out_path}/temp/gals_*.dat')
 
 
 if __name__ == '__main__':
