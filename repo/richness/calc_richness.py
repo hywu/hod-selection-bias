@@ -30,7 +30,7 @@ group.add_argument('--use_cylinder', action='store_true', help='choose either us
 group.add_argument('--use_pmem', action='store_true', help='choose either use_cylinder or use_pmem')
 
 ## optional
-parser.add_argument('--depth', type=int, help='required if use_cylinder==True') # 30
+parser.add_argument('--depth', type=float, help='required if use_cylinder==True') # 30
 
 parser.add_argument('--input_path', help='path to your input hdf5 files')
 parser.add_argument('--output_path', help='path to your output hdf5 files')
@@ -39,6 +39,8 @@ parser.add_argument('--fix_radius', action='store_true', help='whether we use rl
 parser.add_argument('--radius', type=float, help='required if fix_radius == True')
 
 parser.add_argument('--noperc', action='store_true', help='turn off percolation')
+
+parser.add_argument('--ID_str', help='Unique identifying string for parallel computations')
 
 
 args = parser.parse_args()
@@ -68,9 +70,13 @@ else:
     use_rlambda = True
     print('use rlambda')
 
-ofname_base = f'richness'
+if args.ID_str:
+    ofname_base = str(args.ID_str)+f'_richness'
+else:
+    ofname_base = f'richness'
+    
 if use_cylinder == True:
-    ofname_base  += f'_d{depth}'
+    ofname_base  += '_d'+'{:.2f}'.format(depth)
 if args.fix_radius == True:
     ofname_base += f'_r{radius}'
 if args.noperc == True:
