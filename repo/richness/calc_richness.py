@@ -11,10 +11,6 @@ import config
 
 import argparse
 
-
-'TODO'
-'probabilistic percolation'
-
 # example
 # ./calc_richness.py --phase 0 --run_name memHOD_11.2_12.4_0.65_1.0_0.2_0.0_0_z0p3 --use_pmem
 # ./calc_richness.py --phase 0 --run_name memHOD_11.2_12.4_0.65_1.0_0.2_0.0_0_z0p3 --use_cylinder --depth 1
@@ -82,9 +78,6 @@ if args.fix_radius == True:
 if args.noperc == True:
     ofname_base += '_noperc'
 
-
-
-
 ## input & output paths
 if args.input_path:
     in_path = args.input_path
@@ -110,13 +103,6 @@ print('output path', out_path)
 
 
 #### things can be moved to yml files ####
-
-#boxsize = 1100
-#redshift = 0.3
-#scale_fac = 1/(1+redshift)
-#OmegaM = 0.314 
-#hubble = 0.67
-
 cf = config.AbacusConfigFile(args.header)
 
 boxsize   = cf.boxSize
@@ -232,6 +218,14 @@ class CalcRichness(object): # one pz slice at a time
             self.z_halo_padded = z_halo[sel_pz]
             self.mass_padded = mass[sel_pz]
             self.gid_padded = gid[sel_pz]
+
+        ### NEW!!!!: need a nother sort
+        sort = np.argsort(-self.mass_padded)
+        self.x_halo_padded = self.x_halo_padded[sort]
+        self.y_halo_padded = self.y_halo_padded[sort]
+        self.z_halo_padded = self.z_halo_padded[sort]
+        self.mass_padded = self.mass_padded[sort]
+        self.gid_padded = self.gid_padded[sort]
 
         # periodic boundary condition in x-y direction # only galaxies, no need to do this for halos
         x_all = []
