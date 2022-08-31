@@ -1,23 +1,24 @@
 #!/usr/bin/env python
 import timeit
 start = timeit.default_timer()
-
 import numpy as np
 import matplotlib.pyplot as plt
 import h5py
 import os, sys
 from distutils import util
-import config
-
+from multiprocessing import Pool
+from scipy import spatial
 import argparse
 
+import config
+sys.path.append('../utils')
+from periodic_boundary_condition import periodic_boundary_condition
+from periodic_boundary_condition import periodic_boundary_condition_halos
 
-'TODO'
-'probabilistic percolation'
-
-# example
-# ./calc_richness.py --phase 0 --run_name memHOD_11.2_12.4_0.65_1.0_0.2_0.0_0_z0p3 --use_pmem
-# ./calc_richness.py --phase 0 --run_name memHOD_11.2_12.4_0.65_1.0_0.2_0.0_0_z0p3 --use_cylinder --depth 1
+'''
+## example (output to Heidi's space)
+./calc_richness.py --halos "halo_cut3.00e+12_base_c000_ph000_z0p300.h5" --members "NHOD_0.10_11.7_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph000_z0p300.hdf5" --header "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph000/z0p300/header" --use_cylinder --depth 10 --input_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph000/z0p300/" --output_path "/fs/scratch/PCON0003/cond0099/test_summit/" --ID_str "NHOD_0.10_11.7_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph000_z0p300"
+'''
 
 ## required
 parser = argparse.ArgumentParser()
@@ -82,9 +83,6 @@ if args.fix_radius == True:
 if args.noperc == True:
     ofname_base += '_noperc'
 
-
-
-
 ## input & output paths
 if args.input_path:
     in_path = args.input_path
@@ -104,19 +102,13 @@ else:
 
 if os.path.isdir(out_path)==False:
     os.makedirs(out_path)
+    os.makedirs(f'{out_path}/temp/')
 
 print('input path', in_path)
 print('output path', out_path)
 
 
 #### things can be moved to yml files ####
-
-#boxsize = 1100
-#redshift = 0.3
-#scale_fac = 1/(1+redshift)
-#OmegaM = 0.314 
-#hubble = 0.67
-
 cf = config.AbacusConfigFile(args.header)
 
 boxsize   = cf.boxSize
@@ -137,31 +129,16 @@ halo_fname = in_path + halo_file
 gal_fname = in_path + memgal_file
 
 
-# from merge_richness_files import merge_richness_files
-# merge_richness_files(phase, run_name, out_path, ofname_base)
-# exit()
-
-
 ############################################
 #### read in halos ####
 f = h5py.File(halo_fname,'r')
 halos = f['halos']
 #print(halos.dtype)
-mass = halos['mass'] # m200b
-sel = (mass > Mmin)
-x_halo = halos['x'][sel]
-y_halo = halos['y'][sel]
-z_halo = halos['z'][sel]
-#rvir = halos['rvir'][sel]/1e3 # rvir is wrong in this file
-mass = mass[sel]
-gid = halos['gid'][sel] # use gid as halo id
-
-index = np.argsort(-mass)
-x_halo = x_halo[index]
-y_halo = y_halo[index]
-z_halo = z_halo[index]
-mass = mass[index]
-gid = gid[index]
+hid_in = halos['gid']
+mass_in = halos['mass']
+x_halo_in = halos['x']
+y_halo_in = halos['y']
+z_halo_in = halos['z']
 print('finished reading halos')
 
 
@@ -169,135 +146,104 @@ print('finished reading halos')
 f = h5py.File(gal_fname,'r')
 particles  = f['particles']
 #print(particles.dtype)
-x_gal = particles['x']
-y_gal = particles['y']
-z_gal = particles['z']
+x_gal_in = particles['x']
+y_gal_in = particles['y']
+z_gal_in = particles['z']
 print('finished galaxies')
 
-from scipy import spatial
+
+n_parallel_z = 1 # NOTE! cannot do more than one yet.
+n_parallel_x = 10
+n_parallel_y = 10
+
+n_parallel = n_parallel_z * n_parallel_x * n_parallel_y
+
+
+
 rmax_tree = 2
 
 
-class CalcRichness(object): # one pz slice at a time
-    def __init__(self, pz_min, pz_max):
+#### periodic boundary condition ####
+x_padding = 3
+y_padding = 3
+z_padding_halo = 0  ## fully periodic 
+z_padding_gal = 0  ## fully periodic
+
+x_halo, y_halo, z_halo, hid, mass = periodic_boundary_condition_halos(
+    x_halo_in, y_halo_in, z_halo_in, 
+    boxsize, x_padding, y_padding, 0, hid_in, mass_in)
+
+sort = np.argsort(-mass)
+hid = hid[sort]
+mass = mass[sort]
+x_halo = x_halo[sort]
+y_halo = y_halo[sort]
+z_halo = z_halo[sort]
+
+x_gal, y_gal, z_gal = periodic_boundary_condition(
+    x_gal_in, y_gal_in, z_gal_in,
+    boxsize, x_padding, y_padding, 0)
+
+
+class CalcRichness(object):
+    def __init__(self, pz_min=0, pz_max=boxsize, px_min=0, px_max=boxsize, py_min=0, py_max=boxsize):
         self.pz_min = pz_min
         self.pz_max = pz_max
-        d_pz = pz_max - pz_min
+        self.px_min = px_min
+        self.px_max = px_max
+        self.py_min = py_min
+        self.py_max = py_max
 
-        # periodic boundary condition in pz direction
-        if pz_min < depth: # near the lower boundary
-            # for galaxies
-            sel_pz1 = (z_gal < pz_max + 1.2*depth) 
-            sel_pz2 = (z_gal > boxsize - 1.2*depth)
-            x_gal_slice = np.append(x_gal[sel_pz1], x_gal[sel_pz2]) # oh well...
-            y_gal_slice = np.append(y_gal[sel_pz1], y_gal[sel_pz2])
-            z_gal_slice = np.append(z_gal[sel_pz1], z_gal[sel_pz2] - boxsize)
+        sel_gal = (z_gal > pz_min - z_padding_gal) & (z_gal < pz_max + z_padding_gal)
+        if px_min > 0 or px_max < boxsize or py_min > 0 or py_max < boxsize:
+            sel_gal &= (x_gal > px_min - x_padding) & (x_gal < px_max + x_padding)
+            sel_gal &= (y_gal > py_min - y_padding) & (y_gal < py_max + y_padding)
 
-            # for halos: padding for percolation
-            sel_pz1 = (z_halo < pz_max + 1.2*depth) 
-            sel_pz2 = (z_halo > boxsize - 1.2*depth)
-            self.x_halo_padded = np.append(x_halo[sel_pz1], x_halo[sel_pz2]) # oh well...
-            self.y_halo_padded = np.append(y_halo[sel_pz1], y_halo[sel_pz2])
-            self.z_halo_padded = np.append(z_halo[sel_pz1], z_halo[sel_pz2] - boxsize)
-            self.mass_padded = np.append(mass[sel_pz1], mass[sel_pz2])
-            self.gid_padded = np.append(gid[sel_pz1], gid[sel_pz2])
+        self.x_gal = x_gal[sel_gal]
+        self.y_gal = y_gal[sel_gal]
+        self.z_gal = z_gal[sel_gal]
+        
+        sel_halo = (z_halo > pz_min - z_padding_halo) & (z_halo < pz_max + z_padding_halo)
+        if px_min > 0 or px_max < boxsize or py_min > 0 or py_max < boxsize:
+            sel_halo &= (x_halo > px_min - x_padding) & (x_halo < px_max + x_padding)
+            sel_halo &= (y_halo > py_min - y_padding) & (y_halo < py_max + y_padding)
 
-        elif pz_max > boxsize - depth: # near the upper boundary
-            # for galaxies
-            sel_pz1 = (z_gal > pz_min - 1.2*depth)
-            sel_pz2 = (z_gal < 1.2*depth) 
-            x_gal_slice = np.append(x_gal[sel_pz1], x_gal[sel_pz2])
-            y_gal_slice = np.append(y_gal[sel_pz1], y_gal[sel_pz2])
-            z_gal_slice = np.append(z_gal[sel_pz1], z_gal[sel_pz2] + boxsize)
-
-            # for halos
-            sel_pz1 = (z_halo > pz_min - 1.2*depth)
-            sel_pz2 = (z_halo < 1.2*depth) 
-            self.x_halo_padded = np.append(x_halo[sel_pz1], x_halo[sel_pz2])
-            self.y_halo_padded = np.append(y_halo[sel_pz1], y_halo[sel_pz2])
-            self.z_halo_padded = np.append(z_halo[sel_pz1], z_halo[sel_pz2] + boxsize)
-            self.mass_padded = np.append(mass[sel_pz1], mass[sel_pz2])
-            self.gid_padded = np.append(gid[sel_pz1], gid[sel_pz2])
-
-        else: # safe in the middle
-            sel_pz = (z_gal > pz_min - 1.2*depth)&(z_gal < pz_max + 1.2*depth)
-            x_gal_slice = x_gal[sel_pz]
-            y_gal_slice = y_gal[sel_pz]
-            z_gal_slice = z_gal[sel_pz]
-
-            # for halos
-            sel_pz = (z_halo > pz_min - 1.2*depth)&(z_halo < pz_max + 1.2*depth)
-            self.x_halo_padded = x_halo[sel_pz]
-            self.y_halo_padded = y_halo[sel_pz]
-            self.z_halo_padded = z_halo[sel_pz]
-            self.mass_padded = mass[sel_pz]
-            self.gid_padded = gid[sel_pz]
-
-        # periodic boundary condition in x-y direction # only galaxies, no need to do this for halos
-        x_all = []
-        y_all = []
-        z_all = []
-        for x_pm in [-1, 0, 1]:
-            for y_pm in [-1, 0, 1]:
-                x_all.extend(x_gal_slice + x_pm * boxsize)
-                y_all.extend(y_gal_slice + y_pm * boxsize)
-                z_all.extend(z_gal_slice)
-
-        x_all = np.array(x_all)
-        y_all = np.array(y_all)
-        z_all = np.array(z_all)
-        padding = 10
-        sel = (x_all > -padding)&(x_all < boxsize + padding)&(y_all > -padding)&(y_all < boxsize + padding)
-
-        self.x_gal = x_all[sel]
-        self.y_gal = y_all[sel]
-        self.z_gal = z_all[sel]
+        self.x_halo = x_halo[sel_halo]
+        self.y_halo = y_halo[sel_halo]
+        self.z_halo = z_halo[sel_halo]
+        self.hid = hid[sel_halo]
+        self.mass = mass[sel_halo]
 
         gal_position = np.dstack([self.x_gal, self.y_gal])[0]
         gal_tree = spatial.cKDTree(gal_position)
 
-        halo_position = np.dstack([self.x_halo_padded, self.y_halo_padded])[0]
+        halo_position = np.dstack([self.x_halo, self.y_halo])[0]
         halo_tree = spatial.cKDTree(halo_position)
 
+        rmax_tree = 2
         self.indexes_tree = halo_tree.query_ball_tree(gal_tree, r=rmax_tree)
         self.gal_taken = np.zeros(len(self.x_gal)) # for percolation
 
-    def plot_check_pbc(self):
-        plt.figure(figsize=(21,7))
-        plt.subplot(131, aspect='equal')
-        plt.scatter(self.x_gal[::1000], self.y_gal[::1000])
-        plt.axhline(0)
-        plt.axhline(boxsize)
-        plt.axvline(0)
-        plt.axvline(boxsize)
-
-        plt.subplot(132, aspect='equal')
-        plt.scatter(self.y_gal[::1000], self.z_gal[::1000])
-        plt.axvline(0)
-        plt.axvline(boxsize)
-        plt.axhline(self.pz_min)
-        plt.axhline(self.pz_max)
-
-        plt.subplot(133, aspect='equal')
-        plt.scatter(self.x_gal[::1000], self.z_gal[::1000])
-        plt.axvline(0)
-        plt.axvline(boxsize)
-        plt.axhline(self.pz_min)
-        plt.axhline(self.pz_max)
-
-        plt.savefig('pbc.png')
-
     def get_richness(self, i_halo):
         gal_ind = self.indexes_tree[i_halo]
-        x_cen = self.x_halo_padded[i_halo]
-        y_cen = self.y_halo_padded[i_halo]
-        z_cen = self.z_halo_padded[i_halo]
+        x_cen = self.x_halo[i_halo]
+        y_cen = self.y_halo[i_halo]
+        z_cen = self.z_halo[i_halo]
 
         # cut the LOS first!
-        d = self.z_gal[gal_ind] - z_cen
-        if use_cylinder == True: 
-            sel_z = (np.abs(d) < depth)&(self.gal_taken[gal_ind] < 1e-4)
-        elif use_pmem == True:
+        z_gal_gal_ind = self.z_gal[gal_ind]
+        d_pbc0 = z_gal_gal_ind - z_cen
+        d_pbc1 = z_gal_gal_ind + boxsize - z_cen
+        d_pbc2 = z_gal_gal_ind - boxsize - z_cen
+
+        if use_cylinder == True and depth > 0: 
+            sel_z0 = (np.abs(d_pbc0) < depth)
+            sel_z1 = (np.abs(d_pbc1) < depth)
+            sel_z2 = (np.abs(d_pbc2) < depth)
+            sel_z = sel_z0 | sel_z1 | sel_z2
+            sel_z = sel_z & (self.gal_taken[gal_ind] < 1e-4)
+
+        elif use_pmem == True or depth == -1:
             dz = d / 3000. * Ez 
             sel_z = (np.abs(dz) < dz_max)&(self.gal_taken[gal_ind] < 1e-4) # TODO: probabilistic percolation
             dz = dz[sel_z]
@@ -311,30 +257,29 @@ class CalcRichness(object): # one pz slice at a time
             rlam_ini = 1
             rlam = rlam_ini
             for iteration in range(100):
-                if use_cylinder == True:
+                if use_cylinder == True and depth > 0:
                     ngal = len(r[r < rlam])
-                elif use_pmem == True:
+                elif use_pmem == True or depth == -1:
                     ngal = np.sum(pmem_weights(dz, r/rlam))
                 else:
                     print('BUG!!')
 
                 rlam_old = rlam
                 rlam = (ngal/100.)**0.2 / scale_fac # phys -> comoving
-                #print(rlam, rlam_old)
                 if abs(rlam - rlam_old) < 1e-5:
                     break
         else:
             rlam = radius
 
-        sel_mem = (r < rlam)&(self.gal_taken[gal_ind][sel_z] < 1e-4)
+        sel_mem = (r < rlam)#&(self.gal_taken[gal_ind][sel_z] < 1e-4)
             
-        if perc == True:
+        if perc == True and len(gal_ind) > 0:
             self.gal_taken[np.array(gal_ind)[sel_z][sel_mem]] = 1
             # otherwise, all gal_taken elements remain zero
              
-        if use_cylinder == True:
+        if use_cylinder == True and depth > 0:
             lam = len(r[sel_mem])
-        elif use_pmem == True:
+        elif use_pmem == True or depth == -1:
             lam = np.sum(pmem_weights(dz, r/rlam))
         else:
             print('bug!!')
@@ -342,28 +287,36 @@ class CalcRichness(object): # one pz slice at a time
         return rlam, lam
 
     def measure_richness(self):
-        nh = len(self.x_halo_padded)
-        print('nh =', nh)
+        nh = len(self.x_halo)
+        #print('nh =', nh)
 
-        ofname = f'{out_path}/' + ofname_base + f'_{self.pz_min}_{self.pz_max}.dat'
+        ofname = f'{out_path}/temp/richness_pz{self.pz_min:.0f}_{self.pz_max:.0f}_px{self.px_min:.0f}_{self.px_max:.0f}_py{self.py_min:.0f}_{self.py_max:.0f}.dat'
         outfile = open(ofname, 'w')
-        outfile.write('#gid, mass, px, py, pz, rlam, lam \n')
+        outfile.write('#hid, mass, px, py, pz, rlam, lam \n')
         for ih in range(nh):
             rlam, lam = self.get_richness(ih)
-            if self.z_halo_padded[ih] > self.pz_min and self.z_halo_padded[ih] < self.pz_max: # discard padded halos
-                outfile.write('%12i %15e %12g %12g %12g %12g %12g \n'%(self.gid_padded[ih], self.mass_padded[ih], self.x_halo_padded[ih], self.y_halo_padded[ih], self.z_halo_padded[ih], rlam, lam))
+            if self.z_halo[ih] > self.pz_min and self.z_halo[ih] < self.pz_max and \
+                self.x_halo[ih] > self.px_min and self.x_halo[ih] < self.px_max and \
+                self.y_halo[ih] > self.py_min and self.y_halo[ih] < self.py_max:
+                outfile.write('%12i %15e %12g %12g %12g %12g %12g \n'%(self.hid[ih], self.mass[ih], self.x_halo[ih], self.y_halo[ih], self.z_halo[ih], rlam, lam))
         outfile.close()
 
 
-
+z_layer_thickness = boxsize / n_parallel_z
+x_cube_size = boxsize / n_parallel_x
+y_cube_size = boxsize / n_parallel_y
 
 
 def calc_one_bin(ibin):
-    cr = CalcRichness(pz_min=ibin*100, pz_max=(ibin+1)*100)
+    iz = ibin // (n_parallel_x * n_parallel_y)
+    ixy = ibin % (n_parallel_x * n_parallel_y)
+    ix = ixy // n_parallel_x
+    iy = ixy % n_parallel_x
+    cr = CalcRichness(pz_min=iz*z_layer_thickness, pz_max=(iz+1)*z_layer_thickness,
+        px_min=ix*x_cube_size, px_max=(ix+1)*x_cube_size,
+        py_min=iy*y_cube_size, py_max=(iy+1)*y_cube_size
+        )
     cr.measure_richness()
-
-
-
 
 
 if __name__ == '__main__':
@@ -378,11 +331,6 @@ if __name__ == '__main__':
         stop = timeit.default_timer()
         print('richness took', stop - start, 'seconds')
 
-    # for i in [0]:#range(12):
-    #     cr = CalcRichness(pz_min=i*100, pz_max=(i+1)*100)
-    #     #cr.plot_check_pbc()
-    #     
-
 
     stop = timeit.default_timer()
     print('prep took', stop - start, 'seconds')
@@ -391,11 +339,8 @@ if __name__ == '__main__':
         
         start = timeit.default_timer()
         # parallel
-        from multiprocessing import Pool
-        #n_job2 = int(boxsize/100.0)
-        n_job2 = 20
-        p = Pool(n_job2)
-        p.map(calc_one_bin, range(n_job2))
+        p = Pool(n_parallel)
+        p.map(calc_one_bin, range(n_parallel))
         stop = timeit.default_timer()
         print('richness took', stop - start, 'seconds')
     
