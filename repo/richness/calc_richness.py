@@ -15,10 +15,10 @@ sys.path.append('../utils')
 from periodic_boundary_condition import periodic_boundary_condition
 from periodic_boundary_condition import periodic_boundary_condition_halos
 
-
-# example
-# ./calc_richness.py --phase 0 --run_name memHOD_11.2_12.4_0.65_1.0_0.2_0.0_0_z0p3 --use_pmem
-# ./calc_richness.py --phase 0 --run_name memHOD_11.2_12.4_0.65_1.0_0.2_0.0_0_z0p3 --use_cylinder --depth 1
+'''
+## example (output to Heidi's space)
+./calc_richness.py --halos "halo_cut3.00e+12_base_c000_ph000_z0p300.h5" --members "NHOD_0.10_11.7_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph000_z0p300.hdf5" --header "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph000/z0p300/header" --use_cylinder --depth 10 --input_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph000/z0p300/" --output_path "/fs/scratch/PCON0003/cond0099/test_summit/" --ID_str "NHOD_0.10_11.7_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph000_z0p300"
+'''
 
 ## required
 parser = argparse.ArgumentParser()
@@ -102,6 +102,7 @@ else:
 
 if os.path.isdir(out_path)==False:
     os.makedirs(out_path)
+    os.makedirs(f'{out_path}/temp/')
 
 print('input path', in_path)
 print('output path', out_path)
@@ -133,11 +134,11 @@ gal_fname = in_path + memgal_file
 f = h5py.File(halo_fname,'r')
 halos = f['halos']
 #print(halos.dtype)
-mass = halos['mass'] # m200b
+hid_in = halos['gid']
+mass_in = halos['mass']
 x_halo_in = halos['x']
 y_halo_in = halos['y']
 z_halo_in = halos['z']
-gid_in = halos['gid'][sel] # use gid as halo id
 print('finished reading halos')
 
 
@@ -264,7 +265,7 @@ class CalcRichness(object):
                     print('BUG!!')
 
                 rlam_old = rlam
-                rlam = (ngal/100.)**0.2 / scale_factor # phys -> comoving
+                rlam = (ngal/100.)**0.2 / scale_fac # phys -> comoving
                 if abs(rlam - rlam_old) < 1e-5:
                     break
         else:
@@ -289,7 +290,7 @@ class CalcRichness(object):
         nh = len(self.x_halo)
         #print('nh =', nh)
 
-        ofname = f'{out_path}/temp/richness_{rich_name}_pz{self.pz_min:.0f}_{self.pz_max:.0f}_px{self.px_min:.0f}_{self.px_max:.0f}_py{self.py_min:.0f}_{self.py_max:.0f}.dat'
+        ofname = f'{out_path}/temp/richness_pz{self.pz_min:.0f}_{self.pz_max:.0f}_px{self.px_min:.0f}_{self.px_max:.0f}_py{self.py_min:.0f}_{self.py_max:.0f}.dat'
         outfile = open(ofname, 'w')
         outfile.write('#hid, mass, px, py, pz, rlam, lam \n')
         for ih in range(nh):
@@ -297,7 +298,6 @@ class CalcRichness(object):
             if self.z_halo[ih] > self.pz_min and self.z_halo[ih] < self.pz_max and \
                 self.x_halo[ih] > self.px_min and self.x_halo[ih] < self.px_max and \
                 self.y_halo[ih] > self.py_min and self.y_halo[ih] < self.py_max:
-                #0 < self.x_halo[ih] < boxsize and 0 < self.y_halo[ih] < boxsize: # discard padded halos
                 outfile.write('%12i %15e %12g %12g %12g %12g %12g \n'%(self.hid[ih], self.mass[ih], self.x_halo[ih], self.y_halo[ih], self.z_halo[ih], rlam, lam))
         outfile.close()
 
@@ -317,9 +317,6 @@ def calc_one_bin(ibin):
         py_min=iy*y_cube_size, py_max=(iy+1)*y_cube_size
         )
     cr.measure_richness()
-
-
-
 
 
 if __name__ == '__main__':
