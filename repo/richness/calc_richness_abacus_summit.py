@@ -2,154 +2,51 @@
 import timeit
 start = timeit.default_timer()
 import numpy as np
-import matplotlib.pyplot as plt
-import h5py
-import os, sys
-from distutils import util
-from multiprocessing import Pool
+import pandas as pd
 from scipy import spatial
-import argparse
+import os
+import sys
+import glob
+import fitsio
+import h5py
+from astropy.io import fits
+from multiprocessing import Pool
 
-import config
 sys.path.append('../utils')
+from read_yml import ReadYML
 from periodic_boundary_condition import periodic_boundary_condition
 from periodic_boundary_condition import periodic_boundary_condition_halos
 
+#########################################################################
+#### TODO: below needs to be swapped out ####
+#### read in summit halos
+out_path = '/bsuhome/hwu/scratch/hod-selection-bias/output_abacus_summit/'
+data = fitsio.read(out_path+'halos_3e+12.fit')
+hid_in = data['haloid']
+mass_in = data['mass']
+x_halo_in = data['px']
+y_halo_in = data['py']
+z_halo_in = data['pz']
 
-# example
-# ./calc_richness.py --phase 0 --run_name memHOD_11.2_12.4_0.65_1.0_0.2_0.0_0_z0p3 --use_pmem
-# ./calc_richness.py --phase 0 --run_name memHOD_11.2_12.4_0.65_1.0_0.2_0.0_0_z0p3 --use_cylinder --depth 1
+OmegaM = 0.315  # TODO: from header
+redshift = 0.3 # TODO: from header
+boxsize = 2000 # TODO: from header
 
-## required
-parser = argparse.ArgumentParser()
-parser.add_argument('--halos', required=True, help='File name of halo hdf5 file')
-parser.add_argument('--members', required=True, help='File name of mock member galaxies hdf5 file')
-parser.add_argument('--header', required=True, help='Header file name for simulation')
-
-group = parser.add_mutually_exclusive_group() # cylinder or pmem?
-group.add_argument('--use_cylinder', action='store_true', help='choose either use_cylidner or use_pmem')
-group.add_argument('--use_pmem', action='store_true', help='choose either use_cylinder or use_pmem')
-
-## optional
-parser.add_argument('--depth', type=float, help='required if use_cylinder==True') # 30
-
-parser.add_argument('--input_path', help='path to your input hdf5 files')
-parser.add_argument('--output_path', help='path to your output hdf5 files')
-
-parser.add_argument('--fix_radius', action='store_true', help='whether we use rlambda or fixed radius')
-parser.add_argument('--radius', type=float, help='required if fix_radius == True')
-
-parser.add_argument('--noperc', action='store_true', help='turn off percolation')
-
-parser.add_argument('--ID_str', help='Unique identifying string for parallel computations')
-
-
-args = parser.parse_args()
-
-halo_file   = args.halos
-memgal_file = args.members
-
-use_cylinder = args.use_cylinder
-use_pmem = args.use_pmem
-
-## cylinder or pmem?
-if args.use_cylinder == True:
-    depth = args.depth
-    print('using cylinder with depth', depth)
-
-if args.use_pmem == True:
-    use_pmem = True
-    print('using pmem')
-
-
-## rlambda or fixed radius?
-if args.fix_radius == True:
-    use_rlambda = False
-    radius = args.radius
-    print('using fixed radius ', radius, 'cMpc/h')
-else:
-    use_rlambda = True
-    print('use rlambda')
-
-if args.ID_str:
-    ofname_base = str(args.ID_str)+f'_richness'
-else:
-    ofname_base = f'richness'
-    
-if use_cylinder == True:
-    ofname_base  += '_d'+'{:.2f}'.format(depth)
-if args.fix_radius == True:
-    ofname_base += f'_r{radius}'
-if args.noperc == True:
-    ofname_base += '_noperc'
-
-## input & output paths
-if args.input_path:
-    in_path = args.input_path
-else:
-    in_path = f'/bsuhome/hwu/scratch/Projection_Effects/Catalogs/fiducial-{phase}/z0p3/'
-
-if args.output_path:
-    out_path = args.output_path
-else:
-    out_path = f'/bsuhome/hwu/scratch/Projection_Effects/output/richness/fiducial-{phase}/z0p3/{run_name}'
-
-if args.noperc == True:
-    no_perc = args.noperc
-    perc = False
-else:
-    perc = True
-
-if os.path.isdir(out_path)==False:
-    os.makedirs(out_path)
-
-print('input path', in_path)
-print('output path', out_path)
-
-
-#### things can be moved to yml files ####
-cf = config.AbacusConfigFile(args.header)
-
-boxsize   = cf.boxSize
-redshift  = cf.redshift
-scale_fac = 1./(1.+redshift)
-
-OmegaM  = cf.Omega_M
-OmegaDE = 1 - OmegaM
-hubble  = cf.H0 / 100.0
-Ez = np.sqrt(OmegaM * (1+redshift)**3 + OmegaDE)
-dz_max = 0.15
-
-run_parallel = True
-#perc = False
-Mmin = 10**12.5
-
-halo_fname = in_path + halo_file
-gal_fname = in_path + memgal_file
-
-
-############################################
-#### read in halos ####
-f = h5py.File(halo_fname,'r')
-halos = f['halos']
-#print(halos.dtype)
-mass = halos['mass'] # m200b
-x_halo_in = halos['x']
-y_halo_in = halos['y']
-z_halo_in = halos['z']
-gid_in = halos['gid'][sel] # use gid as halo id
-print('finished reading halos')
-
-
-#### read in galaxies ####
+#### galaxies ####
+loc = '/bsuhome/hwu/scratch/abacus_summit/'
+gal_fname = loc + 'memHOD_0.10_12.27_11.70_12.99_0.83_c000_ph000_z0p300.param.mock.h5'
 f = h5py.File(gal_fname,'r')
-particles  = f['particles']
-#print(particles.dtype)
-x_gal_in = particles['x']
-y_gal_in = particles['y']
-z_gal_in = particles['z']
-print('finished galaxies')
+data = f['particles']
+x_gal_in = data['x']
+y_gal_in = data['y']
+z_gal_in = data['z']
+#### TODO: above needs to be swapped out ####
+#########################################################################
 
+
+depth = 30
+
+Mmin = 10**12.5
 
 n_parallel_z = 1 # NOTE! cannot do more than one yet.
 n_parallel_x = 10
@@ -157,10 +54,29 @@ n_parallel_y = 10
 
 n_parallel = n_parallel_z * n_parallel_x * n_parallel_y
 
+perc = True
+use_rlambda = True #False
 
+if depth > 0:
+    use_cylinder = True
+    use_pmem = False
+    #z_padding = 1.2 * depth
+else:
+    use_cylinder = False
+    use_pmem = True
+    from pmem_weights import pmem_weights
+    z_padding = 400
 
-rmax_tree = 2
+if use_rlambda == False:
+    radius = 1
 
+rich_name = f'd{depth:.0f}'
+
+#### 
+OmegaDE = 1 - OmegaM
+Ez = np.sqrt(OmegaM * (1+redshift)**3 + OmegaDE)
+dz_max = 0.15
+scale_factor = 1/(1+redshift)
 
 #### periodic boundary condition ####
 x_padding = 3
@@ -182,7 +98,6 @@ z_halo = z_halo[sort]
 x_gal, y_gal, z_gal = periodic_boundary_condition(
     x_gal_in, y_gal_in, z_gal_in,
     boxsize, x_padding, y_padding, 0)
-
 
 class CalcRichness(object):
     def __init__(self, pz_min=0, pz_max=boxsize, px_min=0, px_max=boxsize, py_min=0, py_max=boxsize):
@@ -302,9 +217,11 @@ class CalcRichness(object):
         outfile.close()
 
 
+
 z_layer_thickness = boxsize / n_parallel_z
 x_cube_size = boxsize / n_parallel_x
 y_cube_size = boxsize / n_parallel_y
+
 
 
 def calc_one_bin(ibin):
@@ -318,36 +235,65 @@ def calc_one_bin(ibin):
         )
     cr.measure_richness()
 
+def merge_files():
+    fname_list = glob.glob(f'{out_path}/temp/richness_{rich_name}_pz*.dat')
+    print('nfiles', len(fname_list))
+    hid_out = []
+    m_out = []
+    x_out = []
+    y_out = []
+    z_out = []
+    rlam_out = []
+    lam_out = []
 
+    for fname in fname_list:
+        data = pd.read_csv(fname, delim_whitespace=True, dtype=np.float64, comment='#', 
+                        names=['haloid', 'mass', 'px', 'py', 'pz', 'rlam', 'lam'])
+        hid_out.extend(data['haloid'])
+        m_out.extend(data['mass'])
+        x_out.extend(data['px'])
+        y_out.extend(data['py'])
+        z_out.extend(data['pz'])
+        rlam_out.extend(data['rlam'])
+        lam_out.extend(data['lam'])
+        
+    hid_out = np.array(hid_out)
+    m_out = np.array(m_out)
+    x_out = np.array(x_out)
+    y_out = np.array(y_out)
+    z_out = np.array(z_out)
+    rlam_out = np.array(rlam_out)
+    lam_out = np.array(lam_out)
 
+    sel = np.argsort(-m_out)
+
+    cols = [
+        fits.Column(name='haloid', format='K' ,array=hid_out[sel]),
+        fits.Column(name='M200m', format='E',array=m_out[sel]),
+        fits.Column(name='px', format='D' ,array=x_out[sel]),
+        fits.Column(name='py', format='D',array=y_out[sel]),
+        fits.Column(name='pz', format='D',array=z_out[sel]),
+        fits.Column(name='Rlambda', format='D',array=rlam_out[sel]),
+        fits.Column(name='lambda', format='D',array=lam_out[sel]),
+    ]
+    coldefs = fits.ColDefs(cols)
+    tbhdu = fits.BinTableHDU.from_columns(coldefs)
+    tbhdu.writeto(f'{out_path}/richness_{rich_name}.fit', overwrite=True)
+
+    os.system(f'rm -rf {out_path}/temp/richness_{rich_name}_pz*.dat')
 
 
 if __name__ == '__main__':
-    
-    if run_parallel == False:
-        cr = CalcRichness(pz_min=0, pz_max=100)
-        stop = timeit.default_timer()
-        print('prep took', stop - start, 'seconds')
-        
-        start = stop
-        cr.measure_richness()
-        stop = timeit.default_timer()
-        print('richness took', stop - start, 'seconds')
-
-
     stop = timeit.default_timer()
     print('prep took', stop - start, 'seconds')
+    start = timeit.default_timer()
+    p = Pool(n_parallel)
+    p.map(calc_one_bin, range(n_parallel))
+    stop = timeit.default_timer()
+    print('richness took', stop - start, 'seconds')
     
-    if run_parallel == True:
-        
-        start = timeit.default_timer()
-        # parallel
-        p = Pool(n_parallel)
-        p.map(calc_one_bin, range(n_parallel))
-        stop = timeit.default_timer()
-        print('richness took', stop - start, 'seconds')
+    start = stop
+    merge_files()
+    stop = timeit.default_timer()
+    print('merging took', stop - start, 'seconds')
     
-    # merge files
-    from merge_richness_files import merge_richness_files
-    #ofname_base = memgal_file.replace(".hdf5", "")
-    merge_richness_files(out_path, ofname_base, boxsize)
