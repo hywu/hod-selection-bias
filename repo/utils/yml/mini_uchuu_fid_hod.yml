@@ -1,0 +1,18 @@
+model_name: fid_hod
+nbody: mini_uchuu
+nbody_loc: /bsuhome/hwu/scratch/uchuu/MiniUchuu/
+output_loc: /bsuhome/hwu/scratch/hod-selection-bias/output_mini_uchuu/
+redshift: 0.3
+
+# HOD parameters 
+alpha: 1
+lgM1: 12.9
+lgkappa: 1
+lgMcut: 11.7
+sigmalogM: 0.1
+sigmaintr: 0
+
+# richness
+depth: 30
+perc: True
+use_rlambda: True
