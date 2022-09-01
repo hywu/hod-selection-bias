@@ -8,55 +8,72 @@ from multiprocessing import Pool
 from astropy.io import fits
 import pandas as pd
 import os, sys, glob 
-
+import yaml
 #### my functions ####
 sys.path.append('../utils')
 from fid_hod import Ngal_S20_poisson
 from fid_hod import Ngal_S20_gauss
 from draw_sat_position import draw_sat_position
-from read_yml import ReadYML
+#from read_yml import ReadYML
 
 
 #### read in the yaml file  ####
 yml_fname = sys.argv[1]
-model_id = int(sys.argv[2])
+#./make_gal_cat.py yml/mini_uchuu_fid_hod.yml
+#./make_gal_cat.py yml/abacus_summit_fid_hod.yml
 
-#./make_gal_cat.py yml/mini_uchuu_grid.yml 0
+with open(yml_fname, 'r') as stream:
+    try:
+        para = yaml.safe_load(stream)
+    except yaml.YAMLError as exc:
+        print(exc)
 
-para = ReadYML(yml_fname)
-out_path = f'{para.output_loc}/model_{para.model_set}_{model_id}/'
-redshift = para.redshift
 
-#### read in the parameter to run ####
-model_list = pd.read_csv(f'csv/model_list_{para.model_set}.csv')
-model = model_list.iloc[model_id]
-alpha = model['alpha']
-lgM1 = model['lgM1']
-lgkappa = model['lgkappa']
-lgMcut = model['lgMcut']
-sigmalogM = model['sigmalogM']
-sigma_intr = model['sigmaintr']
+output_loc = para['output_loc']
+model_name = para['model_name']
+out_path = f'{output_loc}/model_{model_name}'
+redshift = para['redshift']
+alpha = para['alpha']
+lgM1 = para['lgM1']
+lgkappa = para['lgkappa']
+lgMcut = para['lgMcut']
+sigmalogM = para['sigmalogM']
+sigma_intr = para['sigmaintr']
 
 kappa = 10**lgkappa
 
 if os.path.isdir(out_path)==False: os.makedirs(out_path)
 if os.path.isdir(out_path+'/temp/')==False: os.makedirs(out_path+'/temp/')
 
-## save the model to a one-row csv
-df_save = pd.DataFrame(columns=list(model.keys()))
-df_save.loc[0] = model
-df_save.to_csv(f'{out_path}/model.csv', index=False)
 
-if para.which_sim == 'mini_uchuu':
+with open(f'{out_path}/para.yml', 'w') as outfile:
+    yaml.dump(para, outfile, default_flow_style=False)
+
+print('output is at ' + out_path)
+
+if para['nbody'] == 'mini_uchuu':
     from read_mini_uchuu import ReadMiniUchuu
-    rmu = ReadMiniUchuu()
-    rmu.read_halos()
-    boxsize = rmu.boxsize
-    x_halo_all = rmu.xh
-    y_halo_all = rmu.yh
-    z_halo_all = rmu.zh
-    M200m_all = rmu.M200m
-    hid_all = rmu.hid
+    readcat = ReadMiniUchuu(para['nbody_loc'])
+    readcat.read_halos()
+    boxsize = readcat.boxsize
+    x_halo_all = readcat.xh
+    y_halo_all = readcat.yh
+    z_halo_all = readcat.zh
+    M200m_all = readcat.M200m
+    hid_all = readcat.hid
+
+if para['nbody'] == 'abacus_summit':
+    from read_abacus_summit import ReadAbacusSummit
+    readcat = ReadAbacusSummit(para['nbody_loc'])
+    readcat.read_halos()
+    boxsize = readcat.boxsize
+    x_halo_all = readcat.xh
+    y_halo_all = readcat.yh
+    z_halo_all = readcat.zh
+    M200m_all = readcat.mass # sigh, this is actually Mvir
+    hid_all = readcat.hid
+
+
 
 def calc_one_layer(pz_min, pz_max):
     sel = (z_halo_all >= pz_min)&(z_halo_all < pz_max)
@@ -113,8 +130,11 @@ def calc_one_layer(pz_min, pz_max):
     np.savetxt(ofname, data, fmt='%-12i %-15.12e  %-12.12g  %-12.12g  %-12.12g %-12i', header='haloid, M200m, px, py, pz, iscen') # need a few more decimal places
 
 
+n_parallel = 100
+n_layer = boxsize / n_parallel
+
 def calc_one_bin(ibin):
-    calc_one_layer(pz_min=ibin*40, pz_max=(ibin+1)*40)
+    calc_one_layer(pz_min=ibin*n_layer, pz_max=(ibin+1)*n_layer)
 
 def merge_files():
     fname_list = glob.glob(f'{out_path}/temp/gals_*.dat')
@@ -163,9 +183,8 @@ if __name__ == '__main__':
     print('prep took', stop - start, 'seconds')
     
     start = stop
-    n_job2 = 10
-    p = Pool(n_job2)
-    p.map(calc_one_bin, range(n_job2))
+    p = Pool(n_parallel)
+    p.map(calc_one_bin, range(n_parallel))
     stop = timeit.default_timer()
     print('galaxies took', stop - start, 'seconds')
 
