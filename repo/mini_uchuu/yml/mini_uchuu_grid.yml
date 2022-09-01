@@ -1,4 +1,0 @@
-which_sim: mini_uchuu
-model_set: grid
-output_loc: /bsuhome/hwu/scratch/hod-selection-bias/output_mini_uchuu/grid/
-redshift: 0.3
