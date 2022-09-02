@@ -11,7 +11,7 @@ from scipy import spatial
 import argparse
 
 import config
-path_to_here = str(os.path.realpath(__file__))
+path_to_here = str(os.path.dirname(os.path.realpath(__file__)))
 path_to_utils = path_to_here.replace('richness', 'utils')
 sys.path.append(path_to_utils)
 print(sys.path)
