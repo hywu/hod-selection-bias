@@ -11,7 +11,9 @@ from scipy import spatial
 import argparse
 
 import config
-sys.path.append('../utils')
+path_to_here = str(os.path.realpath(__file__))
+path_to_utils = path_to_here.replace('richness', 'utiles')
+sys.path.append(path_to_utils)
 from periodic_boundary_condition import periodic_boundary_condition
 from periodic_boundary_condition import periodic_boundary_condition_halos
 
