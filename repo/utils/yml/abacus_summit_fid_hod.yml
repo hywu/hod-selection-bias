@@ -7,7 +7,7 @@ redshift: 0.3
 # HOD parameters 
 alpha: 1
 lgM1: 12.9
-lgkappa: 1
+lgkappa: 0
 lgMcut: 11.7
 sigmalogM: 0.1
 sigmaintr: 0
@@ -16,3 +16,14 @@ sigmaintr: 0
 depth: 30
 perc: True
 use_rlambda: True
+
+# Cosmology
+#https://abacussummit.readthedocs.io/en/latest/cosmologies.html
+OmegaM: 0.31519
+OmegaL: 0.68481
+hubble: 0.6736
+sigma8: 0.807952
+OmegaB: 0.04930
+ns: 0.9649
+
+mdef: vir

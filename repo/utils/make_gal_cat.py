@@ -12,13 +12,14 @@ import yaml
 #### my functions ####
 sys.path.append('../utils')
 from fid_hod import Ngal_S20_poisson
-from fid_hod import Ngal_S20_gauss
-from draw_sat_position import draw_sat_position
+#from fid_hod import Ngal_S20_gauss
+from draw_sat_position import DrawSatPosition
 #from read_yml import ReadYML
 
 
 #### read in the yaml file  ####
 yml_fname = sys.argv[1]
+dsp = DrawSatPosition(yml_fname)
 #./make_gal_cat.py yml/mini_uchuu_fid_hod.yml
 #./make_gal_cat.py yml/abacus_summit_fid_hod.yml
 
@@ -31,7 +32,7 @@ with open(yml_fname, 'r') as stream:
 
 output_loc = para['output_loc']
 model_name = para['model_name']
-out_path = f'{output_loc}/model_{model_name}'
+out_path = f'{output_loc}/model_{model_name}/'
 redshift = para['redshift']
 alpha = para['alpha']
 lgM1 = para['lgM1']
@@ -39,8 +40,10 @@ lgkappa = para['lgkappa']
 lgMcut = para['lgMcut']
 sigmalogM = para['sigmalogM']
 sigma_intr = para['sigmaintr']
-
 kappa = 10**lgkappa
+
+Mmin = para.get('Mmin', 1e11)
+
 
 if os.path.isdir(out_path)==False: os.makedirs(out_path)
 if os.path.isdir(out_path+'/temp/')==False: os.makedirs(out_path+'/temp/')
@@ -54,23 +57,23 @@ print('output is at ' + out_path)
 if para['nbody'] == 'mini_uchuu':
     from read_mini_uchuu import ReadMiniUchuu
     readcat = ReadMiniUchuu(para['nbody_loc'])
-    readcat.read_halos()
+    readcat.read_halos(Mmin)
     boxsize = readcat.boxsize
     x_halo_all = readcat.xh
     y_halo_all = readcat.yh
     z_halo_all = readcat.zh
-    M200m_all = readcat.M200m
+    mass_all = readcat.M200m
     hid_all = readcat.hid
 
 if para['nbody'] == 'abacus_summit':
     from read_abacus_summit import ReadAbacusSummit
     readcat = ReadAbacusSummit(para['nbody_loc'])
-    readcat.read_halos()
+    readcat.read_halos(Mmin)
     boxsize = readcat.boxsize
     x_halo_all = readcat.xh
     y_halo_all = readcat.yh
     z_halo_all = readcat.zh
-    M200m_all = readcat.mass # sigh, this is actually Mvir
+    mass_all = readcat.mass # sigh, this is actually Mvir
     hid_all = readcat.hid
 
 
@@ -80,7 +83,7 @@ def calc_one_layer(pz_min, pz_max):
     x_halo_sub = x_halo_all[sel]
     y_halo_sub = y_halo_all[sel]
     z_halo_sub = z_halo_all[sel]
-    M200m_sub = M200m_all[sel]
+    mass_sub = mass_all[sel]
     hid_sub = hid_all[sel]
     nhalo = len(x_halo_sub)
 
@@ -92,24 +95,27 @@ def calc_one_layer(pz_min, pz_max):
     z_out = []
     iscen_out = []
 
+
+
+
     for ih in range(nhalo):
         if sigma_intr < 1e-6: # poisson
-            Ntot = Ngal_S20_poisson(M200m_sub[ih], alpha=alpha, lgM1=lgM1, kappa=kappa, lgMcut=lgMcut, sigmalogM=sigmalogM) 
+            Ncen, Nsat = Ngal_S20_poisson(mass_sub[ih], alpha=alpha, lgM1=lgM1, kappa=kappa, lgMcut=lgMcut, sigmalogM=sigmalogM) 
         else:
-            Ntot = Ngal_S20_gauss(M200m_sub[ih], alpha=alpha, lgM1=lgM1, kappa=kappa, lgMcut=lgMcut, sigmalogM=sigmalogM, sigma_intr=sigma_intr)
+            Ncen, Nsat = Ngal_S20_gauss(mass_sub[ih], alpha=alpha, lgM1=lgM1, kappa=kappa, lgMcut=lgMcut, sigmalogM=sigmalogM, sigma_intr=sigma_intr)
 
-        if Ntot >= (1-1e-6):
+        if Ncen > 0.5:
             hid_out.append(hid_sub[ih])
-            m_out.append(M200m_sub[ih])
+            m_out.append(mass_sub[ih])
             x_out.append(x_halo_sub[ih])
             y_out.append(y_halo_sub[ih])
             z_out.append(z_halo_sub[ih])
             iscen_out.append(1)
-            Nsat = Ntot - 1
-            if Nsat > 1e-4:
-                px, py, pz = draw_sat_position(redshift, M200m_sub[ih], Nsat)
+            #Nsat = Ntot - 1
+            if Nsat > 0.5:
+                px, py, pz = dsp.draw_sat_position(mass_sub[ih], Nsat)
                 hid_out.extend(np.zeros(len(px)) + hid_sub[ih])
-                m_out.extend(np.zeros(len(px)) + M200m_sub[ih])
+                m_out.extend(np.zeros(len(px)) + mass_sub[ih])
                 x_out.extend(x_halo_sub[ih] + px)
                 y_out.extend(y_halo_sub[ih] + py)
                 z_out.extend(z_halo_sub[ih] + pz)
@@ -127,7 +133,7 @@ def calc_one_layer(pz_min, pz_max):
 
     data = np.array([hid_out, m_out, x_out, y_out, z_out, iscen_out]).transpose()
     ofname = f'{out_path}/temp/gals_{pz_min}_{pz_max}.dat'
-    np.savetxt(ofname, data, fmt='%-12i %-15.12e  %-12.12g  %-12.12g  %-12.12g %-12i', header='haloid, M200m, px, py, pz, iscen') # need a few more decimal places
+    np.savetxt(ofname, data, fmt='%-12i %-15.12e %-12.12g %-12.12g %-12.12g %-12i', header='haloid, M200m, px, py, pz, iscen') # need a few more decimal places
 
 
 n_parallel = 100

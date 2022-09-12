@@ -67,7 +67,7 @@ rich_name = f'd{depth:.0f}'
 # out_path = f'{para.output_loc}/model_{para.model_set}_{model_id}/'
 output_loc = para['output_loc']
 model_name = para['model_name']
-out_path = f'{output_loc}/model_{model_name}'
+out_path = f'{output_loc}/model_{model_name}/'
 if os.path.isdir(out_path)==False: os.makedirs(out_path)
 if os.path.isdir(out_path+'/temp/')==False: os.makedirs(out_path+'/temp/')
 
@@ -105,11 +105,26 @@ dz_max = 0.15
 scale_factor = 1/(1+para['redshift'])
 
 # read in galaxies
-gal_fname = f'{out_path}/gals.fit'
-data, header = fitsio.read(gal_fname, header=True)
-x_gal_in = data['px']
-y_gal_in = data['py']
-z_gal_in = data['pz']
+gal_cat_format = para.get('gal_cat_format', 'fits')
+
+if gal_cat_format == 'fits':
+    gal_fname = f'{out_path}/gals.fit'
+    data, header = fitsio.read(gal_fname, header=True)
+    x_gal_in = data['px']
+    y_gal_in = data['py']
+    z_gal_in = data['pz']
+
+if gal_cat_format == 'h5':
+    import h5py
+    loc = '/bsuhome/hwu/scratch/abacus_summit/'
+    gal_fname = loc + 'NHOD_0.10_11.7_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph000_z0p300.hdf5'
+    f = h5py.File(gal_fname,'r')
+    data = f['particles']
+    #print(data.dtype)
+    x_gal_in = data['x']
+    y_gal_in = data['y']
+    z_gal_in = data['z']
+
 
 #### periodic boundary condition ####
 x_padding = 3
