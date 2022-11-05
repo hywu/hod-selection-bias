@@ -30,11 +30,12 @@ parser.add_argument('--members', required=True, help='File name of mock member g
 parser.add_argument('--header', required=True, help='Header file name for simulation')
 
 group = parser.add_mutually_exclusive_group() # cylinder or pmem?
-group.add_argument('--use_cylinder', action='store_true', help='choose either use_cylidner or use_pmem')
-group.add_argument('--use_pmem', action='store_true', help='choose either use_cylinder or use_pmem')
+group.add_argument('--use_cylinder', action='store_true', help='choose either use_cylidner or use_pmem or use_quad_top_hat')
+group.add_argument('--use_pmem', action='store_true', help='choose either use_cylinder or use_pmem or use_quad_top_hat')
+group.add_argument('--use_quad_top_hat', action='store_true', help='choose either use_cylinder or use_pmem or use_quad_top_hat')
 
 ## optional
-parser.add_argument('--depth', type=float, help='required if use_cylinder==True') # 30
+parser.add_argument('--depth', type=float, help='required if use_cylinder==True or use_quad_top_hat==True') # 30
 
 parser.add_argument('--input_path', help='path to your input hdf5 files')
 parser.add_argument('--output_path', help='path to your output hdf5 files')
@@ -54,12 +55,17 @@ memgal_file = args.members
 
 use_cylinder = args.use_cylinder
 use_pmem = args.use_pmem
+use_quad_top_hat = args.use_quad_top_hat
 
-## cylinder or pmem?
+## cylinder or pmem or quad_top?
+if args.use_quad_top_hat == True:
+    depth = args.depth
+    print('using quad_top_hat with depth (full width at minimum)', depth)
+
 if args.use_cylinder == True:
     depth = args.depth
     print('using cylinder with depth', depth)
-
+    
 if args.use_pmem == True:
     use_pmem = True
     print('using pmem')
@@ -250,6 +256,14 @@ class CalcRichness(object):
             dz = d / 3000. * Ez 
             sel_z = (np.abs(dz) < dz_max)&(self.gal_taken[gal_ind] < 1e-4) # TODO: probabilistic percolation
             dz = dz[sel_z]
+        
+        elif use_quad_top_hat==True and depth>0:
+            sel_z0 = (np.abs(d_pbc0) < depth)
+            sel_z1 = (np.abs(d_pbc1) < depth)
+            sel_z2 = (np.abs(d_pbc2) < depth)
+            sel_z = sel_z0 | sel_z1 | sel_z2
+            sel_z = sel_z & (self.gal_taken[gal_ind] < 1e-4)
+            
         else:
             print('BUG!!')
 
@@ -264,6 +278,8 @@ class CalcRichness(object):
                     ngal = len(r[r < rlam])
                 elif use_pmem == True or depth == -1:
                     ngal = np.sum(pmem_weights(dz, r/rlam))
+                elif use_quad_top_hat==True and depth>0:
+                    ngal = np.sum(pmem_quad_top_hat(d[r<rlam]))
                 else:
                     print('BUG!!')
 
@@ -284,6 +300,8 @@ class CalcRichness(object):
             lam = len(r[sel_mem])
         elif use_pmem == True or depth == -1:
             lam = np.sum(pmem_weights(dz, r/rlam))
+        elif use_quad_top_hat==True and depth>0:
+            lam = np.sum(pmem_quad_top_hat(d[r<rlam]))
         else:
             print('bug!!')
         #print(lam, len(self.gal_taken[self.gal_taken==1]))
