@@ -293,7 +293,11 @@ class CalcRichness(object):
         nh = len(self.x_halo)
         #print('nh =', nh)
 
-        ofname = f'{out_path}/temp/richness_pz{self.pz_min:.0f}_{self.pz_max:.0f}_px{self.px_min:.0f}_{self.px_max:.0f}_py{self.py_min:.0f}_{self.py_max:.0f}.dat'
+        if os.path.isdir(out_path)==False:
+            ofname = f'{out_path}/temp/{ofname_base}_pz{self.pz_min:.0f}_{self.pz_max:.0f}_px{self.px_min:.0f}_{self.px_max:.0f}_py{self.py_min:.0f}_{self.py_max:.0f}.dat'
+        else:
+            ofname = f'{out_path}/{ofname_base}_pz{self.pz_min:.0f}_{self.pz_max:.0f}_px{self.px_min:.0f}_{self.px_max:.0f}_py{self.py_min:.0f}_{self.py_max:.0f}.dat'
+            
         outfile = open(ofname, 'w')
         outfile.write('#hid, mass, px, py, pz, rlam, lam \n')
         for ih in range(nh):
