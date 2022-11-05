@@ -29,7 +29,7 @@ def pmem_weights(dz, R):
 
 def pmem_quad_top_hat(dist, width):
     def quad(los_dist):
-        dummy = 1. - (los_dist, width)**2.0    
+        dummy = 1. - (los_dist/width)**2.0    
         return dummy
     
     pmem_list = np.zeros(len(dist))
