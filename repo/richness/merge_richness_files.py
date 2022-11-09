@@ -2,7 +2,7 @@
 import h5py as h5
 import numpy as np
 
-def merge_richness_files(out_path, ofname_base, boxsize):    
+def merge_richness_files(out_path, ofname_base, boxsize, quad_file=False):    
     Nslices  = int(boxsize / 100.0) #Assumes boxsize is a multiple of 100.0 Mpc/h
     outfile = out_path + f'/{ofname_base}.h5' #+ run_name
     print(outfile)
@@ -62,7 +62,11 @@ if __name__ == '__main__':
         hod_list = [f'memHOD_11.2_12.4_0.65_1.0_0.2_0.0_{phase}_z0p3.hdf5'] # fid
         for hod in hod_list:
             hod = hod[:-5]
-            ofname = loc_out + hod + '/'+ hod + f'.richness_d{depth}_r{radius}.hdf5'
+            if quad_file==False:
+                ofname = loc_out + hod + '/'+ hod + f'.richness_d{depth}_r{radius}.hdf5'
+            elif quad_file==True:
+                ofname = loc_out + hod + '/'+ hod + f'.richness_quad_d{depth}_r{radius}.hdf5'
+                
             #print(ofname)
             if os.path.exists(ofname):
                 print('done '+hod)
