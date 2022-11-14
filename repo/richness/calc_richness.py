@@ -18,6 +18,9 @@ print(sys.path)
 from periodic_boundary_condition import periodic_boundary_condition
 from periodic_boundary_condition import periodic_boundary_condition_halos
 
+from pmem_weights import pmem_weights
+from pmem_weights import pmem_quad_top_hat
+
 '''
 ## example (output to Heidi's space)
 ./calc_richness.py --halos "halo_cut3.00e+12_base_c000_ph000_z0p300.h5" --members "NHOD_0.10_11.7_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph000_z0p300.hdf5" --header "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph000/z0p300/header" --use_cylinder --depth 10 --input_path "/fs/project/PAS0023/Snapshots/AbacusSummit_base/base_c000/base_c000_ph000/z0p300/" --output_path "/fs/scratch/PCON0003/cond0099/test_summit/" --ID_str "NHOD_0.10_11.7_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph000_z0p300"
