@@ -285,7 +285,7 @@ class CalcRichness(object):
                 elif use_pmem == True or depth == -1:
                     ngal = np.sum(pmem_weights(dz, r/rlam))
                 elif use_quad_top_hat==True and depth>0:
-                    ngal = np.sum( pmem_quad_top_hat(d_pbc0[r<rlam]) + pmem_quad_top_hat(d_pbc1[r<rlam]) + pmem_quad_top_hat(d_pbc2[r<rlam]))
+                    ngal = np.sum( pmem_quad_top_hat(d_pbc0[r<rlam], depth) + pmem_quad_top_hat(d_pbc1[r<rlam], depth) + pmem_quad_top_hat(d_pbc2[r<rlam], depth))
                 else:
                     print('BUG!!')
 
@@ -307,7 +307,7 @@ class CalcRichness(object):
         elif use_pmem == True or depth == -1:
             lam = np.sum(pmem_weights(dz, r/rlam))
         elif use_quad_top_hat==True and depth>0:
-            lam = np.sum( pmem_quad_top_hat(d_pbc0[r<rlam]) + pmem_quad_top_hat(d_pbc1[r<rlam]) + pmem_quad_top_hat(d_pbc2[r<rlam]))
+            lam = np.sum( pmem_quad_top_hat(d_pbc0[r<rlam], depth) + pmem_quad_top_hat(d_pbc1[r<rlam], depth) + pmem_quad_top_hat(d_pbc2[r<rlam], depth))
         else:
             print('bug!!')
         #print(lam, len(self.gal_taken[self.gal_taken==1]))
