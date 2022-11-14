@@ -12,10 +12,12 @@ def merge_richness_files(out_path, ofname_base, boxsize, quad_file=False):
 
     i = 0
     while i < Nslices:
-        fname = out_path+f"/{ofname_base}_"+str(int(i*boxsize/Nslices))+"_"+str(int((i+1)*boxsize/Nslices))+".dat"
-        dummy = np.genfromtxt(fname)
-
-        dummy_array = np.concatenate( (dummy_array, np.transpose(dummy)), axis=1)
+        j = 0
+        while j < Nslices:
+            fname = out_path+f"/{ofname_base}_pz0_"+str(int(boxsize))+"_px"+str(int(i*boxsize/Nslices))+"_"+str(int((i+1)*boxsize/Nslices))+"_py"+str(int(j*boxsize/Nslices))+"_"+str(int((j+1)*boxsize/Nslices))+".dat"
+            dummy = np.genfromtxt(fname)
+            dummy_array = np.concatenate( (dummy_array, np.transpose(dummy)), axis=1)
+            j += 1
         i += 1
 
     N_out = len(dummy_array[0])
