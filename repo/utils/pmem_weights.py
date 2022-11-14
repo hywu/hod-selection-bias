@@ -33,3 +33,16 @@ def pmem_weights(dz, R, dz_max=zmax):
     pmem_list[sel2] = pmem_interp((dz[sel2], R[sel2]*0 + Rmin))
 
     return pmem_list
+
+def pmem_quad_top_hat(dist, width):
+    def quad(los_dist):
+        dummy = 1. - (los_dist/width)**2.0    
+        return dummy
+    
+    pmem_list = np.zeros(len(dist))
+    
+    #restrict to top-hat interior
+    sel = np.absolute(dist)<width
+    pmem_list[sel] = quad(dist[sel])
+    
+    return pmem_list
