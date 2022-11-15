@@ -266,9 +266,9 @@ class CalcRichness(object):
             sel_z2 = (np.abs(d_pbc2) < depth)
             sel_z = sel_z0 | sel_z1 | sel_z2
             sel_z = sel_z & (self.gal_taken[gal_ind] < 1e-4)
-            d_pbc0 = d_pbc0[sel_z0]
-            d_pbc1 = d_pbc1[sel_z1]
-            d_pbc2 = d_pbc2[sel_z2]
+            d_pbc0 = d_pbc0[sel_z]
+            d_pbc1 = d_pbc1[sel_z]
+            d_pbc2 = d_pbc2[sel_z]
             
         else:
             print('BUG!!')
@@ -307,7 +307,7 @@ class CalcRichness(object):
         elif use_pmem == True or depth == -1:
             lam = np.sum(pmem_weights(dz, r/rlam))
         elif use_quad_top_hat==True and depth>0:
-            lam = np.sum( pmem_quad_top_hat(d_pbc0[r<rlam], depth) + pmem_quad_top_hat(d_pbc1[r<rlam], depth) + pmem_quad_top_hat(d_pbc2[r<rlam], depth))
+            lam = np.sum( pmem_quad_top_hat(d_pbc0[sel_mem], depth) + pmem_quad_top_hat(d_pbc1[sel_mem], depth) + pmem_quad_top_hat(d_pbc2[sel_mem], depth))
         else:
             print('bug!!')
         #print(lam, len(self.gal_taken[self.gal_taken==1]))
