@@ -90,6 +90,8 @@ else:
     
 if use_cylinder == True:
     ofname_base  += '_d'+'{:.2f}'.format(depth)
+args.use_quad_top_hat == True:
+    ofname_base  += '_quad_d'+'{:.2f}'.format(depth)
 if args.fix_radius == True:
     ofname_base += f'_r{radius}'
 if args.noperc == True:
