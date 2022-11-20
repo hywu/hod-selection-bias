@@ -4,7 +4,8 @@ start = timeit.default_timer()
 import numpy as np
 import pandas as pd
 import h5py
-from multiprocessing import Pool
+#from multiprocessing import Pool
+from concurrent.futures import ProcessPoolExecutor
 from astropy.io import fits
 import pandas as pd
 import os, sys, glob 
@@ -12,16 +13,13 @@ import yaml
 #### my functions ####
 sys.path.append('../utils')
 from fid_hod import Ngal_S20_poisson
-#from fid_hod import Ngal_S20_gauss
 from draw_sat_position import DrawSatPosition
-#from read_yml import ReadYML
-
 
 #### read in the yaml file  ####
 yml_fname = sys.argv[1]
-dsp = DrawSatPosition(yml_fname)
 #./make_gal_cat.py yml/mini_uchuu_fid_hod.yml
 #./make_gal_cat.py yml/abacus_summit_fid_hod.yml
+dsp = DrawSatPosition(yml_fname)
 
 with open(yml_fname, 'r') as stream:
     try:
@@ -35,12 +33,24 @@ model_name = para['model_name']
 out_path = f'{output_loc}/model_{model_name}/'
 redshift = para['redshift']
 alpha = para['alpha']
-lgM1 = para['lgM1']
+
 lgkappa = para['lgkappa']
 lgMcut = para['lgMcut']
 sigmalogM = para['sigmalogM']
 sigma_intr = para['sigmaintr']
 kappa = 10**lgkappa
+lgM20 = para.get('lgM20', None)
+if lgM20 == None:
+    lgM1 = para['lgM1']
+else:
+    M1 = 20**(-1/alpha) *(10**lgM20 - 10**lgkappa * 10**lgMcut)
+    lgM1 = np.log10(M1)
+print(lgM1)
+
+
+seed = para.get('seed', 42)
+np.random.seed(seed=seed) # for scipy
+#np.random.default_rng(seed)
 
 Mmin = para.get('Mmin', 1e11)
 
@@ -57,26 +67,49 @@ print('output is at ' + out_path)
 if para['nbody'] == 'mini_uchuu':
     from read_mini_uchuu import ReadMiniUchuu
     readcat = ReadMiniUchuu(para['nbody_loc'])
-    readcat.read_halos(Mmin)
-    boxsize = readcat.boxsize
-    x_halo_all = readcat.xh
-    y_halo_all = readcat.yh
-    z_halo_all = readcat.zh
-    mass_all = readcat.M200m
-    hid_all = readcat.hid
+    #readcat.read_halos(Mmin)
+    # boxsize = readcat.boxsize
+    # x_halo_all = readcat.xh
+    # y_halo_all = readcat.yh
+    # z_halo_all = readcat.zh
+    # mass_all = readcat.mass
+    # hid_all = readcat.hid
 
 if para['nbody'] == 'abacus_summit':
     from read_abacus_summit import ReadAbacusSummit
     readcat = ReadAbacusSummit(para['nbody_loc'])
-    readcat.read_halos(Mmin)
-    boxsize = readcat.boxsize
-    x_halo_all = readcat.xh
-    y_halo_all = readcat.yh
-    z_halo_all = readcat.zh
-    mass_all = readcat.mass # sigh, this is actually Mvir
-    hid_all = readcat.hid
+    #readcat.read_halos(Mmin)
+    # boxsize = readcat.boxsize
+    # x_halo_all = readcat.xh
+    # y_halo_all = readcat.yh
+    # z_halo_all = readcat.zh
+    # mass_all = readcat.mass # sigh, this is actually Mvir
+    # hid_all = readcat.hid
+
+if para['nbody'] == 'tng_dmo':
+    from read_tng_dmo import ReadTNGDMO
+    halofinder = para.get('halofinder', 'rockstar')
+    readcat = ReadTNGDMO(para['nbody_loc'], halofinder)
+    print('halofinder', halofinder)
+
+    
+    # if halofinder == 'fof':
+    #     readcat.read_halos_fof(Mmin)
+    # boxsize = readcat.boxsize
+    # x_halo_all = readcat.xh
+    # y_halo_all = readcat.yh
+    # z_halo_all = readcat.zh
+    # mass_all = readcat.mass
+    # hid_all = readcat.hid
 
 
+readcat.read_halos(Mmin)
+boxsize = readcat.boxsize
+x_halo_all = readcat.xh
+y_halo_all = readcat.yh
+z_halo_all = readcat.zh
+mass_all = readcat.mass
+hid_all = readcat.hid
 
 def calc_one_layer(pz_min, pz_max):
     sel = (z_halo_all >= pz_min)&(z_halo_all < pz_max)
@@ -87,16 +120,13 @@ def calc_one_layer(pz_min, pz_max):
     hid_sub = hid_all[sel]
     nhalo = len(x_halo_sub)
 
-    print('nhalo', nhalo)
+    #print('nhalo', nhalo)
     hid_out = []
     m_out = []
     x_out = []
     y_out = []
     z_out = []
     iscen_out = []
-
-
-
 
     for ih in range(nhalo):
         if sigma_intr < 1e-6: # poisson
@@ -189,8 +219,10 @@ if __name__ == '__main__':
     print('prep took', stop - start, 'seconds')
     
     start = stop
-    p = Pool(n_parallel)
-    p.map(calc_one_bin, range(n_parallel))
+    #p = Pool(n_parallel)
+    #p.map(calc_one_bin, range(n_parallel))
+    with ProcessPoolExecutor() as pool:
+        result = pool.map(calc_one_bin, range(n_parallel)) # , chunksize=2 doesn't help
     stop = timeit.default_timer()
     print('galaxies took', stop - start, 'seconds')
 
