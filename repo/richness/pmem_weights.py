@@ -2,7 +2,7 @@
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 
-Pmem_2D_file = 'data/2d_RovRLambda_pmem_map_L15_z0p5.txt'
+Pmem_2D_file = '/users/PAS0023/osu0218/Project/hod-selection-bias/repo/richness/data/2d_RovRLambda_pmem_map_L15_z0p5.txt'
 Pmem_2d_data = np.genfromtxt(Pmem_2D_file)
 
 delz_bins = np.linspace(-0.15, 0.15, 16) #Of course we can change this, but it's what I have computed so far
