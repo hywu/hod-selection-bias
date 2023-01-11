@@ -34,8 +34,10 @@ if los == 'xyz':
     los = sys.argv[2]
 
 save_members = para.get('save_members', False)
+pec_vel = para.get('pec_vel', False)
 
 print('use pmem:', use_pmem)
+print('pec vel:', pec_vel)
 
 Mmin = 10**12.5
 
@@ -72,28 +74,34 @@ if para['nbody'] == 'tng_dmo':
     readcat = ReadTNGDMO(para['nbody_loc'], halofinder)
     print('halofinder', halofinder)
 
-readcat.read_halos(Mmin)
+readcat.read_halos(Mmin, pec_vel=pec_vel)
 boxsize = readcat.boxsize
 OmegaM = readcat.OmegaM
 hubble = readcat.hubble
 hid_in = readcat.hid
 mass_in = readcat.mass
 
+OmegaDE = 1 - OmegaM
+Ez = np.sqrt(OmegaM * (1+para['redshift'])**3 + OmegaDE)
+
 if los == 'z':
     x_halo_in = readcat.xh
     y_halo_in = readcat.yh
     z_halo_in = readcat.zh
+    if pec_vel == True:
+        z_halo_in += readcat.vz / Ez / 100.
 if los == 'x':
     x_halo_in = readcat.yh
     y_halo_in = readcat.zh
     z_halo_in = readcat.xh
+    if pec_vel == True:
+        z_halo_in += readcat.vx / Ez / 100.
 if los == 'y':
     x_halo_in = readcat.zh
     y_halo_in = readcat.xh
     z_halo_in = readcat.yh
-
-OmegaDE = 1 - OmegaM
-Ez = np.sqrt(OmegaM * (1+para['redshift'])**3 + OmegaDE)
+    if pec_vel == True:
+        z_halo_in += readcat.vy / Ez / 100.
 
 if use_pmem == True:
     use_cylinder = False
@@ -109,6 +117,9 @@ else:
 if los != 'z':
     rich_name = f'{rich_name}_{los}'
 
+if pec_vel == True:
+    rich_name += '_vel'
+
 scale_factor = 1/(1+para['redshift'])
 
 # read in galaxies
@@ -121,14 +132,20 @@ if gal_cat_format == 'fits':
         x_gal_in = data['px']
         y_gal_in = data['py']
         z_gal_in = data['pz']
+        if pec_vel == True:
+            z_gal_in += data['vz'] / Ez / 100.
     if los == 'x':
         x_gal_in = data['py']
         y_gal_in = data['pz']
         z_gal_in = data['px']
+        if pec_vel == True:
+            z_gal_in += data['vx'] / Ez / 100.
     if los == 'y':
         x_gal_in = data['pz']
         y_gal_in = data['px']
         z_gal_in = data['py']
+        if pec_vel == True:
+            z_gal_in += data['vy'] / Ez / 100.
 
 if gal_cat_format == 'h5': # testing Andres's catalog
     import h5py
@@ -170,7 +187,7 @@ class CalcRichness(object): # one pz slice at a time
         self.py_max = py_max
 
         sel_gal = (z_gal > pz_min - z_padding_gal) & (z_gal < pz_max + z_padding_gal)
-        if px_min > 0 or px_max < boxsize or py_min > 0 or py_max < boxsize:
+        if px_min > 0 or px_max < boxsize or py_min > 0 or py_max < boxsize: # further dicing the pz slice
             sel_gal &= (x_gal > px_min - x_padding) & (x_gal < px_max + x_padding)
             sel_gal &= (y_gal > py_min - y_padding) & (y_gal < py_max + y_padding)
 
@@ -289,7 +306,10 @@ class CalcRichness(object): # one pz slice at a time
                     self.x_gal_mem = self.x_gal[gal_ind][sel_z][sel_mem]
                     self.y_gal_mem = self.y_gal[gal_ind][sel_z][sel_mem]
                     self.z_gal_mem = self.z_gal[gal_ind][sel_z][sel_mem]
-                    self.dz_out = dz0[sel_mem] 
+                    dz_all = np.array([dz0[sel_mem], dz1[sel_mem], dz2[sel_mem]])
+                    arg = np.array([np.argmin(np.abs(dz_all), axis=0)]) # find the smallest absolute value
+                    self.dz_out = np.take_along_axis(dz_all, arg, axis=0) # cool numpy function!
+                    self.dz_out = np.concatenate(self.dz_out)
                     self.r_out = r[sel_mem]/rlam 
                     self.p_gal_mem = self.x_gal_mem * 0 + 1
                     self.pmem_out = self.x_gal_mem * 0 + 1
@@ -303,6 +323,15 @@ class CalcRichness(object): # one pz slice at a time
                     self.r_out = np.tile(r[sel_mem]/rlam, 3) 
                     self.p_gal_mem = pmem[sel_mem]
                     self.pmem_out = np.concatenate([pmem0[sel_mem], pmem1[sel_mem], pmem2[sel_mem]])
+                    
+                    sel = (self.pmem_out > 1e-6)
+                    self.x_gal_mem = self.x_gal_mem[sel]
+                    self.y_gal_mem = self.y_gal_mem[sel]
+                    self.z_gal_mem = self.z_gal_mem[sel]
+                    self.dz_out = self.dz_out[sel]
+                    self.r_out = self.r_out[sel]
+                    self.pmem_out = self.pmem_out[sel]
+
                     if max(self.p_gal_mem) > 1:
                         print('max(self.p_gal_mem)', max(self.p_gal_mem), 'BUG!: double counting galaxies.')
                         exit()
@@ -456,9 +485,9 @@ def merge_files_members():
     os.system(f'rm -rf {out_path}/temp/members_{rich_name}_pz*.dat')
 
 
-
-
 if __name__ == '__main__':
+    #calc_one_bin(0)
+    
     stop = timeit.default_timer()
     print('prep took', stop - start, 'seconds')
     start = timeit.default_timer()
