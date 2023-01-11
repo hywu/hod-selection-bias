@@ -28,7 +28,7 @@ def merge_richness_files(out_path, ofname_base, boxsize, quad_file=False):
                            ("y",        np.float32, 1),
                            ("z",        np.float32, 1),
                            ("R_lambda", np.float32, 1),
-                           ("lambda",   np.int32,   1)])
+                           ("lambda",   np.float32, 1)])
 
     out_array = np.empty((N_out,), dtype=out_dtype)
 

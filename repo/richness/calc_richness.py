@@ -306,10 +306,13 @@ class CalcRichness(object):
              
         if use_cylinder == True and depth > 0:
             lam = len(r[sel_mem])
+            print("Using Uniform Top-Hat...")
         elif use_pmem == True or depth == -1:
             lam = np.sum(pmem_weights(dz, r/rlam))
+            print("Using interpolated 2D-Pmem distribution...")
         elif use_quad_top_hat==True and depth>0:
             lam = np.sum( pmem_quad_top_hat(d_pbc0[sel_mem], depth) + pmem_quad_top_hat(d_pbc1[sel_mem], depth) + pmem_quad_top_hat(d_pbc2[sel_mem], depth))
+            print("Using Quadratic Top-Hat...")
         else:
             print('bug!!')
         #print(lam, len(self.gal_taken[self.gal_taken==1]))
