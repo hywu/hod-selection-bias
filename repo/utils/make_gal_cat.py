@@ -19,6 +19,7 @@ from draw_sat_position import DrawSatPosition
 #### read in the yaml file  ####
 yml_fname = sys.argv[1]
 #./make_gal_cat.py ../scripts/yml/mini_uchuu_fid_hod.yml
+#./make_gal_cat.py ../scripts/yml/uchuu_fid_hod.yml
 dsp = DrawSatPosition(yml_fname)
 
 with open(yml_fname, 'r') as stream:
@@ -64,16 +65,20 @@ print('output is at ' + out_path)
 
 if para['nbody'] == 'mini_uchuu':
     from read_mini_uchuu import ReadMiniUchuu
-    readcat = ReadMiniUchuu(para['nbody_loc'])
+    readcat = ReadMiniUchuu(para['nbody_loc'], redshift)
+
+if para['nbody'] == 'uchuu':
+    from read_uchuu import ReadUchuu
+    readcat = ReadUchuu(para['nbody_loc'], redshift)
 
 if para['nbody'] == 'abacus_summit':
     from read_abacus_summit import ReadAbacusSummit
-    readcat = ReadAbacusSummit(para['nbody_loc'])
+    readcat = ReadAbacusSummit(para['nbody_loc'], redshift)
 
 if para['nbody'] == 'tng_dmo':
     from read_tng_dmo import ReadTNGDMO
     halofinder = para.get('halofinder', 'rockstar')
-    readcat = ReadTNGDMO(para['nbody_loc'], halofinder)
+    readcat = ReadTNGDMO(para['nbody_loc'], halofinder, redshift)
     print('halofinder', halofinder)
 
 readcat.read_halos(Mmin, pec_vel=pec_vel)
@@ -130,9 +135,14 @@ def calc_one_layer(pz_min, pz_max):
             px_out.append(px_halo_sub[ih])
             py_out.append(py_halo_sub[ih])
             pz_out.append(pz_halo_sub[ih])
-            vx_out.append(vx_halo_sub[ih])
-            vy_out.append(vy_halo_sub[ih])
-            vz_out.append(vz_halo_sub[ih])
+            if pec_vel == True:
+                vx_out.append(vx_halo_sub[ih])
+                vy_out.append(vy_halo_sub[ih])
+                vz_out.append(vz_halo_sub[ih])
+            else:
+                vx_out.append(0)#*px_halo_sub[ih])
+                vy_out.append(0)#*px_halo_sub[ih])
+                vz_out.append(0)#*px_halo_sub[ih])
 
 
             if Nsat > 0.5:
@@ -146,10 +156,14 @@ def calc_one_layer(pz_min, pz_max):
                 px_out.extend(px_halo_sub[ih] + px)
                 py_out.extend(py_halo_sub[ih] + py)
                 pz_out.extend(pz_halo_sub[ih] + pz)
-                vx_out.extend(vx_halo_sub[ih] + vx)
-                vy_out.extend(vy_halo_sub[ih] + vy)
-                vz_out.extend(vz_halo_sub[ih] + vz)
-
+                if pec_vel == True:
+                    vx_out.extend(vx_halo_sub[ih] + vx)
+                    vy_out.extend(vy_halo_sub[ih] + vy)
+                    vz_out.extend(vz_halo_sub[ih] + vz)
+                else:
+                    vx_out.extend(vx)
+                    vy_out.extend(vy)
+                    vz_out.extend(vz)
 
     px_out = np.array(px_out)
     py_out = np.array(py_out)
@@ -160,7 +174,6 @@ def calc_one_layer(pz_min, pz_max):
     px_out[px_out > boxsize] -= boxsize
     py_out[py_out > boxsize] -= boxsize
     pz_out[pz_out > boxsize] -= boxsize
-
 
     vx_out = np.array(vx_out)
     vy_out = np.array(vy_out)
@@ -175,7 +188,12 @@ n_parallel = 100
 n_layer = boxsize / n_parallel
 
 def calc_one_bin(ibin):
-    calc_one_layer(pz_min=ibin*n_layer, pz_max=(ibin+1)*n_layer)
+    pz_min = ibin*n_layer
+    pz_max = (ibin+1)*n_layer
+    ofname = f'{out_path}/temp/gals_{pz_min}_{pz_max}.dat'
+    if os.path.exists(ofname) == False:
+        print('doing' + ofname)
+        calc_one_layer(pz_min=pz_min, pz_max=pz_max)
 
 def merge_files():
     fname_list = glob.glob(f'{out_path}/temp/gals_*.dat')
@@ -227,7 +245,7 @@ def merge_files():
     tbhdu = fits.BinTableHDU.from_columns(coldefs)
     tbhdu.writeto(f'{out_path}/gals.fit', overwrite=True)
 
-    os.system(f'rm -rf {out_path}/temp/gals_*.dat')
+    #os.system(f'rm -rf {out_path}/temp/gals_*.dat')
 
 
 if __name__ == '__main__':
@@ -238,10 +256,19 @@ if __name__ == '__main__':
     start = stop
     #calc_one_bin(0)
 
+    # stop = timeit.default_timer()
+    # print('one vol took', stop - start, 'seconds')
+
+    # uchuu without pec_vel
+    #prep took 122.1488435100764 seconds
+    #one vol took 243.49571766424924 seconds
+    # uchuu with pec vel
+    #prep took 108.99297046102583 seconds
+    #one vol took 243.7070847619325 seconds
     
     #p = Pool(n_parallel)
     #p.map(calc_one_bin, range(n_parallel))
-
+    
     with ProcessPoolExecutor() as pool:
         pool.map(calc_one_bin, range(n_parallel))
     stop = timeit.default_timer()
@@ -256,3 +283,5 @@ if __name__ == '__main__':
     print(f'total time {dtime:.2g} mins')
     
     #total time 0.18 mins for mini uchuu
+    #total time 21 mins for uchuu. need to submit a batch job
+    

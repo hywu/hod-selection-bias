@@ -60,6 +60,7 @@ class DrawSatPosition(object):
 
         r_cdf_interp = interp1d(cdf, r_nfw)
         rand_vals = self.rng.random(Nsat)
+        rand_vals[rand_vals < 1e-4] = 1e-4 # avoid below interpolation range
         rsat_cMpc = r_cdf_interp(rand_vals)
 
         u = self.rng.random(Nsat)

@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 import numpy as np
+from numpy.random import default_rng
 import matplotlib.pyplot as plt
 import fitsio
 import h5py
 import os
 import sys
 import yaml
+from scipy.interpolate import interp1d
 sys.path.append('../utils')
 from measure_lensing import MeasureLensing
 from sample_matching_mass import sample_matching_mass
@@ -27,6 +29,10 @@ class PlotLensing(object):
         self.Rmax = para.get('Rmax', 100)
         self.pimax = para.get('pimax', 100)
         self.depth = para['depth']
+
+        seed = para.get('seed', 42)
+        self.rng = default_rng(seed)
+
 
         redshift = para['redshift']
         self.scale_factor = 1/(1+redshift)
@@ -118,7 +124,7 @@ class PlotLensing(object):
         lam_all = data['lambda']
 
         # shuffle the sample to remove mass sorting
-        shuff = np.random.permutation(len(xh_all))
+        shuff = self.rng.permutation(len(xh_all))
         xh_all = xh_all[shuff]
         yh_all = yh_all[shuff]
         zh_all = zh_all[shuff]
@@ -179,6 +185,7 @@ class PlotLensing(object):
             x = rp[sel]
             y = DS_sel[sel]
             z = DS_mat[sel]
+
             data2 = np.array([x,y,z]).transpose()
             np.savetxt(f'{self.fname2}_{ibin}.dat', data2, fmt='%-12g', header='rp, DS_sel, DS_matched')
 
@@ -189,13 +196,12 @@ class PlotLensing(object):
             data4 = np.array([lam_sel]).transpose()
             np.savetxt(f'{self.fname4}_{ibin}.dat', data4, fmt='%-12g', header='lambda')
 
-
     def plot_lensing(self, axes=None, label=None, plot_bias=False, color=None, lw=None):
         if axes is None and plot_bias==False:
             fig, axes = plt.subplots(1, nbins, figsize=(20, 5))
 
         if axes is None and plot_bias==True:
-            fig, axes = plt.subplots(2, nbins, figsize=(20, 10))
+            fig, axes = plt.subplots(1, nbins, figsize=(20, 5))
 
         for ibin in range(nbins):
             if self.abundance_matching == False:
@@ -234,20 +240,20 @@ class PlotLensing(object):
                     print(f'need to run {self.fname2}_{ibin}.dat')
 
             if plot_bias == True:
-                rp, Sigma_sel, Sigma_matched = np.loadtxt(f'{self.fname1}_{ibin}.dat', unpack=True)
+                #rp, Sigma_sel, Sigma_matched = np.loadtxt(f'{self.fname1}_{ibin}.dat', unpack=True)
                 rp, DS_sel, DS_matched = np.loadtxt(f'{self.fname2}_{ibin}.dat', unpack=True)
-                Sigma_bias = Sigma_sel / Sigma_matched
+                #Sigma_bias = Sigma_sel / Sigma_matched
                 DS_bias = DS_sel / DS_matched
 
-                ax = axes[0,ibin]
-                ax.semilogx(rp, Sigma_bias, label=label, color=color, lw=lw)
-                ax.set_title(title)
-                ax.legend()
-                ax.set_xlabel(r'$\rm r_p$')
-                ax.set_ylabel(r'$\Sigma$ bias')
-                ax.axhline(1, c='gray', ls='--')
+                # ax = axes[0,ibin]
+                # ax.semilogx(rp, Sigma_bias, label=label, color=color, lw=lw)
+                # ax.set_title(title)
+                # ax.legend()
+                # ax.set_xlabel(r'$\rm r_p$')
+                # ax.set_ylabel(r'$\Sigma$ bias')
+                # ax.axhline(1, c='gray', ls='--')
 
-                ax = axes[1,ibin]
+                ax = axes[ibin]
                 ax.semilogx(rp, DS_bias, label=label)
                 ax.set_title(title)
                 ax.legend()
@@ -256,9 +262,62 @@ class PlotLensing(object):
                 ax.axhline(1, c='gray', ls='--')
 
 
+    def get_lensing_data_vector(self, get_bias=False): # use Y1 radius!
+        rp_all = []
+        DS_all = []
+        for ibin in range(nbins):
+
+            fname = f'../y1/data/y1_DS_bin_z_0.2_0.35_lam_{ibin}.dat'
+            rp_y1 = np.loadtxt(fname)[:,0]
+
+            if self.abundance_matching == False:
+                lam_min = lam_min_list[ibin]
+                if self.thresholded == True:
+                    pass 
+                else:
+                    lam_max = lam_max_list[ibin]
+
+            if self.abundance_matching == True:
+                counts_min = self.counts_min_list[ibin]
+                if self.thresholded == True:
+                    space_density = counts_min / self.vol
+                else:
+                    counts_max = self.counts_max_list[ibin]
+                    space_density_min = counts_min / self.vol
+                    space_density_max = counts_max / self.vol
+
+            if get_bias == False:
+                if True:
+                    rp, DS_sel, DS_matched = np.loadtxt(f'{self.fname2}_{ibin}.dat', unpack=True)
+                    rp = rp / self.hubble * self.scale_factor
+                    DS_sel = DS_sel * 1e-12 * self.hubble / self.scale_factor**2
+                    #print(DS_sel)
+                    DS_interp = interp1d(rp, DS_sel)
+
+
+                    rp_all.append(rp_y1)
+                    DS_all.append(DS_interp(rp_y1))
+                # except:
+                #     print(f'need to run {self.fname2}_{ibin}.dat')
+
+            # if get_bias == True: # need to code this?
+            #     try:
+            #         rp, Sigma_sel, Sigma_matched = np.loadtxt(f'{self.fname1}_{ibin}.dat', unpack=True)
+            #         rp, DS_sel, DS_matched = np.loadtxt(f'{self.fname2}_{ibin}.dat', unpack=True)
+            #         Sigma_bias = Sigma_sel / Sigma_matched
+            #         DS_bias = DS_sel / DS_matched
+            #         rp_all.append(rp)
+            #         DS_all.apppend(DS_bias)
+            #     except:
+            #         print(f'need to run {self.fname1}_{ibin}.dat')
+                    
+        return np.array(rp_all), np.array(DS_all)
+
 if __name__ == "__main__":
     yml_fname = sys.argv[1]
     plmu = PlotLensing(yml_fname, abundance_matching=True, thresholded=False)
     plmu.calc_lensing()
-    #plmu.plot_lensing()
-    #plt.show()
+    plmu.plot_lensing()
+    plt.show()
+    # rp, DS = plmu.get_lensing_data_vector()
+    # print(np.shape(rp))

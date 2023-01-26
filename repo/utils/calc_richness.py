@@ -18,6 +18,7 @@ from periodic_boundary_condition import periodic_boundary_condition_halos
 
 yml_fname = sys.argv[1]
 #./calc_richness.py ../scripts/yml/mini_uchuu_fid_hod.yml
+#./calc_richness.py ../scripts/yml/uchuu_fid_hod.yml
 
 with open(yml_fname, 'r') as stream:
     try:
@@ -25,6 +26,7 @@ with open(yml_fname, 'r') as stream:
     except yaml.YAMLError as exc:
         print(exc)
 
+redshift = para['redshift']
 depth = para['depth']
 perc = para['perc']
 use_rlambda = para['use_rlambda']
@@ -61,17 +63,21 @@ if os.path.isdir(out_path+'/temp/')==False:
 # read in halos
 if para['nbody'] == 'mini_uchuu':
     from read_mini_uchuu import ReadMiniUchuu
-    readcat = ReadMiniUchuu(para['nbody_loc'])
+    readcat = ReadMiniUchuu(para['nbody_loc'], redshift)
+
+if para['nbody'] == 'uchuu':
+    from read_uchuu import ReadUchuu
+    readcat = ReadUchuu(para['nbody_loc'], redshift)
 
 if para['nbody'] == 'abacus_summit':
     sys.path.append('../abacus_summit')
     from read_abacus_summit import ReadAbacusSummit
-    readcat = ReadAbacusSummit(para['nbody_loc'])
+    readcat = ReadAbacusSummit(para['nbody_loc'], redshift)
 
 if para['nbody'] == 'tng_dmo':
     from read_tng_dmo import ReadTNGDMO
     halofinder = para.get('halofinder', 'rockstar')
-    readcat = ReadTNGDMO(para['nbody_loc'], halofinder)
+    readcat = ReadTNGDMO(para['nbody_loc'], halofinder, redshift)
     print('halofinder', halofinder)
 
 readcat.read_halos(Mmin, pec_vel=pec_vel)
@@ -82,7 +88,7 @@ hid_in = readcat.hid
 mass_in = readcat.mass
 
 OmegaDE = 1 - OmegaM
-Ez = np.sqrt(OmegaM * (1+para['redshift'])**3 + OmegaDE)
+Ez = np.sqrt(OmegaM * (1+redshift)**3 + OmegaDE)
 
 if los == 'z':
     x_halo_in = readcat.xh
@@ -122,7 +128,7 @@ if los != 'z':
 if pec_vel == True:
     rich_name += '_vel'
 
-scale_factor = 1/(1+para['redshift'])
+scale_factor = 1./(1.+redshift)
 
 # read in galaxies
 gal_cat_format = para.get('gal_cat_format', 'fits')
@@ -360,7 +366,8 @@ class CalcRichness(object): # one pz slice at a time
 
         for ih in range(nh):
             rlam, lam = self.get_richness(ih)
-            if self.z_halo[ih] > self.pz_min and self.z_halo[ih] < self.pz_max and \
+            if lam > 0 and \
+                self.z_halo[ih] > self.pz_min and self.z_halo[ih] < self.pz_max and \
                 self.x_halo[ih] > self.px_min and self.x_halo[ih] < self.px_max and \
                 self.y_halo[ih] > self.py_min and self.y_halo[ih] < self.py_max:
 

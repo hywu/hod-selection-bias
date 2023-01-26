@@ -7,7 +7,7 @@ sys.path.append('../utils')
 from readGadgetSnapshot import readGadgetSnapshot
 
 class ReadMiniUchuu(object):
-    def __init__(self, nbody_loc):
+    def __init__(self, nbody_loc, redshift):
         self.input_loc = nbody_loc #'/bsuhome/hwu/scratch/uchuu/MiniUchuu/'
         #snap_header = readGadgetSnapshot(self.input_loc+f'snapdir_043/MiniUchuu_043.gad.0') # the file is too big to copy
 
@@ -15,9 +15,17 @@ class ReadMiniUchuu(object):
         self.OmegaM = 0.3089 #snap_header.Omega0
         self.boxsize = 400 #snap_header.BoxSize
         self.mpart = 3.270422e+11 #snap_header.mass[1] * 1e10 * 1000
+        self.redshift = redshift
+
+        if self.redshift == 0.3:
+            self.snap_name = '043'
+        if self.redshift == 0.1:
+            self.snap_name = '047'
 
     def read_halos(self, Mmin=1e11, pec_vel=False):
-        data = fitsio.read(self.input_loc+'host_halos_043.fit')
+
+
+        data = fitsio.read(self.input_loc+f'host_halos_{self.snap_name}.fit')
         M200m = data['M200m']
         sel = (M200m >= Mmin)
         M200m = M200m[sel]
@@ -46,14 +54,14 @@ class ReadMiniUchuu(object):
         #return self.hid, self.mass, self.xh, self.yh, self.zh
 
     def read_particles(self):
-        data = fitsio.read(self.input_loc+'particles_043_0.1percent.fit')
+        data = fitsio.read(self.input_loc+f'particles_{self.snap_name}_0.1percent.fit')
         xp = data['x']
         yp = data['y']
         zp = data['z']
         return xp, yp, zp
 
 if __name__ == '__main__':
-    rmu = ReadMiniUchuu(nbody_loc='/bsuhome/hwu/scratch/uchuu/MiniUchuu/')
+    rmu = ReadMiniUchuu(nbody_loc='/bsuhome/hwu/scratch/uchuu/MiniUchuu/', redshift=0.1)
     rmu.read_halos(pec_vel=True)
     print('max', np.max(rmu.vx))
     print('mean, std', np.mean(rmu.vx), np.std(rmu.vx))
