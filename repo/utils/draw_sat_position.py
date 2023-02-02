@@ -29,7 +29,7 @@ class DrawSatPosition(object):
 
         params = {'flat': True, 'H0': H0, 'Om0': self.Om0, 'Ob0': Ob0, 'sigma8': sigma8, 'ns': ns}
         cosmo = cosmology.setCosmology('MyCosmo', params)
-        mass_interp = 10**np.linspace(11, 15.5, 10)
+        mass_interp = 10**np.linspace(11, 16, 20)
 
         c_interp = concentration.concentration(mass_interp, z=self.redshift, mdef=self.mdef, model='bhattacharya13')
         self.c_lnM_interp = interp1d(np.log(mass_interp), c_interp)

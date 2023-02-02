@@ -44,7 +44,7 @@ print('pec vel:', pec_vel)
 Mmin = 10**12.5
 
 n_parallel_z = 1 # NOTE! cannot do more than one yet.
-n_parallel_x = 10
+n_parallel_x = 10 # TODO: check n_parallel_x != n_parallel_y
 n_parallel_y = 10
 
 n_parallel = n_parallel_z * n_parallel_x * n_parallel_y

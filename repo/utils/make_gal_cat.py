@@ -192,7 +192,6 @@ def calc_one_bin(ibin):
     pz_max = (ibin+1)*n_layer
     ofname = f'{out_path}/temp/gals_{pz_min}_{pz_max}.dat'
     if os.path.exists(ofname) == False:
-        print('doing' + ofname)
         calc_one_layer(pz_min=pz_min, pz_max=pz_max)
 
 def merge_files():
@@ -254,8 +253,10 @@ if __name__ == '__main__':
     stop = timeit.default_timer()
     print('prep took', stop - start, 'seconds')
     start = stop
-    #calc_one_bin(0)
-
+    #for i in range(100):
+    #   calc_one_bin(i)
+    #1640 crashes
+    
     # stop = timeit.default_timer()
     # print('one vol took', stop - start, 'seconds')
 
