@@ -21,8 +21,13 @@ class ReadUchuu(object):
         if self.redshift == 0.1:
             self.snap_name = '047'
 
-    def read_halos(self, Mmin=1e11, pec_vel=False):
-        data = fitsio.read(self.input_loc+f'host_halos_{self.snap_name}.fit')
+    def read_halos(self, Mmin=1e11, pec_vel=False, cluster_only=False):
+        if cluster_only == True:
+            fname = self.input_loc+f'host_halos_{self.snap_name}_M12.5.fit'
+        else:
+            self.input_loc+f'host_halos_{self.snap_name}.fit'
+
+        data = fitsio.read()
         M200m = data['M200m']
         sel = (M200m >= Mmin)
         M200m = M200m[sel]
@@ -49,19 +54,22 @@ class ReadUchuu(object):
         #     self.vy = np.zeros(nh)
         #     self.vz = np.zeros(nh)
         #return self.hid, self.mass, self.xh, self.yh, self.zh
-    '''
+    
     def read_particles(self):
-        data = fitsio.read(self.input_loc+'particles_043_0.1percent.fit')
+        fname = self.input_loc+f'particles_{self.snap_name}_0.05percent.h5'
+        f = h5py.File(fname, 'r')
+        data = f['part']
         xp = data['x']
         yp = data['y']
         zp = data['z']
         return xp, yp, zp
-    '''
+    
 if __name__ == '__main__':
     import timeit
     start = timeit.default_timer()
-    rmu = ReadUchuu(nbody_loc='/bsuhome/hwu/scratch/uchuu/Uchuu/')
-    rmu.read_halos(pec_vel=True) #took 1.6e+02 seconds
+    rmu = ReadUchuu(nbody_loc='/bsuhome/hwu/scratch/uchuu/Uchuu/', redshift=0.1)
+    rmu.read_particles()
+    #rmu.read_halos(pec_vel=True) #took 1.6e+02 seconds
     #print('max', np.max(rmu.vx))
     #print('mean, std', np.mean(rmu.vx), np.std(rmu.vx))
     

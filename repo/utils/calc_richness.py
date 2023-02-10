@@ -80,7 +80,7 @@ if para['nbody'] == 'tng_dmo':
     readcat = ReadTNGDMO(para['nbody_loc'], halofinder, redshift)
     print('halofinder', halofinder)
 
-readcat.read_halos(Mmin, pec_vel=pec_vel)
+readcat.read_halos(Mmin, pec_vel=pec_vel, cluster_only=True)
 boxsize = readcat.boxsize
 OmegaM = readcat.OmegaM
 hubble = readcat.hubble
