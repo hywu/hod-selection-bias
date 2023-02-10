@@ -10,7 +10,7 @@ import glob
 import fitsio
 import yaml
 from astropy.io import fits
-from multiprocessing import Pool
+from concurrent.futures import ProcessPoolExecutor
 
 sys.path.append('../utils')
 from periodic_boundary_condition import periodic_boundary_condition
@@ -393,122 +393,143 @@ def calc_one_bin(ibin):
     ixy = ibin % (n_parallel_x * n_parallel_y)
     ix = ixy // n_parallel_x
     iy = ixy % n_parallel_x
-    cr = CalcRichness(pz_min=iz*z_layer_thickness, pz_max=(iz+1)*z_layer_thickness,
-        px_min=ix*x_cube_size, px_max=(ix+1)*x_cube_size,
-        py_min=iy*y_cube_size, py_max=(iy+1)*y_cube_size
-        )
-    #cr = CalcRichness(pz_min=ibin*z_layer_thickness, pz_max=(ibin+1)*z_layer_thickness)
-    cr.measure_richness()
+    pz_min = iz*z_layer_thickness
+    pz_max = (iz+1)*z_layer_thickness
+    px_min = ix*x_cube_size
+    px_max = (ix+1)*x_cube_size
+    py_min = iy*y_cube_size
+    py_max = (iy+1)*y_cube_size
+
+
+    ofname = f'{out_path}/temp/richness_{rich_name}_pz{pz_min:.0f}_{pz_max:.0f}_px{px_min:.0f}_{px_max:.0f}_py{py_min:.0f}_{py_max:.0f}.dat'
+
+    if os.path.exists(ofname) == False:
+        cr = CalcRichness(pz_min=pz_min, pz_max=pz_max, px_min=px_min, px_max=px_max, py_min=py_min, py_max=py_max)
+        cr.measure_richness()
 
 def merge_files_richness():
     fname_list = glob.glob(f'{out_path}/temp/richness_{rich_name}_pz*.dat')
-    print('nfiles', len(fname_list))
-    hid_out = []
-    m_out = []
-    x_out = []
-    y_out = []
-    z_out = []
-    rlam_out = []
-    lam_out = []
+    nfiles = len(fname_list)
+    if nfiles < n_parallel:
+        print('missing ', n_parallel - nfiles, 'files, not merging')
+    else:
+        print('nfiles', nfiles)
+        hid_out = []
+        m_out = []
+        x_out = []
+        y_out = []
+        z_out = []
+        rlam_out = []
+        lam_out = []
 
-    for fname in fname_list:
-        data = pd.read_csv(fname, delim_whitespace=True, dtype=np.float64, comment='#', 
-                        names=['haloid', 'mass', 'px', 'py', 'pz', 'rlam', 'lam'])
-        hid_out.extend(data['haloid'])
-        m_out.extend(data['mass'])
-        x_out.extend(data['px'])
-        y_out.extend(data['py'])
-        z_out.extend(data['pz'])
-        rlam_out.extend(data['rlam'])
-        lam_out.extend(data['lam'])
-        
-    hid_out = np.array(hid_out)
-    m_out = np.array(m_out)
-    x_out = np.array(x_out)
-    y_out = np.array(y_out)
-    z_out = np.array(z_out)
-    rlam_out = np.array(rlam_out)
-    lam_out = np.array(lam_out)
+        for fname in fname_list:
+            data = pd.read_csv(fname, delim_whitespace=True, dtype=np.float64, comment='#', 
+                            names=['haloid', 'mass', 'px', 'py', 'pz', 'rlam', 'lam'])
+            hid_out.extend(data['haloid'])
+            m_out.extend(data['mass'])
+            x_out.extend(data['px'])
+            y_out.extend(data['py'])
+            z_out.extend(data['pz'])
+            rlam_out.extend(data['rlam'])
+            lam_out.extend(data['lam'])
+            
+        hid_out = np.array(hid_out)
+        m_out = np.array(m_out)
+        x_out = np.array(x_out)
+        y_out = np.array(y_out)
+        z_out = np.array(z_out)
+        rlam_out = np.array(rlam_out)
+        lam_out = np.array(lam_out)
 
-    sel = np.argsort(-m_out)
+        sel = np.argsort(-m_out)
 
-    cols = [
-        fits.Column(name='haloid', format='K' ,array=hid_out[sel]),
-        fits.Column(name='M200m', format='E',array=m_out[sel]),
-        fits.Column(name='px', format='D' ,array=x_out[sel]),
-        fits.Column(name='py', format='D',array=y_out[sel]),
-        fits.Column(name='pz', format='D',array=z_out[sel]),
-        fits.Column(name='Rlambda', format='D',array=rlam_out[sel]),
-        fits.Column(name='lambda', format='D',array=lam_out[sel]),
-    ]
-    coldefs = fits.ColDefs(cols)
-    tbhdu = fits.BinTableHDU.from_columns(coldefs)
-    tbhdu.writeto(f'{out_path}/richness_{rich_name}.fit', overwrite=True)
+        cols = [
+            fits.Column(name='haloid', format='K' ,array=hid_out[sel]),
+            fits.Column(name='M200m', format='E',array=m_out[sel]),
+            fits.Column(name='px', format='D' ,array=x_out[sel]),
+            fits.Column(name='py', format='D',array=y_out[sel]),
+            fits.Column(name='pz', format='D',array=z_out[sel]),
+            fits.Column(name='Rlambda', format='D',array=rlam_out[sel]),
+            fits.Column(name='lambda', format='D',array=lam_out[sel]),
+        ]
+        coldefs = fits.ColDefs(cols)
+        tbhdu = fits.BinTableHDU.from_columns(coldefs)
+        tbhdu.writeto(f'{out_path}/richness_{rich_name}.fit', overwrite=True)
 
-    os.system(f'rm -rf {out_path}/temp/richness_{rich_name}_pz*.dat')
+        #os.system(f'rm -rf {out_path}/temp/richness_{rich_name}_pz*.dat')
 
 
 def merge_files_members():
     fname_list = glob.glob(f'{out_path}/temp/members_{rich_name}_pz*.dat')
-    print('nfiles', len(fname_list))
-    hid_out = []
-    x_out = []
-    y_out = []
-    z_out = []
-    dz_out = []
-    r_out = []
-    pmem_out = []
+    nfiles = len(fname_list)
+    if nfiles < n_parallel:
+        print('missing ', n_parallel - nfiles, 'files, not merging')
+    else:
+        print('nfiles', nfiles)
+        hid_out = []
+        x_out = []
+        y_out = []
+        z_out = []
+        dz_out = []
+        r_out = []
+        pmem_out = []
 
-    for fname in fname_list:
-        data = pd.read_csv(fname, delim_whitespace=True, dtype=np.float64, comment='#', 
-                        names=['haloid', 'px', 'py', 'pz', 'dz', 'r', 'pmem'])
-        hid_out.extend(data['haloid'])
-        x_out.extend(data['px'])
-        y_out.extend(data['py'])
-        z_out.extend(data['pz'])
-        dz_out.extend(data['dz'])
-        r_out.extend(data['r'])
-        pmem_out.extend(data['pmem'])
-        
-    hid_out = np.array(hid_out)
-    x_out = np.array(x_out)
-    y_out = np.array(y_out)
-    z_out = np.array(z_out)
-    dz_out = np.array(dz_out)
-    r_out = np.array(r_out)
-    pmem_out = np.array(pmem_out)
+        for fname in fname_list:
+            data = pd.read_csv(fname, delim_whitespace=True, dtype=np.float64, comment='#', 
+                            names=['haloid', 'px', 'py', 'pz', 'dz', 'r', 'pmem'])
+            hid_out.extend(data['haloid'])
+            x_out.extend(data['px'])
+            y_out.extend(data['py'])
+            z_out.extend(data['pz'])
+            dz_out.extend(data['dz'])
+            r_out.extend(data['r'])
+            pmem_out.extend(data['pmem'])
+            
+        hid_out = np.array(hid_out)
+        x_out = np.array(x_out)
+        y_out = np.array(y_out)
+        z_out = np.array(z_out)
+        dz_out = np.array(dz_out)
+        r_out = np.array(r_out)
+        pmem_out = np.array(pmem_out)
 
-    cols = [
-        fits.Column(name='haloid', format='K' ,array=hid_out),
-        fits.Column(name='px_gal', format='D' ,array=x_out),
-        fits.Column(name='py_gal', format='D',array=y_out),
-        fits.Column(name='pz_gal', format='D',array=z_out),
-        fits.Column(name='dz_gal', format='D',array=dz_out),
-        fits.Column(name='r_over_rlambda', format='D',array=r_out),
-        fits.Column(name='pmem', format='D',array=pmem_out),
-    ]
-    coldefs = fits.ColDefs(cols)
-    tbhdu = fits.BinTableHDU.from_columns(coldefs)
-    tbhdu.writeto(f'{out_path}/members_{rich_name}.fit', overwrite=True)
+        cols = [
+            fits.Column(name='haloid', format='K' ,array=hid_out),
+            fits.Column(name='px_gal', format='D' ,array=x_out),
+            fits.Column(name='py_gal', format='D',array=y_out),
+            fits.Column(name='pz_gal', format='D',array=z_out),
+            fits.Column(name='dz_gal', format='D',array=dz_out),
+            fits.Column(name='r_over_rlambda', format='D',array=r_out),
+            fits.Column(name='pmem', format='D',array=pmem_out),
+        ]
+        coldefs = fits.ColDefs(cols)
+        tbhdu = fits.BinTableHDU.from_columns(coldefs)
+        tbhdu.writeto(f'{out_path}/members_{rich_name}.fit', overwrite=True)
 
-    os.system(f'rm -rf {out_path}/temp/members_{rich_name}_pz*.dat')
+        #os.system(f'rm -rf {out_path}/temp/members_{rich_name}_pz*.dat')
 
 
 if __name__ == '__main__':
     #calc_one_bin(0)
     
     stop = timeit.default_timer()
-    print('prep took', stop - start, 'seconds')
-    start = timeit.default_timer()
-    p = Pool(n_parallel)
-    p.map(calc_one_bin, range(n_parallel))
-    stop = timeit.default_timer()
-    print('richness took', stop - start, 'seconds')
-    
+    print('prep took', '%.2g'%((stop - start)/60), 'mins')
     start = stop
+    
+    n_cpu = os.cpu_count()
+    n_repeat = int(np.ceil(n_parallel/n_cpu))
+    for i_repeat in range(n_repeat):
+        with ProcessPoolExecutor() as pool:
+            pool.map(calc_one_bin, range(i_repeat*n_cpu, min(n_parallel, (i_repeat+1)*n_cpu)))
+
+    stop = timeit.default_timer()
+    print('richness took', '%.2g'%((stop - start)/60), 'mins')
+    start = stop
+
     merge_files_richness()
     if save_members == True:
         merge_files_members()
+
     stop = timeit.default_timer()
-    print('merging took', stop - start, 'seconds')
-    
+    print('merging took', '%.2g'%((stop - start)/60), 'mins')
+
