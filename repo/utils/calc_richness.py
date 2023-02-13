@@ -456,7 +456,7 @@ def merge_files_richness():
         tbhdu = fits.BinTableHDU.from_columns(coldefs)
         tbhdu.writeto(f'{out_path}/richness_{rich_name}.fit', overwrite=True)
 
-        #os.system(f'rm -rf {out_path}/temp/richness_{rich_name}_pz*.dat')
+        os.system(f'rm -rf {out_path}/temp/richness_{rich_name}_pz*.dat')
 
 
 def merge_files_members():
@@ -506,7 +506,7 @@ def merge_files_members():
         tbhdu = fits.BinTableHDU.from_columns(coldefs)
         tbhdu.writeto(f'{out_path}/members_{rich_name}.fit', overwrite=True)
 
-        #os.system(f'rm -rf {out_path}/temp/members_{rich_name}_pz*.dat')
+        os.system(f'rm -rf {out_path}/temp/members_{rich_name}_pz*.dat')
 
 
 if __name__ == '__main__':
@@ -532,4 +532,4 @@ if __name__ == '__main__':
 
     stop = timeit.default_timer()
     print('merging took', '%.2g'%((stop - start)/60), 'mins')
-
+    
