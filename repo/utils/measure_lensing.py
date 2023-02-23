@@ -74,7 +74,7 @@ class MeasureLensing(object):
         lnSigma_lt_lnrp_interp = interp1d(np.log(rpmax_list), np.log(Sigma_lt_rpmax))
 
         # get Sigma vs. rpmid, discard first few bins
-        rpmid_list = np.sqrt(rpmin_list*rpmax_list)[5:-1] # inner bins have NaN's
+        rpmid_list = np.sqrt(rpmin_list*rpmax_list)[1:]#[5:-1] # inner bins have NaN's
         # print(np.log(rpavg))
         # print(np.log(Sigma_at_rpavg))
         # print(np.log(rpmid_list[0]))
@@ -83,7 +83,7 @@ class MeasureLensing(object):
 
         DeltaSigma = (Sigma_lt_rp - Sigma_at_rp)
         
-        return rpmid_list, Sigma_at_rp, DeltaSigma
+        return rpmid_list, Sigma_at_rp*1e-12, DeltaSigma*1e-12
         #return rpavg, Sigma_at_rpavg, DeltaSigma
 
 if __name__ == "__main__":
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     from read_mini_uchuu import ReadMiniUchuu
     ouput_loc = '/bsuhome/hwu/scratch/hod-selection-bias/output_mini_uchuu/'
     nbody_loc = '/bsuhome/hwu/scratch/uchuu/MiniUchuu/'
-    rmu = ReadMiniUchuu(nbody_loc)
+    rmu = ReadMiniUchuu(nbody_loc, redshift=0.3)
     xp, yp, zp = rmu.read_particles()
 
     #### halos ####
@@ -112,8 +112,9 @@ if __name__ == "__main__":
     Mmax = 2e14
     sel = (mass > Mmin)&(mass < Mmax)
     out_loc = 'data/'
-    ml = MeasureLensing(out_loc, Rmin=0.1, Rmax=1, pimax=10)
+    ml = MeasureLensing(out_loc, Rmin=0.1, Rmax=10, pimax=100)
     ml.write_bin_file()
     rp, Sigma, DeltaSigma = ml.measure_lensing(
         xh[sel], yh[sel], zh[sel], xp, yp, zp, boxsize, mpart)
 
+    print('DeltaSigma', Sigma)
