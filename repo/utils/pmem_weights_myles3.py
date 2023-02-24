@@ -3,7 +3,7 @@ from scipy import spatial
 
 #calling everything that is a z-score a x-score because z meaning 2 things is confusing
 
-data_in = np.loadtxt('myles_pmem_sampling.dat')
+data_in = np.loadtxt('data/myles_pmem_sampling.dat')
 
 delz = abs(data_in[:,0])
 RspecovRlambda = data_in[:,1]
