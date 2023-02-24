@@ -13,7 +13,7 @@ class ReadUchuu(object):
         self.hubble = 0.6774 #snap_header.HubbleParam 
         self.OmegaM = 0.3089 #snap_header.Omega0
         self.boxsize = 2000 #400 #snap_header.BoxSize
-        self.mpart = 3.270422e+11 #snap_header.mass[1] * 1e10 * 1000 ## TODO! check
+        self.mpart = 6.54e+11 #snap_header.mass[1] / 5e-4 #subsmapling
         self.redshift = redshift
 
         if self.redshift == 0.3:
@@ -25,9 +25,9 @@ class ReadUchuu(object):
         if cluster_only == True:
             fname = self.input_loc+f'host_halos_{self.snap_name}_M12.5.fit'
         else:
-            self.input_loc+f'host_halos_{self.snap_name}.fit'
+            fname = self.input_loc+f'host_halos_{self.snap_name}.fit'
 
-        data = fitsio.read()
+        data = fitsio.read(fname)
         M200m = data['M200m']
         sel = (M200m >= Mmin)
         M200m = M200m[sel]

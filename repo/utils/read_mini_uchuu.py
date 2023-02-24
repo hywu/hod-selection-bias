@@ -22,8 +22,7 @@ class ReadMiniUchuu(object):
         if self.redshift == 0.1:
             self.snap_name = '047'
 
-    def read_halos(self, Mmin=1e11, pec_vel=False):
-
+    def read_halos(self, Mmin=1e11, pec_vel=False, cluster_only=False):
 
         data = fitsio.read(self.input_loc+f'host_halos_{self.snap_name}.fit')
         M200m = data['M200m']

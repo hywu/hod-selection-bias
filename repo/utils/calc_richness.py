@@ -17,8 +17,7 @@ from periodic_boundary_condition import periodic_boundary_condition
 from periodic_boundary_condition import periodic_boundary_condition_halos
 
 yml_fname = sys.argv[1]
-#./calc_richness.py ../scripts/yml/mini_uchuu_fid_hod.yml
-#./calc_richness.py ../scripts/yml/uchuu_fid_hod.yml
+#./calc_richness.py ../scripts/yml/mini_uchuu_fid_hod_pmem.yml
 
 with open(yml_fname, 'r') as stream:
     try:
@@ -111,9 +110,15 @@ if los == 'y':
 
 if use_pmem == True:
     use_cylinder = False
-    from pmem_weights import pmem_weights
+    which_pmem = para.get('which_pmem')
+    if which_pmem == 'myles3':
+        from pmem_weights_myles3 import pmem_weights
+    if which_pmem == 'buzzard':
+        from pmem_weights_buzzard import pmem_weights
+
     depth = -1
-    rich_name = f'pmem'
+    #rich_name = f'pmem'
+    rich_name = which_pmem
     dz_max = 0.5 * boxsize * Ez / 3000. # need to be smaller than half box size, otherwise the same galaxies will be counted twice
     print('dz_max', dz_max)
 else:
@@ -127,6 +132,8 @@ if los != 'z':
 
 if pec_vel == True:
     rich_name += '_vel'
+if perc == False:
+    rich_name += '_noperc'
 
 scale_factor = 1./(1.+redshift)
 
@@ -300,8 +307,8 @@ class CalcRichness(object): # one pz slice at a time
 
         #### Step 4: do percolation ####
         if rlam > 0:
+            sel_mem = (r < rlam)
             if perc == True and len(gal_ind) > 0:
-                sel_mem = (r < rlam)
                 if use_cylinder == True:
                     self.gal_taken[np.array(gal_ind)[sel_z][sel_mem]] = 1
                 if use_pmem == True: # probabilistic percolation
