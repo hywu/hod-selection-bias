@@ -1,0 +1,34 @@
+model_name: fid_hod_z0.1
+nbody: mini_uchuu
+nbody_loc: /bsuhome/hwu/scratch/uchuu/MiniUchuu/
+output_loc: /bsuhome/hwu/scratch/hod-selection-bias/output_mini_uchuu/
+redshift: 0.1
+
+# HOD parameters 
+alpha: 1
+lgM1: 12.9
+lgkappa: 0
+lgMcut: 11.7
+sigmalogM: 0.1
+sigmaintr: 0
+
+# richness
+depth: 30
+perc: False
+use_rlambda: True
+save_members: True
+
+# Cosmology
+# http://skiesanduniverses.org/Simulations/Uchuu/
+OmegaM: 0.3089
+OmegaL: 0.6911
+hubble: 0.6774
+sigma8: 0.8159
+OmegaB: 0.0486
+ns: 0.9667
+
+mdef: 200m
+
+pec_vel: True
+
+sat_from_part: True
