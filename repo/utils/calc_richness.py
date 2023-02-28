@@ -17,7 +17,7 @@ from periodic_boundary_condition import periodic_boundary_condition
 from periodic_boundary_condition import periodic_boundary_condition_halos
 
 yml_fname = sys.argv[1]
-#./calc_richness.py ../scripts/yml/mini_uchuu_fid_hod_pmem.yml
+#./calc_richness.py ../scripts/yml/mini_uchuu_fid_hod.yml
 
 with open(yml_fname, 'r') as stream:
     try:
@@ -36,9 +36,11 @@ if los == 'xyz':
 
 save_members = para.get('save_members', False)
 pec_vel = para.get('pec_vel', False)
+sat_from_part = para.get('sat_from_part', False)
 
 print('use pmem:', use_pmem)
 print('pec vel:', pec_vel)
+print('sat from part:', sat_from_part)
 
 Mmin = 10**12.5
 
@@ -134,6 +136,9 @@ if pec_vel == True:
     rich_name += '_vel'
 if perc == False:
     rich_name += '_noperc'
+if sat_from_part == True:
+    rich_name += '_from_part'
+
 
 scale_factor = 1./(1.+redshift)
 
@@ -141,7 +146,11 @@ scale_factor = 1./(1.+redshift)
 gal_cat_format = para.get('gal_cat_format', 'fits')
 
 if gal_cat_format == 'fits':
-    gal_fname = f'{out_path}/gals.fit'
+    if sat_from_part == True:
+        gal_fname = f'{out_path}/gals_from_part.fit'
+    else:
+        gal_fname = f'{out_path}/gals.fit'
+
     data, header = fitsio.read(gal_fname, header=True)
     if los == 'z':
         x_gal_in = data['px']

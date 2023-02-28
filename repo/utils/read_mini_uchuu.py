@@ -13,7 +13,7 @@ class ReadMiniUchuu(object):
 
         self.hubble = 0.6774 #snap_header.HubbleParam 
         self.OmegaM = 0.3089 #snap_header.Omega0
-        self.boxsize = 400 #snap_header.BoxSize
+        self.boxsize = 400. #snap_header.BoxSize
         self.mpart = 3.270422e+11 #snap_header.mass[1] * 1e10 * 1000
         self.redshift = redshift
 
@@ -52,12 +52,20 @@ class ReadMiniUchuu(object):
         #     self.vz = np.zeros(nh)
         #return self.hid, self.mass, self.xh, self.yh, self.zh
 
-    def read_particles(self):
+    def read_particles(self, pec_vel=False):
         data = fitsio.read(self.input_loc+f'particles_{self.snap_name}_0.1percent.fit')
-        xp = data['x']
-        yp = data['y']
-        zp = data['z']
-        return xp, yp, zp
+        self.xp = data['x']
+        self.yp = data['y']
+        self.zp = data['z']
+        if pec_vel==True:
+            self.vxp = data['vx']
+            self.vyp = data['vy']
+            self.vzp = data['vz']
+
+        return self.xp, self.yp, self.zp
+
+
+
 
 if __name__ == '__main__':
     rmu = ReadMiniUchuu(nbody_loc='/bsuhome/hwu/scratch/uchuu/MiniUchuu/', redshift=0.1)

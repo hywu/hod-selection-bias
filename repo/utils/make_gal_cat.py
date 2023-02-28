@@ -15,12 +15,10 @@ from concurrent.futures import ProcessPoolExecutor
 #### my functions ####
 sys.path.append('../utils')
 from fid_hod import Ngal_S20_poisson
-from draw_sat_position import DrawSatPosition
 #### read in the yaml file  ####
 yml_fname = sys.argv[1]
 #./make_gal_cat.py ../scripts/yml/mini_uchuu_fid_hod.yml
 #./make_gal_cat.py ../scripts/yml/uchuu_fid_hod.yml
-dsp = DrawSatPosition(yml_fname)
 
 with open(yml_fname, 'r') as stream:
     try:
@@ -28,8 +26,7 @@ with open(yml_fname, 'r') as stream:
     except yaml.YAMLError as exc:
         print(exc)
 
-"known bug: parallel version doesn't output error message"
-
+"TODO: parallel version doesn't output error message"
 
 output_loc = para['output_loc']
 model_name = para['model_name']
@@ -47,13 +44,23 @@ if lgM20 == None:
 else:
     M1 = 20**(-1/alpha) *(10**lgM20 - 10**lgkappa * 10**lgMcut)
     lgM1 = np.log10(M1)
-print(lgM1)
+
 pec_vel = para.get('pec_vel', False)
 
 seed = para.get('seed', 42)
 np.random.seed(seed=seed) # for scipy
 
 Mmin = para.get('Mmin', 1e11)
+
+sat_from_part = para.get('sat_from_part', False)
+if sat_from_part == True:
+    print('drawing sat from particles')
+    from draw_sat_positions_from_particles import DrawSatPositionsFromParticles
+    dsp = DrawSatPositionsFromParticles(yml_fname)
+else:
+    from draw_sat_position import DrawSatPosition
+    dsp = DrawSatPosition(yml_fname)
+
 
 if os.path.isdir(out_path)==False: os.makedirs(out_path)
 if os.path.isdir(out_path+'/temp/')==False: os.makedirs(out_path+'/temp/')
@@ -127,6 +134,7 @@ def calc_one_layer(pz_min, pz_max):
         #else:
         #    Ncen, Nsat = Ngal_S20_gauss(mass_sub[ih], alpha=alpha, lgM1=lgM1, kappa=kappa, lgMcut=lgMcut, sigmalogM=sigmalogM, sigma_intr=sigma_intr)
 
+        # first, take care of the central
         if Ncen > 0.5:
             hid_out.append(hid_sub[ih])
             iscen_out.append(1)
@@ -140,30 +148,44 @@ def calc_one_layer(pz_min, pz_max):
                 vy_out.append(vy_halo_sub[ih])
                 vz_out.append(vz_halo_sub[ih])
             else:
-                vx_out.append(0)#*px_halo_sub[ih])
-                vy_out.append(0)#*px_halo_sub[ih])
-                vz_out.append(0)#*px_halo_sub[ih])
+                vx_out.append(0)
+                vy_out.append(0)
+                vz_out.append(0)
 
-
+            # then take care of the satellites
             if Nsat > 0.5:
-                px, py, pz = dsp.draw_sat_position(mass_sub[ih], Nsat)
-                vx, vy, vz = dsp.draw_sat_velocity(mass_sub[ih], Nsat)
+                if sat_from_part == True:
+                    px, py, pz, vx, vy, vz = dsp.draw_sats(mass_sub[ih], Nsat, px_halo_sub[ih], py_halo_sub[ih], pz_halo_sub[ih])
+                    px_out.extend(px)
+                    py_out.extend(py)
+                    pz_out.extend(pz)
+                    vx_out.extend(vx)
+                    vy_out.extend(vy)
+                    vz_out.extend(vz)
+                    if len(px) != Nsat: print('problem with part')
+
+                else:
+                    px, py, pz = dsp.draw_sat_position(mass_sub[ih], Nsat)
+                    vx, vy, vz = dsp.draw_sat_velocity(mass_sub[ih], Nsat)
+
+                    px_out.extend(px_halo_sub[ih] + px)
+                    py_out.extend(py_halo_sub[ih] + py)
+                    pz_out.extend(pz_halo_sub[ih] + pz)
+
+                    if pec_vel == True:
+                        vx_out.extend(vx_halo_sub[ih] + vx)
+                        vy_out.extend(vy_halo_sub[ih] + vy)
+                        vz_out.extend(vz_halo_sub[ih] + vz)
+                    else:
+                        vx_out.extend(vx)
+                        vy_out.extend(vy)
+                        vz_out.extend(vz)
+
 
                 hid_out.extend(np.zeros(Nsat) + hid_sub[ih])
                 iscen_out.extend(np.zeros(Nsat))
                 m_out.extend(np.zeros(Nsat) + mass_sub[ih])
 
-                px_out.extend(px_halo_sub[ih] + px)
-                py_out.extend(py_halo_sub[ih] + py)
-                pz_out.extend(pz_halo_sub[ih] + pz)
-                if pec_vel == True:
-                    vx_out.extend(vx_halo_sub[ih] + vx)
-                    vy_out.extend(vy_halo_sub[ih] + vy)
-                    vz_out.extend(vz_halo_sub[ih] + vz)
-                else:
-                    vx_out.extend(vx)
-                    vy_out.extend(vy)
-                    vz_out.extend(vz)
 
     px_out = np.array(px_out)
     py_out = np.array(py_out)
@@ -242,34 +264,22 @@ def merge_files():
     ]
     coldefs = fits.ColDefs(cols)
     tbhdu = fits.BinTableHDU.from_columns(coldefs)
-    tbhdu.writeto(f'{out_path}/gals.fit', overwrite=True)
+    if sat_from_part == True:
+        fname = 'gals_from_part.fit'
+    else:
+        fname = 'gals.fit'
+    tbhdu.writeto(f'{out_path}/{fname}', overwrite=True)
 
-    #os.system(f'rm -rf {out_path}/temp/gals_*.dat')
+    os.system(f'rm -rf {out_path}/temp/gals_*.dat')
 
 
 if __name__ == '__main__':
-
+    #calc_one_bin(1)
     
     stop = timeit.default_timer()
     print('prep took', stop - start, 'seconds')
     start = stop
-    #for i in range(100):
-    #   calc_one_bin(i)
-    #1640 crashes
-    
-    # stop = timeit.default_timer()
-    # print('one vol took', stop - start, 'seconds')
 
-    # uchuu without pec_vel
-    #prep took 122.1488435100764 seconds
-    #one vol took 243.49571766424924 seconds
-    # uchuu with pec vel
-    #prep took 108.99297046102583 seconds
-    #one vol took 243.7070847619325 seconds
-    
-    #p = Pool(n_parallel)
-    #p.map(calc_one_bin, range(n_parallel))
-    
     with ProcessPoolExecutor() as pool:
         pool.map(calc_one_bin, range(n_parallel))
     stop = timeit.default_timer()
@@ -282,7 +292,4 @@ if __name__ == '__main__':
     stop = timeit.default_timer()
     dtime = (stop - start_master)/60.
     print(f'total time {dtime:.2g} mins')
-    
-    #total time 0.18 mins for mini uchuu
-    #total time 21 mins for uchuu. need to submit a batch job
     
