@@ -1,0 +1,84 @@
+#!/usr/bin/env python
+import timeit
+start = timeit.default_timer()
+start_master = start * 1
+import os
+import sys
+import yaml
+
+#./pipeline.py ../yml/mini_uchuu/mini_uchuu_fid_hod.yml
+
+yml_fname = sys.argv[1]
+
+with open(yml_fname, 'r') as stream:
+    try:
+        para = yaml.safe_load(stream)
+    except yaml.YAMLError as exc:
+        print(exc)
+
+depth = para['depth']
+output_loc = para['output_loc']
+model_name = para['model_name']
+rich_name = para['rich_name']
+
+out_path = f'{output_loc}/model_{model_name}/'
+los_in = para.get('los', 'z')
+if los_in == 'xyz':
+    los_list = ['x', 'y', 'z']
+else:
+    los_list = ['z']
+
+
+#### make galaxy catalog ####
+if os.path.exists(out_path+'gals.fit'):
+    print('galaxies done')
+else:
+    print('need galaxies')
+    os.system(f'./make_gal_cat.py {yml_fname}')
+
+#### calculate richness ####
+for los in los_list:
+    #if los == 'z':
+    fname = out_path+f'richness_{rich_name}.fit'
+    #else:
+    #    fname = out_path+f'richness_{rich_name}.fit'
+    if os.path.exists(fname):
+        print('richness done')
+    else:
+        print('need richness')
+        os.system(f'./calc_richness.py {yml_fname} {los}')
+    
+    #### calculate lensing ####
+
+    #if los == 'z':
+    obs_path = out_path+f'obs_{rich_name}/'
+    #else:
+    #    obs_path = out_path+f'obs_d{depth}_{los}/'
+
+    if os.path.exists(obs_path+'DS_abun_bin_3.dat'):
+        print('lensing done')
+    else:
+        print('need lensing')
+        os.system(f'./plot_lensing.py {yml_fname} {los}')
+        #from plot_lensing import PlotLensing
+        #plmu = PlotLensing(yml_fname, abundance_matching=True, thresholded=False)
+        #plmu.calc_lensing()
+    
+    #### calculate counts vs. richness ####
+    if os.path.exists(obs_path+'/counts_richness.dat'):
+        print('counts done')
+    else:
+        os.system(f'./plot_counts_richness.py {yml_fname} {los}')
+        # sys.path.append('../plots_for_paper/')
+        # from plot_counts_richness import PlotCountsRichness
+        # ccr = PlotCountsRichness(yml_fname)#, model_id, depth)
+        # ccr.calc_counts_richness()
+    
+
+if los_in == 'xyz':
+    os.system(f'./avg_xyz_lensing.py {yml_fname}')
+
+
+stop = timeit.default_timer()
+dtime = (stop - start_master)/60.
+print(f'total time {dtime:.2g} mins')
