@@ -147,10 +147,10 @@ scale_factor = 1./(1.+redshift)
 gal_cat_format = para.get('gal_cat_format', 'fits')
 
 if gal_cat_format == 'fits':
-    if sat_from_part == True:
-        gal_fname = f'{out_path}/gals_from_part.fit'
-    else:
-        gal_fname = f'{out_path}/gals.fit'
+    #if sat_from_part == True:
+    #    gal_fname = f'{out_path}/gals_from_part.fit'
+    #else:
+    gal_fname = f'{out_path}/gals.fit'
 
     data, header = fitsio.read(gal_fname, header=True)
     if los == 'z':
