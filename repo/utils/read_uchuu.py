@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import numpy as np
-#import matplotlib.pyplot as plt
 import h5py, fitsio
 import os, sys
 sys.path.append('../utils')
@@ -31,11 +30,6 @@ class ReadUchuu(object):
         M200m = data['M200m']
         sel = (M200m >= Mmin)
         M200m = M200m[sel]
-        # hid = data['haloid'][sel]
-        # xh = data['px'][sel]
-        # yh = data['py'][sel]
-        # zh = data['pz'][sel]
-
         sort = np.argsort(-M200m)
         self.mass = M200m[sort]
 
@@ -48,36 +42,49 @@ class ReadUchuu(object):
             self.vx = data['vx'][sel][sort]
             self.vy = data['vy'][sel][sort]
             self.vz = data['vz'][sel][sort]
-        # else:
-        #     nh = len(self.xh)
-        #     self.vx = np.zeros(nh)
-        #     self.vy = np.zeros(nh)
-        #     self.vz = np.zeros(nh)
-        #return self.hid, self.mass, self.xh, self.yh, self.zh
-    
-    def read_particles(self):
+
+    def read_particle_positions(self):
         fname = self.input_loc+f'particles_{self.snap_name}_0.05percent.h5'
         f = h5py.File(fname, 'r')
         data = f['part']
-        xp = data['x']
-        yp = data['y']
-        zp = data['z']
-        return xp, yp, zp
-    
+        self.xp = data['x']
+        self.yp = data['y']
+        self.zp = data['z']
+        return self.xp, self.yp, self.zp
+
+    def read_particle_velocities(self):
+        # note: it's impossible to load both particles and velocities at the same time
+        fname = self.input_loc+f'particles_{self.snap_name}_0.05percent_velocities.h5'
+        f = h5py.File(fname, 'r')
+        data = f['part']
+        self.vxp = data['vx']
+        self.vyp = data['vy']
+        self.vzp = data['vz']
+        return self.vxp, self.vyp, self.vzp
+
+    def read_particles_layer(self, pz_min, pz_max):
+        fname = self.input_loc+f'layers_{self.snap_name}/particles_pz_{pz_min}_{pz_max}_0.05percent.h5'
+        f = h5py.File(fname, 'r')
+        data = f['part']
+        self.xp = data['x']
+        self.yp = data['y']
+        self.zp = data['z']
+        self.vxp = data['vx']
+        self.vyp = data['vy']
+        self.vzp = data['vz']
+        return self.xp, self.yp, self.zp, self.vxp, self.vyp, self.vzp
+
 if __name__ == '__main__':
     import timeit
     start = timeit.default_timer()
-    rmu = ReadUchuu(nbody_loc='/bsuhome/hwu/scratch/uchuu/Uchuu/', redshift=0.1)
-    rmu.read_particles()
-    #rmu.read_halos(pec_vel=True) #took 1.6e+02 seconds
+    rmu = ReadUchuu(nbody_loc='/bsuhome/hwu/scratch/uchuu/Uchuu/', redshift=0.3)
+    # rmu.read_particle_positions()
+    # rmu.read_particle_velocities()
+    rmu.read_particles_layer(20.0, 40.0)
+    print(len(rmu.xp), len(rmu.vxp))
+    #rmu.read_halos()
     #print('max', np.max(rmu.vx))
     #print('mean, std', np.mean(rmu.vx), np.std(rmu.vx))
-    
-    # x1, y1, z1, hid1, M1 = rmu.read_halos_new()
-    # x2, y2, z2, hid2, M2 = rmu.read_halos_old()
-    # print('test x',max(abs(x1-x2)))
-    # print('test hid',max(abs(hid1-hid2)))
-    # print('test M %e'%max(abs(M1-M2)))
-
     stop = timeit.default_timer()
-    print(f'took {(stop - start):.2g} seconds')
+    print(f'reading particles took {(stop - start):.2g} seconds')
+    #reading particles took 4.2e+02 seconds
