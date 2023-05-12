@@ -1,6 +1,6 @@
 # hod-selection-bias
 
-Requirements: corrfunc 2.5.
+Requirements: corrfunc 2.5.0
 
 `conda install -c conda-forge gsl`
 
