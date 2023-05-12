@@ -26,6 +26,8 @@ class PlotCountsRichness(object):
         self.rich_name = self.para['rich_name']
         self.out_path = f'{output_loc}/model_{model_name}'
         redshift = self.para['redshift']
+        self.survey = self.para.get('survey', 'desy1')
+
         los = self.para.get('los', 'z')
         # if los == 'xyz':
         #     self.los = sys.argv[2]
@@ -52,12 +54,19 @@ class PlotCountsRichness(object):
         #    self.rich_name += '_from_part'
 
 
-        if os.path.isdir(f'{self.out_path}/obs_{self.rich_name}/')==False: 
-            os.makedirs(f'{self.out_path}/obs_{self.rich_name}/')
+        # if os.path.isdir(f'{self.out_path}/obs_{self.rich_name}/')==False: 
+        #     os.makedirs(f'{self.out_path}/obs_{self.rich_name}/')
+        self.obs_path = f'{self.out_path}/obs_{self.rich_name}_{self.survey}/'
+        if os.path.isdir(self.obs_path)==False: 
+            os.makedirs(self.obs_path)
 
         if self.para['nbody'] == 'mini_uchuu':
             from read_mini_uchuu import ReadMiniUchuu
             self.readcat = ReadMiniUchuu(self.para['nbody_loc'], redshift)
+
+        if self.para['nbody'] == 'uchuu':
+            from read_uchuu import ReadUchuu
+            self.readcat = ReadUchuu(self.para['nbody_loc'], redshift)
 
         if self.para['nbody'] == 'abacus_summit':
             sys.path.append('../abacus_summit')
@@ -75,8 +84,9 @@ class PlotCountsRichness(object):
         #self.hubble = self.readcat.hubble
         self.vol = self.boxsize**3
 
-        self.ofname = f'{self.out_path}/obs_{self.rich_name}/counts_richness.dat'
-
+        #self.ofname = f'{self.out_path}/obs_{self.rich_name}/counts_richness.dat'
+        self.ofname = f'{self.obs_path}/counts_richness.dat'
+        
     def calc_counts_richness(self):
         if self.depth == 'pmem' or self.depth==-1:
             fname = f'{self.out_path}/richness_{self.rich_name}.fit'

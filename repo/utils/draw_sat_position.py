@@ -7,6 +7,7 @@ from scipy.interpolate import interp1d
 
 from colossus.cosmology import cosmology
 from colossus.halo import concentration
+from colossus.halo import mass_defs
 
 class DrawSatPosition(object):
     def __init__(self, yml_fname):
@@ -75,16 +76,30 @@ class DrawSatPosition(object):
         #self.radius = radius
         return px, py, pz
 
-    def draw_sat_velocity(self, mass, Nsat): # need to run draw_sat_position first to get radius
+    def draw_sat_velocity_old(self, mass, Nsat): # need to run draw_sat_position first to get radius
         G = 4.302e-9 # Mpc/Msun (km/s)^2
-        v_std = (2./3.) * G * mass / self.radius
+        v_std = (2./3.) * G * mass / self.radius # this factor of 2 is put in by hand...
         v_std = np.sqrt(v_std)
         vx, vy, vz = np.random.normal(0, v_std, (3, Nsat))
         return vx, vy, vz
 
+    def draw_sat_velocity(self, mass, Nsat): # Evrard 2008
+        #c = concentration.concentration(M=mass, z=self.redshift, mdef='200m', model='bhattacharya13')
+        c = self.c_lnM_interp(np.log(mass))
+        M200c, R200c, c200c = mass_defs.changeMassDefinition(mass, c, self.redshift, '200m', '200c')
+        OmegaM = self.Om0
+        Ez = np.sqrt(OmegaM*(1+self.redshift)**3 + (1-OmegaM))
+        v_std = 1982.9 * (Ez * M200c/1e15)**0.3361 / np.sqrt(3.)
+        vx, vy, vz = np.random.normal(0, v_std, (3, Nsat))
+        return vx, vy, vz
+
+
+
 if __name__ == "__main__":
-    yml_fname = '../scripts/yml/mini_uchuu_fid_hod.yml'
+    yml_fname = '../yml/mini_uchuu/mini_uchuu_fid_hod.yml'
     dsp = DrawSatPosition(yml_fname)
     dsp.draw_sat_position(1e14, 100)
+    # vx, vy, vz = dsp.draw_sat_velocity_old(1e14, 100)
+    # print(np.std(vx))
     vx, vy, vz = dsp.draw_sat_velocity(1e14, 100)
     print(np.std(vx))

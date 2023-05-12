@@ -121,25 +121,10 @@ if use_pmem == True:
         from pmem_weights_buzzard import pmem_weights
 
     depth = -1
-    #rich_name = f'pmem'
-    #rich_name = which_pmem
     dz_max = 0.5 * boxsize * Ez / 3000. # need to be smaller than half box size, otherwise the same galaxies will be counted twice
     print('dz_max', dz_max)
 else:
     use_cylinder = True
-    #rich_name = f'd{depth:.0f}'
-
-
-
-# if los != 'z':
-#     rich_name = f'{rich_name}_{los}'
-# if pec_vel == True:
-#     rich_name += '_vel'
-# if perc == False:
-#     rich_name += '_noperc'
-# if sat_from_part == True:
-#     rich_name += '_from_part'
-
 
 scale_factor = 1./(1.+redshift)
 
@@ -147,11 +132,7 @@ scale_factor = 1./(1.+redshift)
 gal_cat_format = para.get('gal_cat_format', 'fits')
 
 if gal_cat_format == 'fits':
-    #if sat_from_part == True:
-    #    gal_fname = f'{out_path}/gals_from_part.fit'
-    #else:
     gal_fname = f'{out_path}/gals.fit'
-
     data, header = fitsio.read(gal_fname, header=True)
     if los == 'z':
         x_gal_in = data['px']
@@ -367,7 +348,6 @@ class CalcRichness(object): # one pz slice at a time
 
     def measure_richness(self):
         nh = len(self.x_halo)
-        print('nh =', nh)
 
         #### richness files:  ####
         ofname1 = f'{out_path}/temp/richness_{rich_name}_pz{self.pz_min:.0f}_{self.pz_max:.0f}_px{self.px_min:.0f}_{self.px_max:.0f}_py{self.py_min:.0f}_{self.py_max:.0f}.dat'
@@ -430,7 +410,6 @@ def merge_files_richness():
     if nfiles < n_parallel:
         print('missing ', n_parallel - nfiles, 'files, not merging')
     else:
-        print('nfiles', nfiles)
         hid_out = []
         m_out = []
         x_out = []
@@ -530,14 +509,15 @@ if __name__ == '__main__':
     #calc_one_bin(0)
     
     stop = timeit.default_timer()
-    print('prep took', '%.2g'%((stop - start)/60), 'mins')
+    print('calc_richness.py prep took', '%.2g'%((stop - start)/60), 'mins')
     start = stop
     
     n_cpu = os.cpu_count()
     n_repeat = int(np.ceil(n_parallel/n_cpu))
     for i_repeat in range(n_repeat):
         with ProcessPoolExecutor() as pool:
-            pool.map(calc_one_bin, range(i_repeat*n_cpu, min(n_parallel, (i_repeat+1)*n_cpu)))
+            for result in pool.map(calc_one_bin, range(i_repeat*n_cpu, min(n_parallel, (i_repeat+1)*n_cpu))):
+                if result: print(result)  # output error
 
     stop = timeit.default_timer()
     print('richness took', '%.2g'%((stop - start)/60), 'mins')

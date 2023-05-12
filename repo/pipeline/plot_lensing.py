@@ -12,9 +12,7 @@ sys.path.append('../utils')
 from measure_lensing import MeasureLensing
 from sample_matching_mass import sample_matching_mass
 
-lam_min_list = np.array([20, 30, 45, 60])
-lam_max_list = np.array([30, 45, 60, 1000])
-nbins = len(lam_min_list)
+
 
 class PlotLensing(object):
     def __init__(self, yml_fname, abundance_matching, thresholded):
@@ -35,6 +33,18 @@ class PlotLensing(object):
 
         redshift = para['redshift']
         self.scale_factor = 1/(1+redshift)
+
+        self.survey = para.get('survey', 'desy1')
+
+        if self.survey == 'desy1':
+            self.lam_min_list = np.array([20, 30, 45, 60])
+            self.lam_max_list = np.array([30, 45, 60, 1000])
+            self.nbins = len(self.lam_min_list)
+
+        if self.survey == 'sdss':
+            self.lam_min_list = np.array([5])
+            self.lam_max_list = np.array([140])
+            self.nbins = len(self.lam_min_list)
 
         output_loc = para['output_loc']
         model_name = para['model_name']
@@ -83,11 +93,14 @@ class PlotLensing(object):
         self.hubble = self.readcat.hubble
         self.vol = self.boxsize**3
 
-        if os.path.isdir(f'{self.out_path}/obs_{self.rich_name}/')==False: 
-            os.makedirs(f'{self.out_path}/obs_{self.rich_name}/')
+
 
         if abundance_matching == True:
-            cum_den = np.loadtxt('../y1/data/cluster_cumulative_density_z_0.2_0.35.dat')
+            if self.survey == 'desy1':
+                cum_den = np.loadtxt('../y1/data/cluster_cumulative_density_z_0.2_0.35.dat')
+            if self.survey == 'sdss':
+                cum_den = np.array([1.400836e-04])
+
             counts_list = np.array(np.around(cum_den * self.vol)+1e-4, dtype=int)
             counts_list = np.append(counts_list, 0)
             self.counts_min_list = counts_list[0:-1]
@@ -106,10 +119,15 @@ class PlotLensing(object):
         else:
             self.outname += '_bin'
 
-        self.fname1 = f'{self.out_path}/obs_{self.rich_name}/Sigma_{self.outname}'
-        self.fname2 = f'{self.out_path}/obs_{self.rich_name}/DS_{self.outname}'
-        self.fname3 = f'{self.out_path}/obs_{self.rich_name}/mass_{self.outname}'
-        self.fname4 = f'{self.out_path}/obs_{self.rich_name}/lam_{self.outname}'
+
+        self.obs_path = f'{self.out_path}/obs_{self.rich_name}_{self.survey}/'
+        if os.path.isdir(self.obs_path)==False: 
+            os.makedirs(self.obs_path)
+
+        self.fname1 = f'{self.obs_path}/Sigma_{self.outname}'
+        self.fname2 = f'{self.obs_path}/DS_{self.outname}'
+        self.fname3 = f'{self.obs_path}/mass_{self.outname}'
+        self.fname4 = f'{self.obs_path}/lam_{self.outname}'
 
     def calc_lensing(self):
         xp_in, yp_in, zp_in = self.readcat.read_particle_positions()
@@ -152,10 +170,10 @@ class PlotLensing(object):
             lnM_all = lnM_all[sort]
             lam_all = lam_all[sort]
 
-        for ibin in range(nbins):
+        for ibin in range(self.nbins):
             if self.abundance_matching == False:
-                lam_min = lam_min_list[ibin]
-                lam_max = lam_max_list[ibin]
+                lam_min = self.lam_min_list[ibin]
+                lam_max = self.lam_max_list[ibin]
                 if self.thresholded == True:
                     sel = (lam_all >= lam_min)
                 else:
@@ -181,9 +199,9 @@ class PlotLensing(object):
                 lnM_sel = lnM_all[counts_max:counts_min]
                 lam_sel = lam_all[counts_max:counts_min]
 
-            out_loc = f'{self.out_path}/obs_{self.rich_name}/'
+            #out_loc = f'{self.out_path}/obs_{self.rich_name}/'
 
-            ml = MeasureLensing(out_loc, self.Rmin, self.Rmax, self.pimax)
+            ml = MeasureLensing(self.obs_path, self.Rmin, self.Rmax, self.pimax)
             ml.write_bin_file()
             xh_mat, yh_mat, zh_mat, lnM_matched = sample_matching_mass(lnM_sel, lnM_all, xh_all, yh_all, zh_all)
             rp, Sigma_sel, DS_sel = ml.measure_lensing(xh_sel, yh_sel, zh_sel, self.xp, self.yp, self.zp, self.boxsize, self.mpart)
@@ -211,18 +229,18 @@ class PlotLensing(object):
 
     def plot_lensing(self, axes=None, label=None, plot_bias=False, color=None, lw=None):
         if axes is None and plot_bias==False:
-            fig, axes = plt.subplots(1, nbins, figsize=(20, 5))
+            fig, axes = plt.subplots(1, self.nbins, figsize=(20, 5))
 
         if axes is None and plot_bias==True:
-            fig, axes = plt.subplots(1, nbins, figsize=(20, 5))
+            fig, axes = plt.subplots(1, self.nbins, figsize=(20, 5))
 
-        for ibin in range(nbins):
+        for ibin in range(self.nbins):
             if self.abundance_matching == False:
-                lam_min = lam_min_list[ibin]
+                lam_min = self.lam_min_list[ibin]
                 if self.thresholded == True:
                     title = r'$\lambda>%g$'%lam_min
                 else:
-                    lam_max = lam_max_list[ibin]
+                    lam_max = self.lam_max_list[ibin]
                     title = r'$%g < \lambda < %g$'%(lam_min, lam_max)
 
             if self.abundance_matching == True:
@@ -245,7 +263,7 @@ class PlotLensing(object):
                     ax.plot(rp, rp*DS_sel, label=label, color=color, lw=lw)
                     ax.set_xscale('log')
                     ax.set_title(title)
-                    if ibin == 0: # nbins - 1: 
+                    if ibin == 0: # self.nbins - 1: 
                         ax.legend()
                     ax.set_xlabel(r'$\rm r_p \ [pMpc]$')
                     ax.set_ylabel(r'$\rm r_p \Delta\Sigma [pMpc M_\odot/ppc^2]$')
@@ -278,17 +296,17 @@ class PlotLensing(object):
     def get_lensing_data_vector(self, get_bias=False): # use Y1 radius!
         rp_all = []
         DS_all = []
-        for ibin in range(nbins):
+        for ibin in range(self.nbins):
 
             fname = f'../y1/data/y1_DS_bin_z_0.2_0.35_lam_{ibin}.dat'
             rp_y1 = np.loadtxt(fname)[:,0]
 
             if self.abundance_matching == False:
-                lam_min = lam_min_list[ibin]
+                lam_min = self.lam_min_list[ibin]
                 if self.thresholded == True:
                     pass 
                 else:
-                    lam_max = lam_max_list[ibin]
+                    lam_max = self.lam_max_list[ibin]
 
             if self.abundance_matching == True:
                 counts_min = self.counts_min_list[ibin]

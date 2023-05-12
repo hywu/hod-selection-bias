@@ -27,8 +27,6 @@ with open(yml_fname, 'r') as stream:
     except yaml.YAMLError as exc:
         print(exc)
 
-"TODO: parallel version doesn't output error message"
-
 output_loc = para['output_loc']
 model_name = para['model_name']
 out_path = f'{output_loc}/model_{model_name}/'
@@ -207,11 +205,10 @@ def calc_one_layer(pz_min, pz_max):
     vy_out = np.array(vy_out)
     vz_out = np.array(vz_out)
 
-    print(len(hid_out), len(from_part_out))
+    #print(len(hid_out), len(from_part_out))
     data = np.array([hid_out, m_out, px_out, py_out, pz_out, vx_out, vy_out, vz_out, iscen_out, from_part_out]).transpose()
     ofname = f'{out_path}/temp/gals_{pz_min}_{pz_max}.dat'
     np.savetxt(ofname, data, fmt='%-12i %-15.12e %-12.12g %-12.12g %-12.12g  %-12.12g %-12.12g %-12.12g %-12i %-12i', header='haloid, M200m, px, py, pz, vx, vy, vz, iscen, from_part') # need a few more decimal places
-
 
 n_parallel = 100
 n_layer = boxsize / n_parallel
@@ -275,9 +272,6 @@ def merge_files():
     ]
     coldefs = fits.ColDefs(cols)
     tbhdu = fits.BinTableHDU.from_columns(coldefs)
-    # if sat_from_part == True:
-    #     fname = 'gals_from_part.fit'
-    # else:
     fname = 'gals.fit'
     tbhdu.writeto(f'{out_path}/{fname}', overwrite=True)
 
@@ -286,23 +280,23 @@ def merge_files():
 
 if __name__ == '__main__':
     #calc_one_bin(0)
-    #for i in range(n_parallel):
-    #    calc_one_bin(n_parallel)
-    
-    
+
     stop = timeit.default_timer()
-    print('prep took', stop - start, 'seconds')
+    print('make_gal_cat.py prep took', '%.2g'%((stop - start)/60), 'mins')
+
     start = stop
 
     with ProcessPoolExecutor() as pool:
-        pool.map(calc_one_bin, range(n_parallel))
+        for result in pool.map(calc_one_bin, range(n_parallel)):
+            if result: print(result)  # output error
     stop = timeit.default_timer()
-    print('galaxies took', stop - start, 'seconds')
-    
+    print('galaxies took', '%.2g'%((stop - start)/60), 'mins')
+
     start = stop
     merge_files()
     stop = timeit.default_timer()
-    print('merging took', stop - start, 'seconds')
+    print('merging took', '%.2g'%((stop - start)/60), 'mins')
+
     stop = timeit.default_timer()
     dtime = (stop - start_master)/60.
     print(f'total time {dtime:.2g} mins')

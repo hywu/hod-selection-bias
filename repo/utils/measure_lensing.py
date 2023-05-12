@@ -29,9 +29,10 @@ class MeasureLensing(object):
         nthreads = 12
 
         results_DD = countpairs_rp_pi(autocorr=0, nthreads=nthreads, pimax=self.pimax, binfile=self.binfile, 
-            X1=xh.astype(float), Y1=yh.astype(float), Z1=zh.astype(float), 
-            X2=xp.astype(float), Y2=yp.astype(float), Z2=zp.astype(float), 
-            boxsize=np.float64(boxsize), output_rpavg=True, 
+            X1=xh.astype(float), Y1=yh.astype(float), Z1=zh.astype(float),
+            X2=xp.astype(float), Y2=yp.astype(float), Z2=zp.astype(float),
+            boxsize=(np.float64(boxsize),np.float64(boxsize),np.float64(boxsize)),
+            output_rpavg=True, 
             periodic=True, verbose=False)[0]
 
         # X1=np.float64(xh), Y1=np.float64(yh), Z1=np.float64(zh), 
