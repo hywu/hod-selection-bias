@@ -153,17 +153,6 @@ if gal_cat_format == 'fits':
         if pec_vel == True:
             z_gal_in += data['vy'] / Ez / 100.
 
-if gal_cat_format == 'h5': # testing Andres's catalog
-    import h5py
-    loc = '/bsuhome/hwu/scratch/abacus_summit/'
-    gal_fname = loc + 'NHOD_0.10_11.7_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph000_z0p300.hdf5'
-    f = h5py.File(gal_fname,'r')
-    data = f['particles']
-    #print(data.dtype)
-    x_gal_in = data['x']
-    y_gal_in = data['y']
-    z_gal_in = data['z']
-
 #### periodic boundary condition ####
 x_padding = 3
 y_padding = 3
@@ -372,6 +361,7 @@ class CalcRichness(object): # one pz slice at a time
 
                 #### save members (append) (optional) #### 
                 if save_members == True:
+                    self.dz_out *= 3000. / Ez # convert back to comoving distance
                     self.hid_mem = self.x_gal_mem * 0 + self.hid[ih]
                     data = np.array([self.hid_mem, self.x_gal_mem, self.y_gal_mem, self.z_gal_mem, self.dz_out, self.r_out, self.pmem_out]).transpose()
                     with open(ofname2, "ab") as f:
@@ -453,7 +443,6 @@ def merge_files_richness():
         tbhdu.writeto(f'{out_path}/richness_{rich_name}.fit', overwrite=True)
 
         os.system(f'rm -rf {out_path}/temp/richness_{rich_name}_pz*.dat')
-
 
 def merge_files_members():
     fname_list = glob.glob(f'{out_path}/temp/members_{rich_name}_pz*.dat')
