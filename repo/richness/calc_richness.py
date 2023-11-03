@@ -123,15 +123,24 @@ print('output path', out_path)
 
 
 #### things can be moved to yml files ####
-cf = config.AbacusConfigFile(args.header)
+try:
+    myconfigparser = configparser.ConfigParser()
+    myconfigparser.read(param_file)
+    params = myconfigparser['params']
+    boxsize   = float(params['boxsize'])
+    redshift  = float(params['redshift'])
+    OmegaM  = float(params['Omega_M'])
+    hubble  = float(params['h'])
+            
+except:
+    cf = config.AbacusConfigFile(args.header)
+    boxsize   = cf.boxSize
+    redshift  = cf.redshift
+    OmegaM  = cf.Omega_M
+    hubble  = cf.H0 / 100.0
 
-boxsize   = cf.boxSize
-redshift  = cf.redshift
 scale_fac = 1./(1.+redshift)
-
-OmegaM  = cf.Omega_M
 OmegaDE = 1 - OmegaM
-hubble  = cf.H0 / 100.0
 Ez = np.sqrt(OmegaM * (1+redshift)**3 + OmegaDE)
 dz_max = 0.15
 
