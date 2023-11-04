@@ -126,7 +126,7 @@ print('output path', out_path)
 #### things can be moved to yml files ####
 try:
     myconfigparser = configparser.ConfigParser()
-    myconfigparser.read(param_file)
+    myconfigparser.read(args.header)
     params = myconfigparser['params']
     boxsize   = float(params['boxsize'])
     redshift  = float(params['redshift'])
