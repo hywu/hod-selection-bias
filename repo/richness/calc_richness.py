@@ -150,7 +150,7 @@ run_parallel = True
 Mmin = 10**12.5
 
 halo_fname = in_path + halo_file
-gal_fname = in_path + memgal_file
+gal_fname = out_path + memgal_file
 
 
 ############################################
