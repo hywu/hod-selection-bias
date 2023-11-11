@@ -158,7 +158,10 @@ gal_fname = out_path + memgal_file
 f = h5py.File(halo_fname,'r')
 halos = f['halos']
 #print(halos.dtype)
-hid_in = halos['gid']
+try:
+    hid_in = halos['gid']
+except:
+    hid_in = np.arange(0, len(halos['x']))    
 mass_in = halos['mass']
 x_halo_in = halos['x']
 y_halo_in = halos['y']
