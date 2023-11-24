@@ -10,6 +10,9 @@ from multiprocessing import Pool
 from scipy import spatial
 import argparse
 import configparser
+import gc
+
+gc.enable()
 
 import config
 path_to_here = str(os.path.dirname(os.path.realpath(__file__)))
