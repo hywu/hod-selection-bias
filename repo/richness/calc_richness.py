@@ -171,6 +171,8 @@ y_halo_in = halos['y']
 z_halo_in = halos['z']
 print('finished reading halos')
 
+f.close()
+
 
 #### read in galaxies ####
 f = h5py.File(gal_fname,'r')
@@ -181,6 +183,7 @@ y_gal_in = particles['y']
 z_gal_in = particles['z']
 print('finished galaxies')
 
+f.close()
 
 n_parallel_z = 1 # NOTE! cannot do more than one yet.
 n_parallel_x = int(boxsize/50.)
@@ -388,14 +391,13 @@ if __name__ == '__main__':
     print('prep took', stop - start, 'seconds')
     
     if run_parallel == True:
-        
         start = timeit.default_timer()
         # parallel
         p = Pool(n_parallel)
         p.map(calc_one_bin, range(n_parallel))
         stop = timeit.default_timer()
         print('richness took', stop - start, 'seconds')
-    
+
     # merge files
     from merge_richness_files import merge_richness_files
     #ofname_base = memgal_file.replace(".hdf5", "")
