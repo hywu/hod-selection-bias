@@ -73,9 +73,13 @@ if para['nbody'] == 'uchuu':
     readcat = ReadUchuu(para['nbody_loc'], redshift)
 
 if para['nbody'] == 'abacus_summit':
-    sys.path.append('../abacus_summit')
+    #sys.path.append('../abacus_summit')
     from read_abacus_summit import ReadAbacusSummit
     readcat = ReadAbacusSummit(para['nbody_loc'], redshift)
+
+if para['nbody'] == 'flamingo':
+    from read_flamingo import ReadFlamingo
+    readcat = ReadFlamingo(para['nbody_loc'], redshift)
 
 if para['nbody'] == 'tng_dmo':
     from read_tng_dmo import ReadTNGDMO
@@ -409,7 +413,7 @@ def merge_files_richness():
         lam_out = []
 
         for fname in fname_list:
-            data = pd.read_csv(fname, delim_whitespace=True, dtype=np.float64, comment='#', 
+            data = pd.read_csv(fname, sep=r'\s+', dtype=np.float64, comment='#', 
                             names=['haloid', 'mass', 'px', 'py', 'pz', 'rlam', 'lam'])
             hid_out.extend(data['haloid'])
             m_out.extend(data['mass'])
@@ -460,7 +464,7 @@ def merge_files_members():
         pmem_out = []
 
         for fname in fname_list:
-            data = pd.read_csv(fname, delim_whitespace=True, dtype=np.float64, comment='#', 
+            data = pd.read_csv(fname, sep=r'\s+', dtype=np.float64, comment='#', 
                             names=['haloid', 'px', 'py', 'pz', 'dz', 'r', 'pmem'])
             hid_out.extend(data['haloid'])
             x_out.extend(data['px'])

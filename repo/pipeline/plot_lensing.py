@@ -82,6 +82,10 @@ class PlotLensing(object):
             from read_abacus_summit import ReadAbacusSummit
             self.readcat = ReadAbacusSummit(para['nbody_loc'])
 
+        if para['nbody'] == 'flamingo':
+            from read_flamingo import ReadFlamingo
+            self.readcat = ReadFlamingo(para['nbody_loc'])
+
         if para['nbody'] == 'tng_dmo':
             from read_tng_dmo import ReadTNGDMO
             halofinder = para.get('halofinder', 'rockstar')

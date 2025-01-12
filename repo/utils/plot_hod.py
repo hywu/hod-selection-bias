@@ -36,6 +36,10 @@ class PlotHOD(object):
             from read_abacus_summit import ReadAbacusSummit
             readcat = ReadAbacusSummit(self.para['nbody_loc'], self.redshift)
 
+        if self.para['nbody'] == 'flamingo':
+            from read_flamingo import ReadFlamingo
+            readcat = ReadFlamingo(self.para['nbody_loc'], self.redshift)
+
         if self.para['nbody'] == 'tng_dmo':
             from read_tng_dmo import ReadTNGDMO
             halofinder = para.get('halofinder', 'rockstar')
@@ -80,15 +84,17 @@ class PlotHOD(object):
             x_cen = x_halo[i_halo]
             y_cen = y_halo[i_halo]
             z_cen = z_halo[i_halo]
-            r = (x_gal[gal_ind] - x_cen)**2 + (y_gal[gal_ind] - y_cen)**2 + (z_gal[gal_ind] - z_cen)**2 
-            r = np.sqrt(r)
-            ngal.append(len(r[r <= radius[i_halo]*(1+1e-4)]))
+            #r = (x_gal[gal_ind] - x_cen)**2 + (y_gal[gal_ind] - y_cen)**2 + (z_gal[gal_ind] - z_cen)**2 
+            #r = np.sqrt(r)
+            #ngal.append(len(r[r <= radius[i_halo]*(1+1e-4)]))
+            indx = gal_tree.query_ball_point([x_cen, y_cen, z_cen], radius[i_halo])
+            ngal.append(len(indx))
         ngal = np.array(ngal)
 
         x = np.log(mass)
         y = ngal
 
-        nbins_per_decade = 5
+        nbins_per_decade = 10
         n_decade = (np.log10(max(mass))-np.log10(min(mass)))
         nbins = int(nbins_per_decade*n_decade + 1e-4) 
         x_bins = np.linspace(min(x), max(x), nbins+1)

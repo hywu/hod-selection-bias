@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import numpy as np
-import h5py#, fitsio
+import h5py, fitsio
 import os, sys
 sys.path.append('../utils')
 import yaml
@@ -19,8 +19,8 @@ class ReadFlamingo(object):
 
         cosmo = parsed_yaml['Cosmology']
         self.hubble = cosmo['h'] 
-        self.OmegaM = 1 - cosmo['Omega_lambda']
-        #self.boxsize = # defined later
+        self.OmegaM = 1. - cosmo['Omega_lambda']
+        self.boxsize = 1000. * self.hubble # Todo: how to read it from the header?
         #self.mpart = # defined later 
         self.redshift = redshift
 
@@ -31,7 +31,33 @@ class ReadFlamingo(object):
         snap_id = snap_id_list[idx]
         self.snap_name = f'{snap_id:0>4d}'
 
-    def read_halos(self, Mmin=1e11, pec_vel=False, cluster_only=False):
+    def read_halos(self, Mmin=1e11, pec_vel=False, cluster_only=False, halo_loc='/cosma8/data/do012/dc-wu5/cylinder/output_HYDRO_PLANCK/'):
+        # sigh... temp solution for halo loc
+        
+        #if cluster_only == True:
+        #    fname = self.input_loc+f'host_halos_{self.snap_name}_M12.5.fit'
+        #else:
+        fname = halo_loc + f'host_halos_{self.snap_name}.fit'
+
+        data = fitsio.read(fname)
+        M200m = data['M200m']
+        sel = (M200m >= Mmin)
+        M200m = M200m[sel]
+        sort = np.argsort(-M200m)
+        self.mass = M200m[sort]
+
+        self.hid = data['haloid'][sel][sort]
+        self.xh = data['px'][sel][sort]
+        self.yh = data['py'][sel][sort]
+        self.zh = data['pz'][sel][sort]
+
+        if pec_vel == True: ## takes too long to read in velocity
+            self.vx = data['vx'][sel][sort]
+            self.vy = data['vy'][sel][sort]
+            self.vz = data['vz'][sel][sort]
+
+
+    def read_halos_orig(self, Mmin=1e11, pec_vel=False, cluster_only=False):
         
         fname = self.input_loc + f'SOAP/halo_properties_{self.snap_name}.hdf5'
         f = h5py.File(fname,'r')
@@ -64,7 +90,7 @@ class ReadFlamingo(object):
         self.zp = coord[:,2] * self.hubble
 
         # calculate mpart ignoring gas. assuming all have the same mass
-        self.boxsize = max(self.xp) # Mpc/h
+        #self.boxsize = max(self.xp) # Mpc/h
         rhocrit = 2.77536627e11 # h^2 Msun Mpc^-3
         total_mass_in_box_hiMsun = boxsize**3 * self.OmegaM * rhocrit
         self.mpart = total_mass_in_box_hiMsun / len(self.xp) # Msun/h
@@ -88,9 +114,9 @@ if __name__ == '__main__':
     print(len(rfl.xh))
     print('max', np.max(rfl.vx))
     
-    rfl.read_particle_positions()
-    print(len(rfl.xp))
-    print('downsampled particle mass %e Msun/h'%rfl.mpart)
+    # rfl.read_particle_positions()
+    # print(len(rfl.xp))
+    # print('downsampled particle mass %e Msun/h'%rfl.mpart)
 
-    rfl.read_particle_velocities()
-    print(len(rfl.vxp))
+    # rfl.read_particle_velocities()
+    # print(len(rfl.vxp))

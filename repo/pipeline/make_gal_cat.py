@@ -233,7 +233,7 @@ def merge_files():
     iscen_out = []
     from_part_out = []
     for fname in fname_list:
-        data = pd.read_csv(fname, delim_whitespace=True, dtype=np.float64, 
+        data = pd.read_csv(fname, sep=r'\s+', dtype=np.float64, 
             comment='#', 
             names=['haloid', 'm', 'px', 'py', 'pz', 'vx', 'vy', 'vz', 'iscen','from_part'])
         hid_out.extend(data['haloid'])
