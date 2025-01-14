@@ -20,7 +20,7 @@ class ReadFlamingo(object):
         cosmo = parsed_yaml['Cosmology']
         self.hubble = cosmo['h'] 
         self.OmegaM = 1. - cosmo['Omega_lambda']
-        self.boxsize = 1000. * self.hubble # Todo: how to read it from the header?
+        self.boxsize = 1000. * self.hubble # Todo: how to read boxsize from the header?
         #self.mpart = # defined later 
         self.redshift = redshift
 
@@ -31,20 +31,19 @@ class ReadFlamingo(object):
         snap_id = snap_id_list[idx]
         self.snap_name = f'{snap_id:0>4d}'
 
-    def read_halos(self, Mmin=1e11, pec_vel=False, cluster_only=False, halo_loc='/cosma8/data/do012/dc-wu5/cylinder/output_HYDRO_PLANCK/'):
-        # sigh... temp solution for halo loc
+    def read_halos(self, Mmin, pec_vel=False, cluster_only=False, halo_loc='/cosma8/data/do012/dc-wu5/cylinder/output_HYDRO_PLANCK/'):
+        # sigh... temporary solution for halo loc
         
         #if cluster_only == True:
         #    fname = self.input_loc+f'host_halos_{self.snap_name}_M12.5.fit'
         #else:
         fname = halo_loc + f'host_halos_{self.snap_name}.fit'
-
         data = fitsio.read(fname)
-        M200m = data['M200m']
-        sel = (M200m >= Mmin)
-        M200m = M200m[sel]
-        sort = np.argsort(-M200m)
-        self.mass = M200m[sort]
+        Mvir = data['Mvir']
+        sel = (Mvir >= Mmin)
+        Mvir = Mvir[sel]
+        sort = np.argsort(-Mvir)
+        self.mass = Mvir[sort]
 
         self.hid = data['haloid'][sel][sort]
         self.xh = data['px'][sel][sort]
@@ -92,7 +91,7 @@ class ReadFlamingo(object):
         # calculate mpart ignoring gas. assuming all have the same mass
         #self.boxsize = max(self.xp) # Mpc/h
         rhocrit = 2.77536627e11 # h^2 Msun Mpc^-3
-        total_mass_in_box_hiMsun = boxsize**3 * self.OmegaM * rhocrit
+        total_mass_in_box_hiMsun = self.boxsize**3 * self.OmegaM * rhocrit
         self.mpart = total_mass_in_box_hiMsun / len(self.xp) # Msun/h
 
         return self.xp, self.yp, self.zp

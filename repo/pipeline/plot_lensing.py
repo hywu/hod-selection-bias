@@ -80,11 +80,11 @@ class PlotLensing(object):
 
         if para['nbody'] == 'abacus_summit':
             from read_abacus_summit import ReadAbacusSummit
-            self.readcat = ReadAbacusSummit(para['nbody_loc'])
+            self.readcat = ReadAbacusSummit(para['nbody_loc'], redshift)
 
         if para['nbody'] == 'flamingo':
             from read_flamingo import ReadFlamingo
-            self.readcat = ReadFlamingo(para['nbody_loc'])
+            self.readcat = ReadFlamingo(para['nbody_loc'], redshift)
 
         if para['nbody'] == 'tng_dmo':
             from read_tng_dmo import ReadTNGDMO
@@ -92,7 +92,7 @@ class PlotLensing(object):
             self.readcat = ReadTNGDMO(para['nbody_loc'], halofinder)
             print('halofinder', halofinder)
 
-        self.mpart = self.readcat.mpart
+        #self.mpart = self.readcat.mpart # moved to below
         self.boxsize = self.readcat.boxsize
         self.hubble = self.readcat.hubble
         self.vol = self.boxsize**3
@@ -135,6 +135,7 @@ class PlotLensing(object):
 
     def calc_lensing(self):
         xp_in, yp_in, zp_in = self.readcat.read_particle_positions()
+        self.mpart = self.readcat.mpart
         if self.los == 'z':
             self.xp = xp_in
             self.yp = yp_in
@@ -155,7 +156,7 @@ class PlotLensing(object):
         xh_all = data['px'] # already rotated when calculating richness
         yh_all = data['py']
         zh_all = data['pz']
-        lnM_all = np.log(data['M200m'])
+        lnM_all = np.log(data['mass'])
         lam_all = data['lambda']
 
         # shuffle the sample to remove mass sorting
@@ -226,7 +227,7 @@ class PlotLensing(object):
 
             # these two files are for sanity checks
             data3 = np.array([lnM_sel]).transpose()
-            np.savetxt(f'{self.fname3}_{ibin}.dat', data3, fmt='%-12g', header='lnM200m')
+            np.savetxt(f'{self.fname3}_{ibin}.dat', data3, fmt='%-12g', header='lnMass')
 
             data4 = np.array([lam_sel]).transpose()
             np.savetxt(f'{self.fname4}_{ibin}.dat', data4, fmt='%-12g', header='lambda')

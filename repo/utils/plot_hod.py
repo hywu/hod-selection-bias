@@ -4,6 +4,7 @@ from scipy import spatial
 rmax_tree = 4
 import yaml
 import fitsio
+from astropy.io import fits
 import sys
 
 class PlotHOD(object):
@@ -21,7 +22,8 @@ class PlotHOD(object):
         output_loc = self.para['output_loc']
         model_name = self.para['model_name']
         self.out_path = f'{output_loc}/model_{model_name}/'
-        self.ofname = f'{self.out_path}/hod_recovered.dat'
+        self.ofname1 = f'{self.out_path}/mass_Ngal.fit'
+        self.ofname2 = f'{self.out_path}/hod_recovered.dat'
 
     def calc_hod(self, Mmin):
         if self.para['nbody'] == 'mini_uchuu':
@@ -49,6 +51,7 @@ class PlotHOD(object):
        
         readcat.read_halos(Mmin)
         mass = readcat.mass
+        id_halo = readcat.hid
         x_halo = readcat.xh
         y_halo = readcat.yh
         z_halo = readcat.zh
@@ -91,6 +94,16 @@ class PlotHOD(object):
             ngal.append(len(indx))
         ngal = np.array(ngal)
 
+        #### save the Ngals ####
+        col0 = fits.Column(name='haloid', unit='', format='D', array=id_halo)
+        col1 = fits.Column(name='mass', unit='', format='D', array=mass)
+        col2 = fits.Column(name='Ngal', unit='', format='D', array=ngal)
+        cols = [col0, col1, col2]
+        coldefs = fits.ColDefs(cols)
+        hdu = fits.BinTableHDU.from_columns(coldefs)
+        hdu.writeto(self.ofname1, overwrite=True)
+
+        #### calculate the average ####
         x = np.log(mass)
         y = ngal
 
@@ -110,17 +123,21 @@ class PlotHOD(object):
         y_bin_mean = np.array(y_bin_mean)
         y_bin_std = np.array(y_bin_std)
 
-        
-
         data = np.array([np.exp(x_bin_mean), y_bin_mean, y_bin_std]).transpose()
-        np.savetxt(self.ofname, data, fmt='%-12g', header='mass, mean(Ngal), std(N_gal)')
+        np.savetxt(self.ofname2, data, fmt='%-12g', header='mass, mean(Ngal), std(N_gal)')
 
         return np.exp(x_bin_mean), y_bin_mean, y_bin_std
 
 
     def plot_hod(self):
-        m, mean_Ngal, std_ngal = np.loadtxt(self.ofname, unpack=True)
+        m, mean_Ngal, std_ngal = np.loadtxt(self.ofname2, unpack=True)
         return m, mean_Ngal, std_ngal
+
+    def plot_Ngal_vs_mass(self):
+        data, h = fitsio.read(self.ofname1, header=True)
+        m = data['mass']
+        Ngal = data['Ngal']
+        return m, Ngal
 
 if __name__ == "__main__":
     yml_fname = sys.argv[1] 
@@ -131,6 +148,7 @@ if __name__ == "__main__":
 
     
     # use plot_hod_mor.ipynb for plotting
+    '''
     import matplotlib.pyplot as plt
     plt.figure(figsize=(14,7))
     plt.subplot(121)
@@ -140,3 +158,4 @@ if __name__ == "__main__":
     plt.semilogx(mass, hod_std)
 
     plt.show()
+    '''

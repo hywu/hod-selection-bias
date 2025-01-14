@@ -42,7 +42,7 @@ print('use pmem:', use_pmem)
 print('pec vel:', pec_vel)
 print('sat from part:', sat_from_part)
 
-Mmin = 10**12.5
+Mmin = 10**12.5 # TODO
 
 n_parallel_z = 1 # NOTE! cannot do more than one yet.
 n_parallel_x = 10 # TODO: check n_parallel_x != n_parallel_y
@@ -129,6 +129,7 @@ if use_pmem == True:
     print('dz_max', dz_max)
 else:
     use_cylinder = True
+
 
 scale_factor = 1./(1.+redshift)
 
@@ -255,9 +256,6 @@ class CalcRichness(object): # one pz slice at a time
             sel_z2 = (np.abs(dz2) < dz_max)
             sel_z = sel_z0 | sel_z1 | sel_z2
             sel_z = sel_z & (self.gal_taken[gal_ind] < 0.8) # TODO: percolation threshold?
-            dz0 = dz0[sel_z]
-            dz1 = dz1[sel_z]
-            dz2 = dz2[sel_z]
 
         else:
             print('BUG!!')
@@ -287,7 +285,10 @@ class CalcRichness(object): # one pz slice at a time
                 if abs(rlam - rlam_old) < 1e-5 or rlam < 1e-6:
                     break
         else: 
-            rlam = radius # fixed aperture
+            radius = para['radius']
+            rlam = radius * 1. # fixed aperture
+            if use_cylinder == True and depth > 0:
+                ngal = len(r[r < rlam])
 
         #### Step 4: do percolation ####
         if rlam > 0:
@@ -351,7 +352,7 @@ class CalcRichness(object): # one pz slice at a time
         if save_members == True:
             ofname2 = f'{out_path}/temp/members_{rich_name}_pz{self.pz_min:.0f}_{self.pz_max:.0f}_px{self.px_min:.0f}_{self.px_max:.0f}_py{self.py_min:.0f}_{self.py_max:.0f}.dat'
             outfile2 = open(ofname2, 'w')
-            outfile2.write('#hid, dz, r/rlam, pmem \n')
+            outfile2.write('#hid, x, y, z, dz, r/rlam, pmem \n')
             outfile2.close()
 
         for ih in range(nh):
@@ -394,7 +395,7 @@ def calc_one_bin(ibin):
 
     ofname = f'{out_path}/temp/richness_{rich_name}_pz{pz_min:.0f}_{pz_max:.0f}_px{px_min:.0f}_{px_max:.0f}_py{py_min:.0f}_{py_max:.0f}.dat'
 
-    if os.path.exists(ofname) == False:
+    if True: #os.path.exists(ofname) == False:
         cr = CalcRichness(pz_min=pz_min, pz_max=pz_max, px_min=px_min, px_max=px_max, py_min=py_min, py_max=py_max)
         cr.measure_richness()
 
@@ -435,7 +436,7 @@ def merge_files_richness():
 
         cols = [
             fits.Column(name='haloid', format='K' ,array=hid_out[sel]),
-            fits.Column(name='M200m', format='E',array=m_out[sel]),
+            fits.Column(name='mass', format='E',array=m_out[sel]),
             fits.Column(name='px', format='D' ,array=x_out[sel]),
             fits.Column(name='py', format='D',array=y_out[sel]),
             fits.Column(name='pz', format='D',array=z_out[sel]),
@@ -500,6 +501,7 @@ def merge_files_members():
 
 if __name__ == '__main__':
     #calc_one_bin(0)
+    
     
     stop = timeit.default_timer()
     print('calc_richness.py prep took', '%.2g'%((stop - start)/60), 'mins')
