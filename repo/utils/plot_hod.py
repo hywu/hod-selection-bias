@@ -6,6 +6,9 @@ import yaml
 import fitsio
 from astropy.io import fits
 import sys
+from fid_hod import Ngal_S20_noscatt
+from scipy.optimize import minimize
+
 
 class PlotHOD(object):
     def __init__(self, yml_fname):
@@ -24,6 +27,7 @@ class PlotHOD(object):
         self.out_path = f'{output_loc}/model_{model_name}/'
         self.ofname1 = f'{self.out_path}/mass_Ngal.fit'
         self.ofname2 = f'{self.out_path}/hod_recovered.dat'
+        self.ofname3 = f'{self.out_path}/hod_para_bestfit.yml'
 
     def calc_hod(self, Mmin):
         if self.para['nbody'] == 'mini_uchuu':
@@ -138,6 +142,75 @@ class PlotHOD(object):
         m = data['mass']
         Ngal = data['Ngal']
         return m, Ngal
+
+
+    def fit_hod(self):
+        mass, hod_mean, hod_std = self.plot_hod()
+        sel = (hod_mean > 1e-2)
+        mass = mass[sel]
+        hod_mean = hod_mean[sel]
+        hod_std = hod_std[sel]
+
+        def chi_sqr(para):
+            alpha = para[0]
+            lgM1 = para[1]
+            kappa = para[2]
+            lgMcut= para[3]
+            sigmalogM = para[4]
+            Ncen, Nsat = Ngal_S20_noscatt(mass, alpha, lgM1, kappa, lgMcut, sigmalogM)
+            return np.sum((Ncen + Nsat - hod_mean)**2/hod_std**2)
+
+        alpha_ini = 1
+        lgM1_ini = 13.5
+        kappa_ini = 1
+        lgMcut_ini = 12
+        sigmalogM_ini = 0.1
+        res = minimize(chi_sqr, x0=(alpha_ini, lgM1_ini, kappa_ini, lgMcut_ini, sigmalogM_ini), 
+            bounds=((0.5, 1.5), (13, 14), (0.5,2), (11, 13), (0.05, 0.5)))
+        print(res)
+        alpha_best = res.x[0]
+        lgM1_best = res.x[1]
+        kappa_best = res.x[2]
+        lgMcut_best = res.x[3]
+        sigmalogM_best = res.x[4]
+        # lgMcut_best = res.x[0]
+        # lgM1_best = res.x[1]
+        # alpha_best = res.x[2]
+        # sigmalogM_best = res.x[3]
+        # kappa_best = res.x[4]
+        Ncen_best, Nsat_best = Ngal_S20_noscatt(mass, alpha_best, lgM1_best, kappa_best, lgMcut_best, sigmalogM_best)
+
+        para_dict = {
+        "lgMcut": float(lgMcut_best),
+        "lgM1": float(lgM1_best),
+        "alpha": float(alpha_best),
+        "sigmalogM": float(sigmalogM_best), 
+        "kappa": float(kappa_best),
+        }
+        with open(self.ofname3, 'w') as outfile:
+            yaml.dump(para_dict, outfile)
+
+        return para_dict
+
+    def plot_hod_bestfit(self):
+        mass, hod_mean, hod_std = self.plot_hod()
+        sel = (hod_mean > 1e-2)
+        mass = mass[sel]
+
+        with open(self.ofname3, 'r') as stream:
+            try:
+                parsed_yaml = yaml.safe_load(stream)
+                print(parsed_yaml)
+            except yaml.YAMLError as exc:
+                print(exc)
+        alpha = parsed_yaml['alpha']
+        lgM1 = parsed_yaml['lgM1']
+        kappa = parsed_yaml['kappa']
+        lgMcut = parsed_yaml['lgMcut']
+        sigmalogM = parsed_yaml['sigmalogM']
+        Ncen, Nsat = Ngal_S20_noscatt(mass, alpha, lgM1, kappa, lgMcut, sigmalogM)
+        return mass, Ncen, Nsat
+
 
 if __name__ == "__main__":
     yml_fname = sys.argv[1] 
