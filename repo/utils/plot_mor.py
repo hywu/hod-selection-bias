@@ -22,7 +22,7 @@ def plot_mor(yml_fname):
     cl_fname = f'{out_path}/richness_{rich_name}.fit'
     print(cl_fname)
     data = fitsio.read(cl_fname)
-    mass = data['M200m']
+    mass = data['mass']
     lam = data['lambda']
 
     x = np.array(np.log(mass[lam > 0]))

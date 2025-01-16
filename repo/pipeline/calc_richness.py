@@ -14,7 +14,7 @@ from concurrent.futures import ProcessPoolExecutor
 
 sys.path.append('../utils')
 from periodic_boundary_condition import periodic_boundary_condition
-from periodic_boundary_condition import periodic_boundary_condition_halos
+#from periodic_boundary_condition import periodic_boundary_condition_halos # integrated!
 
 yml_fname = sys.argv[1]
 #./calc_richness.py ../yml/mini_uchuu/mini_uchuu_fid_hod.yml
@@ -25,14 +25,22 @@ with open(yml_fname, 'r') as stream:
     except yaml.YAMLError as exc:
         print(exc)
 
+# box properties
 redshift = para['redshift']
+
+# richness
 depth = para['depth']
 perc = para['perc']
+rank_proxy = para['rank_proxy']
+rank_cut = float(para['rank_cut'])
+save_members = para.get('save_members', False)
+use_cylinder = para['use_cylinder']
 use_rlambda = para['use_rlambda']
 use_pmem = para.get('use_pmem', False)
-los = para.get('los', 'z')
-if los == 'xyz':
-    los = sys.argv[2]
+
+# los = para.get('los', 'z')
+# if los == 'xyz':
+#     los = sys.argv[2]
 
 save_members = para.get('save_members', False)
 pec_vel = para.get('pec_vel', False)
@@ -42,7 +50,7 @@ print('use pmem:', use_pmem)
 print('pec vel:', pec_vel)
 print('sat from part:', sat_from_part)
 
-Mmin = 10**12.5 # TODO
+Mmin = 10**12.5
 
 n_parallel_z = 1 # NOTE! cannot do more than one yet.
 n_parallel_x = 10 # TODO: check n_parallel_x != n_parallel_y
@@ -62,6 +70,11 @@ if os.path.isdir(out_path)==False:
     os.makedirs(out_path)
 if os.path.isdir(out_path+'/temp/')==False:
     os.makedirs(out_path+'/temp/')
+
+
+# save a back-up parameter file
+with open(f'{out_path}/para_{rich_name}.yml', 'w') as outfile:
+    yaml.dump(para, outfile)
 
 # read in halos
 if para['nbody'] == 'mini_uchuu':
@@ -87,6 +100,7 @@ if para['nbody'] == 'tng_dmo':
     readcat = ReadTNGDMO(para['nbody_loc'], halofinder, redshift)
     print('halofinder', halofinder)
 
+
 readcat.read_halos(Mmin, pec_vel=pec_vel, cluster_only=True)
 boxsize = readcat.boxsize
 OmegaM = readcat.OmegaM
@@ -96,34 +110,35 @@ mass_in = readcat.mass
 
 OmegaDE = 1 - OmegaM
 Ez = np.sqrt(OmegaM * (1+redshift)**3 + OmegaDE)
+scale_factor = 1./(1.+redshift)
 
-if los == 'z':
-    x_halo_in = readcat.xh
-    y_halo_in = readcat.yh
-    z_halo_in = readcat.zh
-    if pec_vel == True:
-        z_halo_in += readcat.vz / Ez / 100.
-if los == 'x':
-    x_halo_in = readcat.yh
-    y_halo_in = readcat.zh
-    z_halo_in = readcat.xh
-    if pec_vel == True:
-        z_halo_in += readcat.vx / Ez / 100.
-if los == 'y':
-    x_halo_in = readcat.zh
-    y_halo_in = readcat.xh
-    z_halo_in = readcat.yh
-    if pec_vel == True:
-        z_halo_in += readcat.vy / Ez / 100.
+# if los == 'z':
+x_halo_in = readcat.xh
+y_halo_in = readcat.yh
+z_halo_in = readcat.zh
+if pec_vel == True:
+    z_halo_in += readcat.vz / Ez / 100.
+# if los == 'x':
+#     x_halo_in = readcat.yh
+#     y_halo_in = readcat.zh
+#     z_halo_in = readcat.xh
+#     if pec_vel == True:
+#         z_halo_in += readcat.vx / Ez / 100.
+# if los == 'y':
+#     x_halo_in = readcat.zh
+#     y_halo_in = readcat.xh
+#     z_halo_in = readcat.yh
+#     if pec_vel == True:
+#         z_halo_in += readcat.vy / Ez / 100.
 
 if use_pmem == True:
     use_cylinder = False
     which_pmem = para.get('which_pmem')
-    if which_pmem == 'myles3':
-        from pmem_weights_myles3 import pmem_weights
-    if which_pmem == 'buzzard':
-        from pmem_weights_buzzard import pmem_weights
-
+    # if which_pmem == 'myles3':
+    #     from pmem_weights_myles3 import pmem_weights
+    # if which_pmem == 'buzzard':
+    #     from pmem_weights_buzzard import pmem_weights
+    #### TODO! get the updated files
     depth = -1
     dz_max = 0.5 * boxsize * Ez / 3000. # need to be smaller than half box size, otherwise the same galaxies will be counted twice
     print('dz_max', dz_max)
@@ -131,51 +146,99 @@ else:
     use_cylinder = True
 
 
-scale_factor = 1./(1.+redshift)
+#### read in BCG candidates ####
+import fitsio
+
+if rank_proxy[:3] != 'env':
+    gal_fname = f'{out_path}/gals.fit'
+    data, h = fitsio.read(gal_fname, header=True)
+    hid = data['haloid']
+    x = data['px']
+    y = data['py']
+    z = data['pz']
+    mass = data['mass_sub'] # not mass_host
+    #Mstar = data['Mstar']
+    lum = 10**(-0.4*data['M_z'])
+
+    if rank_proxy == 'mass':
+        rank_in = mass
+    if rank_proxy == 'mstar':
+        rank_in = Mstar
+    if rank_proxy == 'lum':
+        rank_in = lum
+    if rank_proxy == 'none':
+        rank_in = np.zeros(len(lum))
+
+''' # TODO: sort by environment
+if rank_proxy[:3] == 'env':
+    gal_fname = f'{out_path}/gals_{rank_proxy}.fit'
+    data, h = fitsio.read(gal_fname, header=True)
+    #data, h = fitsio.read('data/gal_cat_0071.fit', header=True)
+    #print(h)
+
+    hid = data['ID']
+    x = data['px']
+    y = data['py']
+    z = data['pz']
+    Mvir = data['Mvir']
+    env = data['env']
+    rank_in = env
+'''
+
+sel = (rank_in > rank_cut)
+x_halo_in = x[sel]
+y_halo_in = y[sel]
+z_halo_in = z[sel]
+hid_in = hid[sel]
+rank_in = rank_in[sel]
 
 # read in galaxies
-gal_cat_format = para.get('gal_cat_format', 'fits')
+# gal_cat_format = para.get('gal_cat_format', 'fits')
+# if gal_cat_format == 'fits':
+gal_fname = f'{out_path}/gals.fit'
+data, header = fitsio.read(gal_fname, header=True)
+# if los == 'z':
+x_gal_in = data['px']
+y_gal_in = data['py']
+z_gal_in = data['pz']
+if pec_vel == True:
+    z_gal_in += data['vz'] / Ez / 100.
 
-if gal_cat_format == 'fits':
-    gal_fname = f'{out_path}/gals.fit'
-    data, header = fitsio.read(gal_fname, header=True)
-    if los == 'z':
-        x_gal_in = data['px']
-        y_gal_in = data['py']
-        z_gal_in = data['pz']
-        if pec_vel == True:
-            z_gal_in += data['vz'] / Ez / 100.
-    if los == 'x':
-        x_gal_in = data['py']
-        y_gal_in = data['pz']
-        z_gal_in = data['px']
-        if pec_vel == True:
-            z_gal_in += data['vx'] / Ez / 100.
-    if los == 'y':
-        x_gal_in = data['pz']
-        y_gal_in = data['px']
-        z_gal_in = data['py']
-        if pec_vel == True:
-            z_gal_in += data['vy'] / Ez / 100.
+#hid_gal_in = data['haloid'] ### TODO: save these properties in member files
+#mass_gal_in = data['mass_sub']
+#iscen_gal_in = data['iscen']
+# if los == 'x':
+#     x_gal_in = data['py']
+#     y_gal_in = data['pz']
+#     z_gal_in = data['px']
+#     if pec_vel == True:
+#         z_gal_in += data['vx'] / Ez / 100.
+# if los == 'y':
+#     x_gal_in = data['pz']
+#     y_gal_in = data['px']
+#     z_gal_in = data['py']
+#     if pec_vel == True:
+#         z_gal_in += data['vy'] / Ez / 100.
 
 #### periodic boundary condition ####
 x_padding = 3
 y_padding = 3
+z_padding = 0
 
-x_halo, y_halo, z_halo, hid, mass = periodic_boundary_condition_halos(
+x_halo, y_halo, z_halo, hid, rank = periodic_boundary_condition(
     x_halo_in, y_halo_in, z_halo_in, 
-    boxsize, x_padding, y_padding, 0, hid_in, mass_in)
+    boxsize, x_padding, y_padding, z_padding, hid_in, rank_in)
 
-sort = np.argsort(-mass)
+sort = np.argsort(-rank)
 hid = hid[sort]
-mass = mass[sort]
+rank = rank[sort]
 x_halo = x_halo[sort]
 y_halo = y_halo[sort]
 z_halo = z_halo[sort]
 
 x_gal, y_gal, z_gal = periodic_boundary_condition(
     x_gal_in, y_gal_in, z_gal_in,
-    boxsize, x_padding, y_padding, 0)
+    boxsize, x_padding, y_padding, z_padding)
 
 class CalcRichness(object): # one pz slice at a time
     def __init__(self, pz_min, pz_max, px_min=0, px_max=boxsize, py_min=0, py_max=boxsize):
@@ -204,12 +267,12 @@ class CalcRichness(object): # one pz slice at a time
         self.y_halo = y_halo[sel_halo]
         self.z_halo = z_halo[sel_halo]
         self.hid = hid[sel_halo]
-        self.mass = mass[sel_halo]
+        self.rank = rank[sel_halo]
 
         #### sort again, just to be safe ####
-        sort = np.argsort(-self.mass)
+        sort = np.argsort(-self.rank)
         self.hid = self.hid[sort]
-        self.mass = self.mass[sort]
+        self.rank = self.rank[sort]
         self.x_halo = self.x_halo[sort]
         self.y_halo = self.y_halo[sort]
         self.z_halo = self.z_halo[sort]
@@ -346,7 +409,7 @@ class CalcRichness(object): # one pz slice at a time
         #### richness files:  ####
         ofname1 = f'{out_path}/temp/richness_{rich_name}_pz{self.pz_min:.0f}_{self.pz_max:.0f}_px{self.px_min:.0f}_{self.px_max:.0f}_py{self.py_min:.0f}_{self.py_max:.0f}.dat'
         outfile1 = open(ofname1, 'w')
-        outfile1.write('#hid, mass, px, py, pz, rlam, lam \n')
+        outfile1.write('#hid, rank, px, py, pz, rlam, lam \n')
 
         #### member files: only write header (optional) ####
         if save_members == True:
@@ -362,7 +425,7 @@ class CalcRichness(object): # one pz slice at a time
                 self.x_halo[ih] > self.px_min and self.x_halo[ih] < self.px_max and \
                 self.y_halo[ih] > self.py_min and self.y_halo[ih] < self.py_max:
 
-                outfile1.write('%12i %15e %12g %12g %12g %12g %12g \n'%(self.hid[ih], self.mass[ih], self.x_halo[ih], self.y_halo[ih], self.z_halo[ih], rlam, lam))
+                outfile1.write('%12i %15e %12g %12g %12g %12g %12g \n'%(self.hid[ih], self.rank[ih], self.x_halo[ih], self.y_halo[ih], self.z_halo[ih], rlam, lam))
 
                 #### save members (append) (optional) #### 
                 if save_members == True:
@@ -415,9 +478,9 @@ def merge_files_richness():
 
         for fname in fname_list:
             data = pd.read_csv(fname, sep=r'\s+', dtype=np.float64, comment='#', 
-                            names=['haloid', 'mass', 'px', 'py', 'pz', 'rlam', 'lam'])
+                            names=['haloid', 'rank', 'px', 'py', 'pz', 'rlam', 'lam'])
             hid_out.extend(data['haloid'])
-            m_out.extend(data['mass'])
+            m_out.extend(data['rank'])
             x_out.extend(data['px'])
             y_out.extend(data['py'])
             z_out.extend(data['pz'])
