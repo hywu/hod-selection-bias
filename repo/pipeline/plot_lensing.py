@@ -12,8 +12,6 @@ sys.path.append('../utils')
 from measure_lensing import MeasureLensing
 from sample_matching_mass import sample_matching_mass
 
-
-
 class PlotLensing(object):
     def __init__(self, yml_fname, abundance_matching, thresholded):
 
@@ -153,11 +151,13 @@ class PlotLensing(object):
         # get clusters
         fname = f'{self.out_path}/richness_{self.rich_name}.fit'
         data, header = fitsio.read(fname, header=True)
-        xh_all = data['px'] # already rotated when calculating richness
-        yh_all = data['py']
-        zh_all = data['pz']
-        lnM_all = np.log(data['mass'])
-        lam_all = data['lambda']
+        mass_all = data['mass_host']
+        sel = (mass_all > 0)
+        xh_all = data['px'][sel] # already rotated when calculating richness
+        yh_all = data['py'][sel]
+        zh_all = data['pz'][sel]
+        lnM_all = np.log(mass_all[sel])
+        lam_all = data['lambda'][sel]
 
         # shuffle the sample to remove mass sorting
         shuff = self.rng.permutation(len(xh_all))
