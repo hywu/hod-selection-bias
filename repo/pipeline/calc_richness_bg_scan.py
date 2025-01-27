@@ -10,15 +10,18 @@ import glob
 import fitsio
 import yaml
 from astropy.io import fits
-from astropy.table import Table
 from concurrent.futures import ProcessPoolExecutor
-
 sys.path.append('../utils')
 from periodic_boundary_condition import periodic_boundary_condition
-#from periodic_boundary_condition import periodic_boundary_condition_halos
+from periodic_boundary_condition import periodic_boundary_condition_halos
+
+# background subtraction
+# allowing lambda(z) scanning
+
+# ./calc_richness_bg_scan.py ../yml/mini_uchuu/mini_uchuu_fid_hod_bg_uniform.yml 
+# ./calc_richness_bg_scan.py ../lambda_z_cyl/mini_uchuu_fid_hod_scan_uniform.yml 0
 
 yml_fname = sys.argv[1]
-#./calc_richness.py ../yml/mini_uchuu/mini_uchuu_fid_hod.yml
 
 with open(yml_fname, 'r') as stream:
     try:
@@ -30,10 +33,19 @@ redshift = para['redshift']
 depth = para['depth']
 perc = para['perc']
 use_rlambda = para['use_rlambda']
+radius = para.get('radius', -1)
 use_pmem = para.get('use_pmem', False)
 los = para.get('los', 'z')
 if los == 'xyz':
     los = sys.argv[2]
+
+scan_mode = para.get('scan_mode', False)
+if scan_mode == True:
+    dz_scan = int(sys.argv[2])
+else:
+    dz_scan = 0
+
+subtract_background = para.get('subtract_background', True)
 
 save_members = para.get('save_members', False)
 pec_vel = para.get('pec_vel', False)
@@ -43,7 +55,7 @@ print('use pmem:', use_pmem)
 print('pec vel:', pec_vel)
 print('sat from part:', sat_from_part)
 
-Mmin = 10**12.5 # TODO
+Mmin = 10**12.5
 
 n_parallel_z = 1 # NOTE! cannot do more than one yet.
 n_parallel_x = 10 # TODO: check n_parallel_x != n_parallel_y
@@ -57,6 +69,12 @@ z_padding_gal = 0
 output_loc = para['output_loc']
 model_name = para['model_name']
 rich_name = para['rich_name']
+# if depth != -1:
+    
+rich_name += f'{depth}'
+# else:
+if scan_mode == True:
+    rich_name += f'_scan{dz_scan}'
 
 out_path = f'{output_loc}/model_{model_name}/'
 if os.path.isdir(out_path)==False:
@@ -74,13 +92,9 @@ if para['nbody'] == 'uchuu':
     readcat = ReadUchuu(para['nbody_loc'], redshift)
 
 if para['nbody'] == 'abacus_summit':
-    #sys.path.append('../abacus_summit')
+    sys.path.append('../abacus_summit')
     from read_abacus_summit import ReadAbacusSummit
     readcat = ReadAbacusSummit(para['nbody_loc'], redshift)
-
-if para['nbody'] == 'flamingo':
-    from read_flamingo import ReadFlamingo
-    readcat = ReadFlamingo(para['nbody_loc'], redshift)
 
 if para['nbody'] == 'tng_dmo':
     from read_tng_dmo import ReadTNGDMO
@@ -117,27 +131,24 @@ if los == 'y':
     if pec_vel == True:
         z_halo_in += readcat.vy / Ez / 100.
 
-if use_pmem == True:
-    use_cylinder = False
-    which_pmem = para.get('which_pmem')
-    # if which_pmem == 'myles3':
-    #     from pmem_weights_myles3 import pmem_weights
-    # if which_pmem == 'buzzard':
-    #     from pmem_weights_buzzard import pmem_weights
-    if which_pmem == 'quad':
-        from pmem_weights_quad import pmem_weights_dchi, volume_dchi
-    if which_pmem == 'gauss':
-        from pmem_weights_gauss import pmem_weights_dchi, volume_dchi
-    if which_pmem == 'uniform':
-        from pmem_weights_uniform import pmem_weights_dchi, volume_dchi
+z_halo_in += dz_scan
 
+# if use_pmem == True:
+#     use_cylinder = False
+which_pmem = para.get('which_pmem')
+if which_pmem == 'quad':
+    from pmem_weights_quad import pmem_weights_dchi, volume_dchi
+if which_pmem == 'gauss':
+    from pmem_weights_gauss import pmem_weights_dchi, volume_dchi
+if which_pmem == 'uniform':
+    from pmem_weights_uniform import pmem_weights_dchi, volume_dchi
 
-    depth = -1
-    dz_max = 0.5 * boxsize * Ez / 3000. # need to be smaller than half box size, otherwise the same galaxies will be counted twice
-    print('dz_max', dz_max)
-else:
-    use_cylinder = True
-
+#depth = -1
+dchi_max = 0.5 * boxsize
+#dz_max = 0.5 * boxsize * Ez / 3000. # need to be smaller than half box size, otherwise the same galaxies will be counted twice
+#print('dz_max', dz_max)
+# else:
+#     use_cylinder = True
 
 scale_factor = 1./(1.+redshift)
 
@@ -166,11 +177,31 @@ if gal_cat_format == 'fits':
         if pec_vel == True:
             z_gal_in += data['vy'] / Ez / 100.
 
+if subtract_background == True:
+    density_bg = len(x_gal_in) / boxsize**3
+else:
+    density_bg = 0
+
+print('density_bg = ', density_bg)
+
+
+
+# if gal_cat_format == 'h5': # testing Andres's catalog
+#     import h5py
+#     loc = '/bsuhome/hwu/scratch/abacus_summit/'
+#     gal_fname = loc + 'NHOD_0.10_11.7_11.7_12.9_1.00_0.0_0.0_1.0_1.0_0.0_c000_ph000_z0p300.hdf5'
+#     f = h5py.File(gal_fname,'r')
+#     data = f['particles']
+#     #print(data.dtype)
+#     x_gal_in = data['x']
+#     y_gal_in = data['y']
+#     z_gal_in = data['z']
+
 #### periodic boundary condition ####
 x_padding = 3
 y_padding = 3
 
-x_halo, y_halo, z_halo, hid, mass = periodic_boundary_condition(
+x_halo, y_halo, z_halo, hid, mass = periodic_boundary_condition_halos(
     x_halo_in, y_halo_in, z_halo_in, 
     boxsize, x_padding, y_padding, 0, hid_in, mass_in)
 
@@ -244,29 +275,35 @@ class CalcRichness(object): # one pz slice at a time
         d_pbc1 = z_gal_gal_ind + boxsize - z_cen
         d_pbc2 = z_gal_gal_ind - boxsize - z_cen
 
-        dz0 = d_pbc0 * Ez / 3000.
-        dz1 = d_pbc1 * Ez / 3000.
-        dz2 = d_pbc2 * Ez / 3000.
+        dz0 = d_pbc0 #* Ez / 3000.
+        dz1 = d_pbc1 #* Ez / 3000.
+        dz2 = d_pbc2 #* Ez / 3000.
 
-        if use_cylinder == True and depth > 0:
-            sel_z0 = (np.abs(d_pbc0) < depth)
-            sel_z1 = (np.abs(d_pbc1) < depth)
-            sel_z2 = (np.abs(d_pbc2) < depth)
-            sel_z = sel_z0 | sel_z1 | sel_z2
-            sel_z = sel_z & (self.gal_taken[gal_ind] < 1e-4)
-            dz0 = dz0[sel_z]
-            dz1 = dz1[sel_z]
-            dz2 = dz2[sel_z]
+        # if use_cylinder == True and depth > 0:
+        #     sel_z0 = (np.abs(d_pbc0) < depth)
+        #     sel_z1 = (np.abs(d_pbc1) < depth)
+        #     sel_z2 = (np.abs(d_pbc2) < depth)
+        #     sel_z = sel_z0 | sel_z1 | sel_z2
+        #     sel_z = sel_z & (self.gal_taken[gal_ind] < 1e-4)
+        #     dz0 = dz0[sel_z]
+        #     dz1 = dz1[sel_z]
+        #     dz2 = dz2[sel_z]
 
-        elif use_pmem == True and depth == -1:
-            sel_z0 = (np.abs(dz0) < dz_max)
-            sel_z1 = (np.abs(dz1) < dz_max)
-            sel_z2 = (np.abs(dz2) < dz_max)
-            sel_z = sel_z0 | sel_z1 | sel_z2
-            sel_z = sel_z & (self.gal_taken[gal_ind] < 0.8) # TODO: percolation threshold?
+        #elif use_pmem == True: #and depth == -1:
+        # sel_z0 = (np.abs(dz0) < dz_max)
+        # sel_z1 = (np.abs(dz1) < dz_max)
+        # sel_z2 = (np.abs(dz2) < dz_max)
+        sel_z0 = (np.abs(dz0) < dchi_max)
+        sel_z1 = (np.abs(dz1) < dchi_max)
+        sel_z2 = (np.abs(dz2) < dchi_max)
+        sel_z = sel_z0 | sel_z1 | sel_z2
+        sel_z = sel_z & (self.gal_taken[gal_ind] < 0.8) # TODO: percolation threshold?
+        dz0 = dz0[sel_z]
+        dz1 = dz1[sel_z]
+        dz2 = dz2[sel_z]
 
-        else:
-            print('BUG!!')
+        # else:
+        #     print('BUG!!')
 
         #### step 2: calculate radius ####
         r = (self.x_gal[gal_ind][sel_z] - x_cen)**2 + (self.y_gal[gal_ind][sel_z] - y_cen)**2 
@@ -277,74 +314,84 @@ class CalcRichness(object): # one pz slice at a time
             rlam_ini = 1
             rlam = rlam_ini
             for iteration in range(100):
-                if use_cylinder == True and depth > 0:
-                    ngal = len(r[r < rlam])
-                elif use_pmem == True or depth == -1:
-                    pmem0 = pmem_weights(dz0, r/rlam, dz_max=dz_max)
-                    pmem1 = pmem_weights(dz1, r/rlam, dz_max=dz_max)
-                    pmem2 = pmem_weights(dz2, r/rlam, dz_max=dz_max)
-                    pmem = pmem0 + pmem1 + pmem2
-                    ngal = np.sum(pmem)
-                else:
-                    print('BUG!!')
+                #if use_cylinder == True and depth > 0:
+                #    ngal = len(r[r < rlam])
+                #elif use_pmem == True or depth == -1:
+                pmem0 = pmem_weights_dchi(dz0, r/rlam, dchi_max=dchi_max, depth=depth)
+                pmem1 = pmem_weights_dchi(dz1, r/rlam, dchi_max=dchi_max, depth=depth)
+                pmem2 = pmem_weights_dchi(dz2, r/rlam, dchi_max=dchi_max, depth=depth)
+                pmem = pmem0 + pmem1 + pmem2
+                ngal = np.sum(pmem)
+
+                nbg = density_bg * volume_dchi(rlam, depth)
+                ngal = ngal - nbg # okay to be negative
+                #ngal = max(ngal - nbg, 0)
 
                 rlam_old = rlam
-                rlam = (ngal/100.)**0.2 / scale_factor # phys -> comoving
+                if ngal < 0:
+                    rlam = 0
+                else:
+                    rlam = (ngal/100.)**0.2 / scale_factor # phys -> comoving
                 if abs(rlam - rlam_old) < 1e-5 or rlam < 1e-6:
                     break
         else: 
-            radius = para['radius']
-            rlam = radius * 1. # fixed aperture
-            if use_cylinder == True and depth > 0:
-                ngal = len(r[r < rlam])
+            rlam = radius # fixed aperture
+            pmem0 = pmem_weights_dchi(dz0, r/rlam, dchi_max=dchi_max, depth=depth)
+            pmem1 = pmem_weights_dchi(dz1, r/rlam, dchi_max=dchi_max, depth=depth)
+            pmem2 = pmem_weights_dchi(dz2, r/rlam, dchi_max=dchi_max, depth=depth)
+            pmem = pmem0 + pmem1 + pmem2
+            ngal = np.sum(pmem)
+            nbg = density_bg * volume_dchi(rlam, depth)
+            #ngal = max(ngal - nbg, 0)
+            ngal = ngal - nbg # okay to be negative
+
 
         #### Step 4: do percolation ####
         if rlam > 0:
             sel_mem = (r < rlam)
             if perc == True and len(gal_ind) > 0:
-                if use_cylinder == True:
-                    self.gal_taken[np.array(gal_ind)[sel_z][sel_mem]] = 1
-                if use_pmem == True: # probabilistic percolation
-                    self.gal_taken[np.array(gal_ind)[sel_z][sel_mem]] += pmem[sel_mem]
+                #if use_cylinder == True:
+                #    self.gal_taken[np.array(gal_ind)[sel_z][sel_mem]] = 1
+                #if use_pmem == True: # probabilistic percolation
+                self.gal_taken[np.array(gal_ind)[sel_z][sel_mem]] += pmem[sel_mem]
 
         #### Step 5 (optional): save the member galaxies ####
         if save_members == True:
             if rlam > 0:
-                if use_cylinder == True and depth > 0: # no repeat
-                    self.x_gal_mem = self.x_gal[gal_ind][sel_z][sel_mem]
-                    self.y_gal_mem = self.y_gal[gal_ind][sel_z][sel_mem]
-                    self.z_gal_mem = self.z_gal[gal_ind][sel_z][sel_mem]
-                    dz_all = np.array([dz0[sel_mem], dz1[sel_mem], dz2[sel_mem]])
-                    arg = np.array([np.argmin(np.abs(dz_all), axis=0)]) # find the smallest absolute value
-                    self.dz_out = np.take_along_axis(dz_all, arg, axis=0) # cool numpy function!
-                    self.dz_out = np.concatenate(self.dz_out)
-                    self.r_out = r[sel_mem]/rlam 
-                    self.p_gal_mem = self.x_gal_mem * 0 + 1
-                    self.pmem_out = self.x_gal_mem * 0 + 1
+                # if use_cylinder == True and depth > 0: # no repeat
+                #     self.x_gal_mem = self.x_gal[gal_ind][sel_z][sel_mem]
+                #     self.y_gal_mem = self.y_gal[gal_ind][sel_z][sel_mem]
+                #     self.z_gal_mem = self.z_gal[gal_ind][sel_z][sel_mem]
+                #     dz_all = np.array([dz0[sel_mem], dz1[sel_mem], dz2[sel_mem]])
+                #     arg = np.array([np.argmin(np.abs(dz_all), axis=0)]) # find the smallest absolute value
+                #     self.dz_out = np.take_along_axis(dz_all, arg, axis=0) # cool numpy function!
+                #     self.dz_out = np.concatenate(self.dz_out)
+                #     self.r_out = r[sel_mem]/rlam 
+                #     self.p_gal_mem = self.x_gal_mem * 0 + 1
+                #     self.pmem_out = self.x_gal_mem * 0 + 1
 
-                elif use_pmem == True or depth == -1: # each gal: repeat 3 times for PBC
-                    self.x_gal_mem = np.tile(self.x_gal[gal_ind][sel_z][sel_mem], 3)
-                    self.y_gal_mem = np.tile(self.y_gal[gal_ind][sel_z][sel_mem], 3)
-                    self.z_gal_mem = np.tile(self.z_gal[gal_ind][sel_z][sel_mem], 3)
-                    # save duplicate galaxies for dz0, dz1, and dz2
-                    self.dz_out = np.concatenate([dz0[sel_mem], dz1[sel_mem], dz2[sel_mem]])
-                    self.r_out = np.tile(r[sel_mem]/rlam, 3) 
-                    self.p_gal_mem = pmem[sel_mem]
-                    self.pmem_out = np.concatenate([pmem0[sel_mem], pmem1[sel_mem], pmem2[sel_mem]])
-                    
-                    sel = (self.pmem_out > 1e-6)
-                    self.x_gal_mem = self.x_gal_mem[sel]
-                    self.y_gal_mem = self.y_gal_mem[sel]
-                    self.z_gal_mem = self.z_gal_mem[sel]
-                    self.dz_out = self.dz_out[sel]
-                    self.r_out = self.r_out[sel]
-                    self.pmem_out = self.pmem_out[sel]
+                # elif use_pmem == True or depth == -1: # each gal: repeat 3 times for PBC
+                self.x_gal_mem = np.tile(self.x_gal[gal_ind][sel_z][sel_mem], 3)
+                self.y_gal_mem = np.tile(self.y_gal[gal_ind][sel_z][sel_mem], 3)
+                self.z_gal_mem = np.tile(self.z_gal[gal_ind][sel_z][sel_mem], 3)
+                # save duplicate galaxies for dz0, dz1, and dz2
+                self.dz_out = np.concatenate([dz0[sel_mem], dz1[sel_mem], dz2[sel_mem]])
+                self.r_out = np.tile(r[sel_mem]/rlam, 3) 
+                self.p_gal_mem = pmem[sel_mem]
+                self.pmem_out = np.concatenate([pmem0[sel_mem], pmem1[sel_mem], pmem2[sel_mem]])
+                
+                sel = (self.pmem_out > 1e-6)
+                self.x_gal_mem = self.x_gal_mem[sel]
+                self.y_gal_mem = self.y_gal_mem[sel]
+                self.z_gal_mem = self.z_gal_mem[sel]
+                self.dz_out = self.dz_out[sel]
+                self.r_out = self.r_out[sel]
+                self.pmem_out = self.pmem_out[sel]
 
-                    if max(self.p_gal_mem) > 1:
-                        print('max(self.p_gal_mem)', max(self.p_gal_mem), 'BUG!: double counting galaxies.')
-                        exit()
-                else:
-                    print('BUG')
+                if max(self.p_gal_mem) > 1:
+                    print('max(self.p_gal_mem)', max(self.p_gal_mem), 'BUG!: double counting galaxies.')
+                    exit()
+
 
         return rlam, ngal
 
@@ -354,20 +401,19 @@ class CalcRichness(object): # one pz slice at a time
         #### richness files:  ####
         ofname1 = f'{out_path}/temp/richness_{rich_name}_pz{self.pz_min:.0f}_{self.pz_max:.0f}_px{self.px_min:.0f}_{self.px_max:.0f}_py{self.py_min:.0f}_{self.py_max:.0f}.dat'
         outfile1 = open(ofname1, 'w')
-        #outfile1.write('#hid, mass, px, py, pz, rlam, lam \n')
-        outfile1.write('haloid mass px py pz rlambda lambda \n')
+        outfile1.write('#hid, mass, px, py, pz, rlam, lam \n')
 
         #### member files: only write header (optional) ####
         if save_members == True:
             ofname2 = f'{out_path}/temp/members_{rich_name}_pz{self.pz_min:.0f}_{self.pz_max:.0f}_px{self.px_min:.0f}_{self.px_max:.0f}_py{self.py_min:.0f}_{self.py_max:.0f}.dat'
             outfile2 = open(ofname2, 'w')
-            outfile2.write('haloid px_gal py_gal pz_gal dz_gal r_over_rlambda pmem \n')
+            outfile2.write('#hid, dz, r/rlam, pmem \n')
             outfile2.close()
 
         for ih in range(nh):
             rlam, lam = self.get_richness(ih)
-            if lam > 0 and \
-                self.z_halo[ih] > self.pz_min and self.z_halo[ih] < self.pz_max and \
+            #if lam > 0 and \
+            if self.z_halo[ih] > self.pz_min and self.z_halo[ih] < self.pz_max and \
                 self.x_halo[ih] > self.px_min and self.x_halo[ih] < self.px_max and \
                 self.y_halo[ih] > self.py_min and self.y_halo[ih] < self.py_max:
 
@@ -375,13 +421,14 @@ class CalcRichness(object): # one pz slice at a time
 
                 #### save members (append) (optional) #### 
                 if save_members == True:
-                    self.dz_out *= 3000. / Ez # convert back to comoving distance
                     self.hid_mem = self.x_gal_mem * 0 + self.hid[ih]
                     data = np.array([self.hid_mem, self.x_gal_mem, self.y_gal_mem, self.z_gal_mem, self.dz_out, self.r_out, self.pmem_out]).transpose()
                     with open(ofname2, "ab") as f:
                         np.savetxt(f, data, fmt='%12i %12g %12g %12g %12g %12g %12g')
 
         outfile1.close()
+
+
 
 z_layer_thickness = boxsize / n_parallel_z
 x_cube_size = boxsize / n_parallel_x
@@ -399,37 +446,14 @@ def calc_one_bin(ibin):
     py_min = iy*y_cube_size
     py_max = (iy+1)*y_cube_size
 
+
     ofname = f'{out_path}/temp/richness_{rich_name}_pz{pz_min:.0f}_{pz_max:.0f}_px{px_min:.0f}_{px_max:.0f}_py{py_min:.0f}_{py_max:.0f}.dat'
 
-    if True: #os.path.exists(ofname) == False:
+    if os.path.exists(ofname) == False:
         cr = CalcRichness(pz_min=pz_min, pz_max=pz_max, px_min=px_min, px_max=px_max, py_min=py_min, py_max=py_max)
         cr.measure_richness()
 
-def merge_files(richnes_or_members='richness'):
-    # merge all temp file and output a fits file with the same header
-    fname_list = glob.glob(f'{out_path}/temp/{richnes_or_members}_{rich_name}_pz*.dat')
-    nfiles = len(fname_list)
-    if nfiles < n_parallel:
-        print('missing ', n_parallel - nfiles, 'files, not merging')
-    else:
-        df_list = [pd.read_csv(file, sep=r'\s+') for file in fname_list]
-        merged_df = pd.concat(df_list, ignore_index=True)
-        # Turn it into a fits file
-        table = Table.from_pandas(merged_df)
-        # Create FITS Header based on CSV column names
-        hdr = fits.Header()
-        column_names = merged_df.columns.tolist()
-        for idx, col in enumerate(column_names):
-            hdr[f'COLUMN{idx+1}'] = col
-        primary_hdu = fits.PrimaryHDU(header=hdr)
-        table_hdu = fits.BinTableHDU(table)
-        hdul = fits.HDUList([primary_hdu, table_hdu])
-        hdul.writeto(f'{out_path}/{richnes_or_members}_{rich_name}.fit', overwrite=True)
-
-        os.system(f'rm -rf {out_path}/temp/{richnes_or_members}_{rich_name}_pz*.dat')
-
-'''
-def merge_files_richness_old():
+def merge_files_richness():
     fname_list = glob.glob(f'{out_path}/temp/richness_{rich_name}_pz*.dat')
     nfiles = len(fname_list)
     if nfiles < n_parallel:
@@ -444,8 +468,8 @@ def merge_files_richness_old():
         lam_out = []
 
         for fname in fname_list:
-            data = pd.read_csv(fname, sep=r'\s+', dtype=np.float64, comment='#', 
-                            names=['haloid', 'mass', 'px', 'py', 'pz', 'rlam', 'lam'], skiprows=1)
+            data = pd.read_csv(fname, delim_whitespace=True, dtype=np.float64, comment='#', 
+                            names=['haloid', 'mass', 'px', 'py', 'pz', 'rlam', 'lam'])
             hid_out.extend(data['haloid'])
             m_out.extend(data['mass'])
             x_out.extend(data['px'])
@@ -466,7 +490,7 @@ def merge_files_richness_old():
 
         cols = [
             fits.Column(name='haloid', format='K' ,array=hid_out[sel]),
-            fits.Column(name='mass', format='E',array=m_out[sel]),
+            fits.Column(name='M200m', format='E',array=m_out[sel]),
             fits.Column(name='px', format='D' ,array=x_out[sel]),
             fits.Column(name='py', format='D',array=y_out[sel]),
             fits.Column(name='pz', format='D',array=z_out[sel]),
@@ -475,10 +499,12 @@ def merge_files_richness_old():
         ]
         coldefs = fits.ColDefs(cols)
         tbhdu = fits.BinTableHDU.from_columns(coldefs)
-        tbhdu.writeto(f'{out_path}/richness_{rich_name}_old.fit', overwrite=True)
+        tbhdu.writeto(f'{out_path}/richness_{rich_name}.fit', overwrite=True)
+
+        os.system(f'rm -rf {out_path}/temp/richness_{rich_name}_pz*.dat')
 
 
-def merge_files_members_old():
+def merge_files_members():
     fname_list = glob.glob(f'{out_path}/temp/members_{rich_name}_pz*.dat')
     nfiles = len(fname_list)
     if nfiles < n_parallel:
@@ -494,8 +520,8 @@ def merge_files_members_old():
         pmem_out = []
 
         for fname in fname_list:
-            data = pd.read_csv(fname, sep=r'\s+', dtype=np.float64, comment='#', 
-                            names=['haloid', 'px', 'py', 'pz', 'dz', 'r', 'pmem'], skiprows=1)
+            data = pd.read_csv(fname, delim_whitespace=True, dtype=np.float64, comment='#', 
+                            names=['haloid', 'px', 'py', 'pz', 'dz', 'r', 'pmem'])
             hid_out.extend(data['haloid'])
             x_out.extend(data['px'])
             y_out.extend(data['py'])
@@ -523,13 +549,13 @@ def merge_files_members_old():
         ]
         coldefs = fits.ColDefs(cols)
         tbhdu = fits.BinTableHDU.from_columns(coldefs)
-        tbhdu.writeto(f'{out_path}/members_{rich_name}_old.fit', overwrite=True)
-        #os.system(f'rm -rf {out_path}/temp/members_{rich_name}_pz*.dat')
-'''
+        tbhdu.writeto(f'{out_path}/members_{rich_name}.fit', overwrite=True)
+
+        os.system(f'rm -rf {out_path}/temp/members_{rich_name}_pz*.dat')
+
 
 if __name__ == '__main__':
     #calc_one_bin(0)
-    
     
     stop = timeit.default_timer()
     print('calc_richness.py prep took', '%.2g'%((stop - start)/60), 'mins')
@@ -545,19 +571,11 @@ if __name__ == '__main__':
     stop = timeit.default_timer()
     print('richness took', '%.2g'%((stop - start)/60), 'mins')
     start = stop
-    
-    merge_files('richness')
+
+    merge_files_richness()
     if save_members == True:
-        merge_files('members')
+        merge_files_members()
 
     stop = timeit.default_timer()
     print('merging took', '%.2g'%((stop - start)/60), 'mins')
-
-    '''
-    start = stop
-    merge_files_richness_old()
-    if save_members == True:
-        merge_files_members_old()
-    stop = timeit.default_timer()
-    print('old merging took', '%.2g'%((stop - start)/60), 'mins')
-    '''
+    
