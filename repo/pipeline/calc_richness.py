@@ -10,6 +10,7 @@ import glob
 import fitsio
 import yaml
 from astropy.io import fits
+from astropy.table import Table
 from concurrent.futures import ProcessPoolExecutor
 
 sys.path.append('../utils')
@@ -346,13 +347,14 @@ class CalcRichness(object): # one pz slice at a time
         #### richness files:  ####
         ofname1 = f'{out_path}/temp/richness_{rich_name}_pz{self.pz_min:.0f}_{self.pz_max:.0f}_px{self.px_min:.0f}_{self.px_max:.0f}_py{self.py_min:.0f}_{self.py_max:.0f}.dat'
         outfile1 = open(ofname1, 'w')
-        outfile1.write('#hid, mass, px, py, pz, rlam, lam \n')
+        #outfile1.write('#hid, mass, px, py, pz, rlam, lam \n')
+        outfile1.write('haloid mass px py pz rlambda lambda \n')
 
         #### member files: only write header (optional) ####
         if save_members == True:
             ofname2 = f'{out_path}/temp/members_{rich_name}_pz{self.pz_min:.0f}_{self.pz_max:.0f}_px{self.px_min:.0f}_{self.px_max:.0f}_py{self.py_min:.0f}_{self.py_max:.0f}.dat'
             outfile2 = open(ofname2, 'w')
-            outfile2.write('#hid, x, y, z, dz, r/rlam, pmem \n')
+            outfile2.write('haloid px_gal py_gal pz_gal dz_gal r_over_rlambda pmem \n')
             outfile2.close()
 
         for ih in range(nh):
@@ -374,8 +376,6 @@ class CalcRichness(object): # one pz slice at a time
 
         outfile1.close()
 
-
-
 z_layer_thickness = boxsize / n_parallel_z
 x_cube_size = boxsize / n_parallel_x
 y_cube_size = boxsize / n_parallel_y
@@ -392,14 +392,37 @@ def calc_one_bin(ibin):
     py_min = iy*y_cube_size
     py_max = (iy+1)*y_cube_size
 
-
     ofname = f'{out_path}/temp/richness_{rich_name}_pz{pz_min:.0f}_{pz_max:.0f}_px{px_min:.0f}_{px_max:.0f}_py{py_min:.0f}_{py_max:.0f}.dat'
 
     if True: #os.path.exists(ofname) == False:
         cr = CalcRichness(pz_min=pz_min, pz_max=pz_max, px_min=px_min, px_max=px_max, py_min=py_min, py_max=py_max)
         cr.measure_richness()
 
-def merge_files_richness():
+def merge_files(richnes_or_members='richness'):
+    # merge all temp file and output a fits file with the same header
+    fname_list = glob.glob(f'{out_path}/temp/{richnes_or_members}_{rich_name}_pz*.dat')
+    nfiles = len(fname_list)
+    if nfiles < n_parallel:
+        print('missing ', n_parallel - nfiles, 'files, not merging')
+    else:
+        df_list = [pd.read_csv(file, sep=r'\s+') for file in fname_list]
+        merged_df = pd.concat(df_list, ignore_index=True)
+        # Turn it into a fits file
+        table = Table.from_pandas(merged_df)
+        # Create FITS Header based on CSV column names
+        hdr = fits.Header()
+        column_names = merged_df.columns.tolist()
+        for idx, col in enumerate(column_names):
+            hdr[f'COLUMN{idx+1}'] = col
+        primary_hdu = fits.PrimaryHDU(header=hdr)
+        table_hdu = fits.BinTableHDU(table)
+        hdul = fits.HDUList([primary_hdu, table_hdu])
+        hdul.writeto(f'{out_path}/{richnes_or_members}_{rich_name}.fit', overwrite=True)
+
+        os.system(f'rm -rf {out_path}/temp/{richnes_or_members}_{rich_name}_pz*.dat')
+
+'''
+def merge_files_richness_old():
     fname_list = glob.glob(f'{out_path}/temp/richness_{rich_name}_pz*.dat')
     nfiles = len(fname_list)
     if nfiles < n_parallel:
@@ -415,7 +438,7 @@ def merge_files_richness():
 
         for fname in fname_list:
             data = pd.read_csv(fname, sep=r'\s+', dtype=np.float64, comment='#', 
-                            names=['haloid', 'mass', 'px', 'py', 'pz', 'rlam', 'lam'])
+                            names=['haloid', 'mass', 'px', 'py', 'pz', 'rlam', 'lam'], skiprows=1)
             hid_out.extend(data['haloid'])
             m_out.extend(data['mass'])
             x_out.extend(data['px'])
@@ -445,11 +468,10 @@ def merge_files_richness():
         ]
         coldefs = fits.ColDefs(cols)
         tbhdu = fits.BinTableHDU.from_columns(coldefs)
-        tbhdu.writeto(f'{out_path}/richness_{rich_name}.fit', overwrite=True)
+        tbhdu.writeto(f'{out_path}/richness_{rich_name}_old.fit', overwrite=True)
 
-        os.system(f'rm -rf {out_path}/temp/richness_{rich_name}_pz*.dat')
 
-def merge_files_members():
+def merge_files_members_old():
     fname_list = glob.glob(f'{out_path}/temp/members_{rich_name}_pz*.dat')
     nfiles = len(fname_list)
     if nfiles < n_parallel:
@@ -466,7 +488,7 @@ def merge_files_members():
 
         for fname in fname_list:
             data = pd.read_csv(fname, sep=r'\s+', dtype=np.float64, comment='#', 
-                            names=['haloid', 'px', 'py', 'pz', 'dz', 'r', 'pmem'])
+                            names=['haloid', 'px', 'py', 'pz', 'dz', 'r', 'pmem'], skiprows=1)
             hid_out.extend(data['haloid'])
             x_out.extend(data['px'])
             y_out.extend(data['py'])
@@ -494,10 +516,9 @@ def merge_files_members():
         ]
         coldefs = fits.ColDefs(cols)
         tbhdu = fits.BinTableHDU.from_columns(coldefs)
-        tbhdu.writeto(f'{out_path}/members_{rich_name}.fit', overwrite=True)
-
-        os.system(f'rm -rf {out_path}/temp/members_{rich_name}_pz*.dat')
-
+        tbhdu.writeto(f'{out_path}/members_{rich_name}_old.fit', overwrite=True)
+        #os.system(f'rm -rf {out_path}/temp/members_{rich_name}_pz*.dat')
+'''
 
 if __name__ == '__main__':
     #calc_one_bin(0)
@@ -517,11 +538,19 @@ if __name__ == '__main__':
     stop = timeit.default_timer()
     print('richness took', '%.2g'%((stop - start)/60), 'mins')
     start = stop
-
-    merge_files_richness()
+    
+    merge_files('richness')
     if save_members == True:
-        merge_files_members()
+        merge_files('members')
 
     stop = timeit.default_timer()
     print('merging took', '%.2g'%((stop - start)/60), 'mins')
-    
+
+    '''
+    start = stop
+    merge_files_richness_old()
+    if save_members == True:
+        merge_files_members_old()
+    stop = timeit.default_timer()
+    print('old merging took', '%.2g'%((stop - start)/60), 'mins')
+    '''

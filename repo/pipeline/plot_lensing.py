@@ -152,12 +152,12 @@ class PlotLensing(object):
         fname = f'{self.out_path}/richness_{self.rich_name}.fit'
         data, header = fitsio.read(fname, header=True)
         mass_all = data['mass_host']
-        sel = (mass_all > 0)
-        xh_all = data['px'][sel] # already rotated when calculating richness
-        yh_all = data['py'][sel]
-        zh_all = data['pz'][sel]
-        lnM_all = np.log(mass_all[sel])
-        lam_all = data['lambda'][sel]
+        #sel = (mass_all > 0)
+        xh_all = data['px']#[sel] # already rotated when calculating richness
+        yh_all = data['py']#[sel]
+        zh_all = data['pz']#[sel]
+        lnM_all = np.log(mass_all)
+        lam_all = data['lambda']#[sel]
 
         # shuffle the sample to remove mass sorting
         shuff = self.rng.permutation(len(xh_all))
@@ -231,6 +231,24 @@ class PlotLensing(object):
 
             data4 = np.array([lam_sel]).transpose()
             np.savetxt(f'{self.fname4}_{ibin}.dat', data4, fmt='%-12g', header='lambda')
+
+    def plot_mass_pdf(self, axes=None, label=None, plot_bias=False, color=None, lw=None):
+        if axes is None and plot_bias==False:
+            fig, axes = plt.subplots(1, self.nbins, figsize=(20, 5))
+
+        if axes is None and plot_bias==True:
+            fig, axes = plt.subplots(1, self.nbins, figsize=(20, 5))
+
+        for ibin in range(self.nbins):
+            lnM = np.loadtxt(f'{self.fname3}_{ibin}.dat')
+            ax = axes[ibin]
+            ax.hist(lnM/np.log(10.), density=True, fc='none', 
+                histtype='step', label=label, lw=lw)
+
+            if ibin == 0: # self.nbins - 1: 
+                ax.legend()
+            ax.set_xlabel(r'$\rm  \log_{10} M$')
+            ax.set_ylabel(r'PDF')
 
     def plot_lensing(self, axes=None, label=None, plot_bias=False, color=None, lw=None):
         if axes is None and plot_bias==False:

@@ -10,6 +10,7 @@ import glob
 import fitsio
 import yaml
 from astropy.io import fits
+from astropy.table import Table
 from concurrent.futures import ProcessPoolExecutor
 
 sys.path.append('../utils')
@@ -103,8 +104,8 @@ readcat.read_halos(Mmin, pec_vel=pec_vel, cluster_only=True)
 boxsize = readcat.boxsize
 OmegaM = readcat.OmegaM
 hubble = readcat.hubble
-hid_in = readcat.hid
-mass_in = readcat.mass
+# hid_in = readcat.hid
+# mass_in = readcat.mass
 
 OmegaDE = 1 - OmegaM
 Ez = np.sqrt(OmegaM * (1+redshift)**3 + OmegaDE)
@@ -129,49 +130,65 @@ else:
 #### read in galaxies ####
 import fitsio
 
-if rank_proxy[:3] != 'env':
-    gal_fname = f'{out_path}/gals.fit'
-    data, h = fitsio.read(gal_fname, header=True)
-    hid = data['haloid']
-    x = data['px']
-    y = data['py']
-    z = data['pz']
-    mass_sub = data['mass_sub']
-    mass_host = data['mass_host']
-    #Mstar = data['Mstar']
-    lum = 10**(-0.4*data['M_z'])
-
-    if rank_proxy == 'mass':
-        rank = mass_sub
-    if rank_proxy == 'mstar':
-        rank = Mstar
-    if rank_proxy == 'lum':
-        rank = lum
-    if rank_proxy == 'none':
-        rank = np.zeros(len(lum))
-
-''' # TODO: sort by environment
-if rank_proxy[:3] == 'env':
+if 'env' in rank_proxy:
     gal_fname = f'{out_path}/gals_{rank_proxy}.fit'
-    data, h = fitsio.read(gal_fname, header=True)
-    #data, h = fitsio.read('data/gal_cat_0071.fit', header=True)
-    #print(h)
+else:
+     gal_fname = f'{out_path}/gals.fit'
+# print(rank_proxy[-3:])
 
-    hid = data['ID']
-    x = data['px']
-    y = data['py']
-    z = data['pz']
-    Mvir = data['Mvir']
-    env = data['env']
-    rank_in = env
-'''
+# if rank_proxy[-3:] != 'env':
+
+#     gal_fname = f'{out_path}/gals.fit'
+# else:
+#     # rank_proxy[-3:] == 'env':
+    
+#     gal_fname = f'{out_path}/gals_{rank_proxy}.fit'
+
+data, h = fitsio.read(gal_fname, header=True)
+hid_host = data['hid_host']
+hid_sub = data['hid_sub']
+x = data['px']
+y = data['py']
+z = data['pz']
+mass_sub = data['mass_sub']
+mass_host = data['mass_host']
+#Mstar = data['Mstar']
+
+
+if rank_proxy == 'mass':
+    rank = mass_sub
+elif rank_proxy == 'lum':
+    lum = 10**(-0.4*data['M_z'])
+    rank = lum
+elif rank_proxy == 'none':
+    rank = np.zeros(len(lum))
+    print('not ranked!!!')
+elif 'env' in rank_proxy:
+    rank = data['env']
+    print(rank_proxy)
+
+
+
+    # data, h = fitsio.read(gal_fname, header=True)
+    # #data, h = fitsio.read('data/gal_cat_0071.fit', header=True)
+    # #print(h)
+
+    # hid = data['ID']
+    # x = data['px']
+    # y = data['py']
+    # z = data['pz']
+    # Mvir = data['Mvir']
+    # env = data['env']
+    # rank_in = env
+
 
 # get the centers 
 sel = (rank > rank_cut)
 x_cen_in = x[sel]
 y_cen_in = y[sel]
 z_cen_in = z[sel]
-hid_cen_in = hid[sel]
+hid_host_cen_in = hid_host[sel] # host id (bookkeeping)
+hid_sub_cen_in = hid_sub[sel] # subhalo id (for cluser id)
 ms_cen_in = mass_sub[sel]
 mh_cen_in = mass_host[sel]
 rank_cen_in = rank[sel]
@@ -183,9 +200,9 @@ z_gal_in = data['pz']
 if pec_vel == True:
     z_gal_in += data['vz'] / Ez / 100.
 
-#hid_gal_in = data['haloid']
-m_gal_in = data['mass_sub']
-#iscen_gal_in = data['iscen']
+hid_gal_in = data['hid_host'] # host id for galaxies
+iscen_gal_in = data['iscen']
+m_gal_in = data['mass_host']
 
 #### periodic boundary condition ####
 z_padding_cen = 0
@@ -196,24 +213,25 @@ y_padding = 3
 z_padding = 0
 
 # periodic boundary condition for centers
-x_cen, y_cen, z_cen, hid_cen, rank_cen, ms_cen, mh_cen = periodic_boundary_condition(
+x_cen, y_cen, z_cen, hid_host_cen, hid_sub_cen, rank_cen, ms_cen, mh_cen = periodic_boundary_condition(
     x_cen_in, y_cen_in, z_cen_in, 
     boxsize, x_padding, y_padding, z_padding, 
-    hid_cen_in, rank_cen_in, ms_cen_in, mh_cen_in)
+    hid_host_cen_in, hid_sub_cen_in, rank_cen_in, ms_cen_in, mh_cen_in)
 
 sort = np.argsort(-rank_cen)
 x_cen = x_cen[sort]
 y_cen = y_cen[sort]
 z_cen = z_cen[sort]
-hid_cen = hid_cen[sort]
+hid_host_cen = hid_host_cen[sort]
+hid_sub_cen = hid_sub_cen[sort]
 rank_cen = rank_cen[sort]
 ms_cen = ms_cen[sort]
 mh_cen = mh_cen[sort]
 
 # periodic boundary condition for galaxies
-x_gal, y_gal, z_gal, m_gal = periodic_boundary_condition(
+x_gal, y_gal, z_gal, hid_gal, iscen_gal, m_gal = periodic_boundary_condition(
     x_gal_in, y_gal_in, z_gal_in,
-    boxsize, x_padding, y_padding, z_padding, m_gal_in)
+    boxsize, x_padding, y_padding, z_padding, hid_gal_in, iscen_gal_in, m_gal_in)
 
 
 class CalcRichness(object): # one pz slice at a time
@@ -234,6 +252,8 @@ class CalcRichness(object): # one pz slice at a time
         self.x_gal = x_gal[sel_gal]
         self.y_gal = y_gal[sel_gal]
         self.z_gal = z_gal[sel_gal]
+        self.hid_gal = hid_gal[sel_gal]
+        self.iscen_gal = iscen_gal[sel_gal]
         self.m_gal = m_gal[sel_gal]
         
         # centers in this slice
@@ -245,7 +265,8 @@ class CalcRichness(object): # one pz slice at a time
         self.x_cen = x_cen[sel_cen]
         self.y_cen = y_cen[sel_cen]
         self.z_cen = z_cen[sel_cen]
-        self.hid_cen = hid_cen[sel_cen]
+        self.hid_host_cen = hid_host_cen[sel_cen]
+        self.hid_sub_cen = hid_sub_cen[sel_cen]
         self.rank_cen = rank_cen[sel_cen]
         self.ms_cen = ms_cen[sel_cen]
         self.mh_cen = mh_cen[sel_cen]
@@ -255,7 +276,8 @@ class CalcRichness(object): # one pz slice at a time
         self.x_cen = self.x_cen[sort]
         self.y_cen = self.y_cen[sort]
         self.z_cen = self.z_cen[sort]
-        self.hid_cen = self.hid_cen[sort]
+        self.hid_host_cen = self.hid_host_cen[sort]
+        self.hid_sub_cen = self.hid_sub_cen[sort]
         self.rank_cen = self.rank_cen[sort]
         self.ms_cen = self.ms_cen[sort]
         self.mh_cen = self.mh_cen[sort]
@@ -352,6 +374,9 @@ class CalcRichness(object): # one pz slice at a time
                     self.x_gal_mem = self.x_gal[gal_ind][sel_z][sel_mem]
                     self.y_gal_mem = self.y_gal[gal_ind][sel_z][sel_mem]
                     self.z_gal_mem = self.z_gal[gal_ind][sel_z][sel_mem]
+
+                    self.hid_gal_mem = self.hid_gal[gal_ind][sel_z][sel_mem]
+                    self.iscen_gal_mem = self.iscen_gal[gal_ind][sel_z][sel_mem]
                     self.m_gal_mem = self.m_gal[gal_ind][sel_z][sel_mem]
                     dz_all = np.array([dz0[sel_mem], dz1[sel_mem], dz2[sel_mem]])
                     arg = np.array([np.argmin(np.abs(dz_all), axis=0)]) # find the smallest absolute value
@@ -365,6 +390,8 @@ class CalcRichness(object): # one pz slice at a time
                     self.x_gal_mem = np.tile(self.x_gal[gal_ind][sel_z][sel_mem], 3)
                     self.y_gal_mem = np.tile(self.y_gal[gal_ind][sel_z][sel_mem], 3)
                     self.z_gal_mem = np.tile(self.z_gal[gal_ind][sel_z][sel_mem], 3)
+                    self.hid_gal_mem = np.tile(self.hid_gal[gal_ind][sel_z][sel_mem], 3)
+                    self.iscen_gal_mem = np.tile(self.iscen_gal[gal_ind][sel_z][sel_mem], 3)
                     self.m_gal_mem = np.tile(self.m_gal[gal_ind][sel_z][sel_mem], 3)
                     # save duplicate galaxies for dz0, dz1, and dz2
                     self.dz_out = np.concatenate([dz0[sel_mem], dz1[sel_mem], dz2[sel_mem]])
@@ -376,6 +403,8 @@ class CalcRichness(object): # one pz slice at a time
                     self.x_gal_mem = self.x_gal_mem[sel]
                     self.y_gal_mem = self.y_gal_mem[sel]
                     self.z_gal_mem = self.z_gal_mem[sel]
+                    self.hid_gal_mem = self.hid_gal_mem[sel]
+                    self.iscen_gal_mem = self.iscen_gal_mem[sel]
                     self.m_gal_mem = self.m_gal_mem[sel]
                     self.dz_out = self.dz_out[sel]
                     self.r_out = self.r_out[sel]
@@ -395,13 +424,15 @@ class CalcRichness(object): # one pz slice at a time
         #### richness files:  ####
         ofname1 = f'{out_path}/temp/richness_{rich_name}_pz{self.pz_min:.0f}_{self.pz_max:.0f}_px{self.px_min:.0f}_{self.px_max:.0f}_py{self.py_min:.0f}_{self.py_max:.0f}.dat'
         outfile1 = open(ofname1, 'w')
-        outfile1.write('#hid, rank, px, py, pz, rlam, lam, m_sub, m_halo \n')
+        #outfile1.write('#hid, rank, px, py, pz, rlam, lam, m_sub, m_halo \n')
+        outfile1.write('cluster_id host_id rank px py pz rlambda lambda mass_sub mass_host \n')
 
         #### member files: only write header (optional) ####
         if save_members == True:
             ofname2 = f'{out_path}/temp/members_{rich_name}_pz{self.pz_min:.0f}_{self.pz_max:.0f}_px{self.px_min:.0f}_{self.px_max:.0f}_py{self.py_min:.0f}_{self.py_max:.0f}.dat'
             outfile2 = open(ofname2, 'w')
-            outfile2.write('#hid, x, y, z, dz, r/rlam, pmem, m \n')
+            #outfile2.write('#hid, x, y, z, dz, r/rlam, pmem, m \n')
+            outfile2.write('cluster_id px_gal py_gal pz_gal dz_gal r_over_rlambda pmem haloid iscen mass_host \n')
             outfile2.close()
 
         for ih in range(nh):
@@ -411,15 +442,15 @@ class CalcRichness(object): # one pz slice at a time
                 self.x_cen[ih] > self.px_min and self.x_cen[ih] < self.px_max and \
                 self.y_cen[ih] > self.py_min and self.y_cen[ih] < self.py_max:
 
-                outfile1.write('%12i %15e %12g %12g %12g %12g %12g %12g %12g \n'%(self.hid_cen[ih], self.rank_cen[ih], self.x_cen[ih], self.y_cen[ih], self.z_cen[ih], rlam, lam, self.ms_cen[ih], self.mh_cen[ih]))
+                outfile1.write('%12i %12i %15e %12g %12g %12g %12g %12g %12g %12g \n'%(self.hid_sub_cen[ih], self.hid_host_cen[ih], self.rank_cen[ih], self.x_cen[ih], self.y_cen[ih], self.z_cen[ih], rlam, lam, self.ms_cen[ih], self.mh_cen[ih]))
 
                 #### save members (append) (optional) #### 
                 if save_members == True:
                     self.dz_out *= 3000. / Ez # convert back to comoving distance
-                    self.hid_mem = self.x_gal_mem * 0 + self.hid[ih]
-                    data = np.array([self.hid_mem, self.x_gal_mem, self.y_gal_mem, self.z_gal_mem, self.dz_out, self.r_out, self.pmem_out, self.m_gal_mem]).transpose()
+                    self.cid_mem = self.x_gal_mem * 0 + self.hid_sub_cen[ih]
+                    data = np.array([self.cid_mem, self.x_gal_mem, self.y_gal_mem, self.z_gal_mem, self.dz_out, self.r_out, self.pmem_out, self.hid_gal_mem, self.iscen_gal_mem, self.m_gal_mem]).transpose()
                     with open(ofname2, "ab") as f:
-                        np.savetxt(f, data, fmt='%12i %12g %12g %12g %12g %12g %12g %12e')
+                        np.savetxt(f, data, fmt='%12i %12g %12g %12g %12g %12g %12g %12i %12i %12e')
 
         outfile1.close()
 
@@ -449,6 +480,31 @@ def calc_one_bin(ibin):
         cr = CalcRichness(pz_min=pz_min, pz_max=pz_max, px_min=px_min, px_max=px_max, py_min=py_min, py_max=py_max)
         cr.measure_richness()
 
+def merge_files(richnes_or_members='richness'):
+    # merge all temp file and output a fits file with the same header
+    fname_list = glob.glob(f'{out_path}/temp/{richnes_or_members}_{rich_name}_pz*.dat')
+    nfiles = len(fname_list)
+    if nfiles < n_parallel:
+        print('missing ', n_parallel - nfiles, 'files, not merging')
+    else:
+        df_list = [pd.read_csv(file, sep=r'\s+') for file in fname_list]
+        merged_df = pd.concat(df_list, ignore_index=True)
+        # Turn it into a fits file
+        table = Table.from_pandas(merged_df)
+        # Create FITS Header based on CSV column names
+        hdr = fits.Header()
+        column_names = merged_df.columns.tolist()
+        for idx, col in enumerate(column_names):
+            hdr[f'COLUMN{idx+1}'] = col
+        primary_hdu = fits.PrimaryHDU(header=hdr)
+        table_hdu = fits.BinTableHDU(table)
+        hdul = fits.HDUList([primary_hdu, table_hdu])
+        hdul.writeto(f'{out_path}/{richnes_or_members}_{rich_name}.fit', overwrite=True)
+
+        os.system(f'rm -rf {out_path}/temp/{richnes_or_members}_{rich_name}_pz*.dat')
+
+
+r'''
 def merge_files_richness():
     fname_list = glob.glob(f'{out_path}/temp/richness_{rich_name}_pz*.dat')
     nfiles = len(fname_list)
@@ -559,7 +615,7 @@ def merge_files_members():
         tbhdu.writeto(f'{out_path}/members_{rich_name}.fit', overwrite=True)
 
         #os.system(f'rm -rf {out_path}/temp/members_{rich_name}_pz*.dat')
-
+'''
 
 if __name__ == '__main__':
     #calc_one_bin(0)
@@ -580,9 +636,9 @@ if __name__ == '__main__':
     print('richness took', '%.2g'%((stop - start)/60), 'mins')
     start = stop
 
-    merge_files_richness()
+    merge_files('richness')
     if save_members == True:
-        merge_files_members()
+        merge_files('members')
 
     stop = timeit.default_timer()
     print('merging took', '%.2g'%((stop - start)/60), 'mins')

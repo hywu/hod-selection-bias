@@ -6,6 +6,9 @@ def periodic_boundary_condition(x, y, z, boxsize, x_padding, y_padding, z_paddin
     # takes arbitrary number of extra properties
     # output the same number of extra properties
 
+    if (boxsize - np.max(x)) > 0.01 * boxsize:
+        print('boxsize is probably wrong!')
+
     prop_dict = {'x':[], 'y':[], 'z':[]}
     #print('np.shape(args)', np.shape(args))
     nprop = np.shape(args)[0]
