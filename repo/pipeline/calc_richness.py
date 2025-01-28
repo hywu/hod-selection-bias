@@ -279,12 +279,21 @@ class CalcRichness(object): # one pz slice at a time
             for iteration in range(100):
                 if use_cylinder == True and depth > 0:
                     ngal = len(r[r < rlam])
-                elif use_pmem == True or depth == -1:
-                    pmem0 = pmem_weights(dz0, r/rlam, dz_max=dz_max)
-                    pmem1 = pmem_weights(dz1, r/rlam, dz_max=dz_max)
-                    pmem2 = pmem_weights(dz2, r/rlam, dz_max=dz_max)
+                elif use_pmem == True:# or depth == -1:
+                    # pmem0 = pmem_weights(dz0, r/rlam, dz_max=dz_max)
+                    # pmem1 = pmem_weights(dz1, r/rlam, dz_max=dz_max)
+                    # pmem2 = pmem_weights(dz2, r/rlam, dz_max=dz_max)
+                    pmem0 = pmem_weights_dchi(dz0, r/rlam, dchi_max=dchi_max, depth=depth)
+                    pmem1 = pmem_weights_dchi(dz1, r/rlam, dchi_max=dchi_max, depth=depth)
+                    pmem2 = pmem_weights_dchi(dz2, r/rlam, dchi_max=dchi_max, depth=depth)
                     pmem = pmem0 + pmem1 + pmem2
                     ngal = np.sum(pmem)
+
+                    # nbg = density_bg * volume_dchi(rlam, depth)
+                    # ngal = ngal - nbg # okay to be negative
+                    # #ngal = max(ngal - nbg, 0)
+
+
                 else:
                     print('BUG!!')
 
