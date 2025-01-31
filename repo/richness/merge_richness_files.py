@@ -3,7 +3,7 @@ import h5py as h5
 import numpy as np
 
 def merge_richness_files(out_path, ofname_base, boxsize, quad_file=False):    
-    Nslices  = int(boxsize / 50.0) #Assumes boxsize is a multiple of 100.0 Mpc/h
+    Nslices  = int(boxsize / 400.0) #Assumes boxsize is a multiple of 40.0 Mpc/h
     outfile = out_path + f'/{ofname_base}.h5' #+ run_name
     print(outfile)
 
