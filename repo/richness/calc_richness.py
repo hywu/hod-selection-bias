@@ -186,8 +186,8 @@ print('finished galaxies')
 f.close()
 
 n_parallel_z = 1 # NOTE! cannot do more than one yet.
-n_parallel_x = int(boxsize/50.)
-n_parallel_y = int(boxsize/50.)
+n_parallel_x = int(boxsize/400.)
+n_parallel_y = int(boxsize/400.)
 
 n_parallel = n_parallel_z * n_parallel_x * n_parallel_y
 
