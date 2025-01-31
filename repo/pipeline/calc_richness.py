@@ -293,7 +293,6 @@ class CalcRichness(object): # one pz slice at a time
                     # ngal = ngal - nbg # okay to be negative
                     # #ngal = max(ngal - nbg, 0)
 
-
                 else:
                     print('BUG!!')
 

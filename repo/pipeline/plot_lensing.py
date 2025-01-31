@@ -150,14 +150,21 @@ class PlotLensing(object):
 
         # get clusters
         fname = f'{self.out_path}/richness_{self.rich_name}.fit'
-        data, header = fitsio.read(fname, header=True)
-        mass_all = data['mass_host']
-        #sel = (mass_all > 0)
-        xh_all = data['px']#[sel] # already rotated when calculating richness
-        yh_all = data['py']#[sel]
-        zh_all = data['pz']#[sel]
+        fname2 = f'{self.out_path}/richness_{self.rich_name}_best_match.fit'
+        
+        if os.path.exists(fname2):
+            print('use best_match mass' )
+            data, header = fitsio.read(fname2, header=True)
+            mass_all = data['mass_best_match']
+        else:
+            data, header = fitsio.read(fname2, header=True)
+            mass_all = data['mass_host']
+
+        xh_all = data['px']
+        yh_all = data['py']
+        zh_all = data['pz']
         lnM_all = np.log(mass_all)
-        lam_all = data['lambda']#[sel]
+        lam_all = data['lambda']
 
         # shuffle the sample to remove mass sorting
         shuff = self.rng.permutation(len(xh_all))

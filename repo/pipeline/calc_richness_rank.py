@@ -39,6 +39,14 @@ use_cylinder = para['use_cylinder']
 use_rlambda = para['use_rlambda']
 use_pmem = para.get('use_pmem', False)
 
+use_rp_weight = para.get('use_rp_weight', False)
+if use_rp_weight == True:
+    print('using rp weighting')
+    epsilon = para['epsilon']
+    def rp_weight(rp):
+        return epsilon**2/(rp**2 + epsilon**2)
+
+
 # los = para.get('los', 'z')
 # if los == 'xyz':
 #     los = sys.argv[2]
@@ -130,8 +138,8 @@ else:
 #### read in galaxies ####
 import fitsio
 
-if 'env' in rank_proxy:
-    gal_fname = f'{out_path}/gals_{rank_proxy}.fit'
+if 'env' in rank_proxy or 'eps' in rank_proxy:
+    gal_fname = f'{out_path}/gals_{rank_proxy}_env.fit'
 else:
      gal_fname = f'{out_path}/gals.fit'
 # print(rank_proxy[-3:])
@@ -161,9 +169,9 @@ elif rank_proxy == 'lum':
     lum = 10**(-0.4*data['M_z'])
     rank = lum
 elif rank_proxy == 'none':
-    rank = np.zeros(len(lum))
-    print('not ranked!!!')
-elif 'env' in rank_proxy:
+    rank = np.zeros(len(x))
+    print('Galaxies are not ranked!')
+elif 'env' in rank_proxy or 'eps' in rank_proxy:
     rank = data['env']
     print(rank_proxy)
 
@@ -356,8 +364,10 @@ class CalcRichness(object): # one pz slice at a time
             radius = para['radius']
             rlam = radius * 1. # fixed aperture
             if use_cylinder == True and depth > 0:
-                ngal = len(r[r < rlam])
-
+                if use_rp_weight == False:
+                    ngal = len(r[r < rlam])
+                else:
+                    ngal = np.sum(rp_weight(r[r < rlam]))
         #### Step 4: do percolation ####
         if rlam > 0:
             sel_mem = (r < rlam)
@@ -425,14 +435,14 @@ class CalcRichness(object): # one pz slice at a time
         ofname1 = f'{out_path}/temp/richness_{rich_name}_pz{self.pz_min:.0f}_{self.pz_max:.0f}_px{self.px_min:.0f}_{self.px_max:.0f}_py{self.py_min:.0f}_{self.py_max:.0f}.dat'
         outfile1 = open(ofname1, 'w')
         #outfile1.write('#hid, rank, px, py, pz, rlam, lam, m_sub, m_halo \n')
-        outfile1.write('cluster_id host_id rank px py pz rlambda lambda mass_sub mass_host \n')
+        outfile1.write('cluster_id hid_host rank px py pz rlambda lambda mass_sub mass_host \n')
 
         #### member files: only write header (optional) ####
         if save_members == True:
             ofname2 = f'{out_path}/temp/members_{rich_name}_pz{self.pz_min:.0f}_{self.pz_max:.0f}_px{self.px_min:.0f}_{self.px_max:.0f}_py{self.py_min:.0f}_{self.py_max:.0f}.dat'
             outfile2 = open(ofname2, 'w')
             #outfile2.write('#hid, x, y, z, dz, r/rlam, pmem, m \n')
-            outfile2.write('cluster_id px_gal py_gal pz_gal dz_gal r_over_rlambda pmem haloid iscen mass_host \n')
+            outfile2.write('cluster_id px_gal py_gal pz_gal dz_gal r_over_rlambda pmem hid_host iscen mass_host \n')
             outfile2.close()
 
         for ih in range(nh):

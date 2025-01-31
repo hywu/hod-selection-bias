@@ -45,7 +45,7 @@ class ReadFlamingo(object):
         sort = np.argsort(-Mvir)
         self.mass = Mvir[sort]
 
-        self.hid = data['haloid'][sel][sort]
+        self.hid = data['hid_host'][sel][sort]
         self.xh = data['px'][sel][sort]
         self.yh = data['py'][sel][sort]
         self.zh = data['pz'][sel][sort]
