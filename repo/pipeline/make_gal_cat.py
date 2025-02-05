@@ -20,6 +20,7 @@ from fid_hod import Ngal_S20_poisson
 #### read in the yaml file  ####
 yml_fname = sys.argv[1]
 #./make_gal_cat.py ../yml/mini_uchuu/mini_uchuu_fid_hod.yml
+#./make_gal_cat.py ../yml/abacus_summit/abacus_summit_fid_hod.yml
 
 with open(yml_fname, 'r') as stream:
     try:
@@ -27,22 +28,60 @@ with open(yml_fname, 'r') as stream:
     except yaml.YAMLError as exc:
         print(exc)
 
-output_loc = para['output_loc']
+
+#### For AbacusSummit ####
+cosmo_id = para.get('cosmo_id', None)
+hod_id = para.get('hod_id', None)
+phase = para.get('phase', None)
+redshift = para['redshift']
+if redshift == 0.3: z_str = '0p300'
+
+if cosmo_id != None:
+    output_loc = para['output_loc']+f'/base_c{cosmo_id:0>3d}_ph{phase:0>3d}/z{z_str}/'
+print(output_loc)
+
+
+
 model_name = para['model_name']
 out_path = f'{output_loc}/model_{model_name}/'
-redshift = para['redshift']
-alpha = para['alpha']
-lgkappa = para['lgkappa']
-lgMcut = para['lgMcut']
-sigmalogM = para['sigmalogM']
-sigma_intr = para['sigmaintr']
-kappa = 10**lgkappa
-lgM20 = para.get('lgM20', None)
-if lgM20 == None:
+
+def get_hod_para(hod_id_wanted):
+    df = pd.read_csv('/projects/hywu/cluster_sims/cluster_finding/work/hod/repo/abacus_summit/hod_params.csv', sep=',')
+    nrows = df.shape[0]
+    for irow in np.arange(nrows):
+        row = df.iloc[irow]
+        hod_id = row['hod_id']
+        if hod_id == hod_id_wanted:
+            row_output = row
+            break
+    return row_output # it's a data frame, but it can be used as a dictionary
+
+
+alpha = para.get('alpha', None)
+if alpha != None:
+    alpha = para['alpha']
+    lgkappa = para['lgkappa']
+    lgMcut = para['lgMcut']
+    sigmalogM = para['sigmalogM']
+    sigma_intr = para['sigmaintr']
     lgM1 = para['lgM1']
 else:
-    M1 = 20**(-1/alpha) *(10**lgM20 - 10**lgkappa * 10**lgMcut)
-    lgM1 = np.log10(M1)
+    hod_id = para['hod_id']
+    hod_para = get_hod_para(hod_id)
+    alpha = hod_para['alpha']
+    lgkappa = hod_para['lgkappa']
+    lgMcut = hod_para['lgMcut']
+    sigmalogM = hod_para['sigmalogM']
+    sigma_intr = hod_para['sigmaintr']
+    lgM1 = hod_para['lgM1']
+
+kappa = 10**lgkappa
+# lgM20 = para.get('lgM20', None)
+# if lgM20 == None:
+#     lgM1 = para['lgM1']
+# else:
+#     M1 = 20**(-1/alpha) *(10**lgM20 - 10**lgkappa * 10**lgMcut)
+#     lgM1 = np.log10(M1)
 
 pec_vel = para.get('pec_vel', False)
 

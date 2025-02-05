@@ -4,10 +4,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from numpy.random import default_rng
 from scipy.interpolate import interp1d
+import configparser
 
 from colossus.cosmology import cosmology
 from colossus.halo import concentration
 from colossus.halo import mass_defs
+
+from read_abacus_summit import get_cosmo_para
 
 class DrawSatPosition(object):
     def __init__(self, yml_fname):
@@ -19,11 +22,25 @@ class DrawSatPosition(object):
 
         self.redshift = para['redshift']
         self.mdef = para['mdef']
-        self.Om0 = para['OmegaM']
-        Ob0 = para['OmegaB']
-        sigma8 = para['sigma8']
-        ns = para['ns']
-        H0 = para['hubble'] * 100
+
+        #cosmo_from_header = para.get('cosmo_from_header', False)
+
+        self.Om0 = para.get('OmegaM', -1)
+        if self.Om0 != -1:
+            self.Om0 = para['OmegaM']
+            Ob0 = para['OmegaB']
+            sigma8 = para['sigma8']
+            ns = para['ns']
+            H0 = para['hubble'] * 100
+        else:
+            print('read cosmo from csv')
+            cosmo_id = para['cosmo_id']
+            cosmo_para = get_cosmo_para(cosmo_id)
+            self.Om0 = cosmo_para['OmegaM']
+            Ob0 = cosmo_para['OmegaB']
+            sigma8 = cosmo_para['sigma8']
+            ns = cosmo_para['ns']
+            H0 = cosmo_para['hubble'] * 100
 
         seed = para.get('seed', 42)
         self.rng = default_rng(seed)
@@ -96,7 +113,8 @@ class DrawSatPosition(object):
 
 
 if __name__ == "__main__":
-    yml_fname = '../yml/mini_uchuu/mini_uchuu_fid_hod.yml'
+    #yml_fname = '../yml/mini_uchuu/mini_uchuu_fid_hod.yml'
+    yml_fname = '../yml/abacus_summit/abacus_summit_fid_hod.yml'
     dsp = DrawSatPosition(yml_fname)
     dsp.draw_sat_position(1e14, 100)
     # vx, vy, vz = dsp.draw_sat_velocity_old(1e14, 100)
