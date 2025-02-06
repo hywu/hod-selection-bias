@@ -1,24 +1,29 @@
 #!/usr/bin/env python
-import timeit
-start = timeit.default_timer()
+from concurrent.futures import ProcessPoolExecutor
+import fitsio
 import numpy as np
+import os
 import pandas as pd
 from scipy import spatial
-import os
 import sys
-import glob
-import fitsio
+import timeit
+#import glob
 import yaml
-from astropy.io import fits
-from astropy.table import Table
-from concurrent.futures import ProcessPoolExecutor
+# from astropy.io import fits
+# from astropy.table import Table
+start = timeit.default_timer()
+
+
 
 sys.path.append('../utils')
 from periodic_boundary_condition import periodic_boundary_condition
 #from periodic_boundary_condition import periodic_boundary_condition_halos
+from merge_files import merge_files
 
 yml_fname = sys.argv[1]
 #./calc_richness.py ../yml/mini_uchuu/mini_uchuu_fid_hod.yml
+
+##srun -A hywu_cluster_sims_0001 -p dev -c 1 --mem=8GB -t 120 --pty /bin/bash
 
 with open(yml_fname, 'r') as stream:
     try:
@@ -26,7 +31,20 @@ with open(yml_fname, 'r') as stream:
     except yaml.YAMLError as exc:
         print(exc)
 
-redshift = para['redshift']
+
+#### For AbacusSummit ####
+if para['nbody'] == 'abacus_summit':
+    cosmo_id = para.get('cosmo_id', None)
+    hod_id = para.get('hod_id', None)
+    phase = para.get('phase', None)
+    redshift = para['redshift']
+    if redshift == 0.3: z_str = '0p300'
+    output_loc = para['output_loc']+f'/base_c{cosmo_id:0>3d}_ph{phase:0>3d}/z{z_str}/'
+else:
+   output_loc = para['output_loc']
+   redshift = para['redshift']
+
+
 depth = para['depth']
 perc = para['perc']
 use_rlambda = para['use_rlambda']
@@ -43,7 +61,8 @@ print('use pmem:', use_pmem)
 print('pec vel:', pec_vel)
 print('sat from part:', sat_from_part)
 
-Mmin = 10**12.5 # TODO
+#Mmin = 10**12.5 # TODO
+Mmin = para.get('Mmin', 10**12.5)
 
 n_parallel_z = 1 # NOTE! cannot do more than one yet.
 n_parallel_x = 10 # TODO: check n_parallel_x != n_parallel_y
@@ -54,7 +73,7 @@ n_parallel = n_parallel_z * n_parallel_x * n_parallel_y
 z_padding_halo = 0
 z_padding_gal = 0
 
-output_loc = para['output_loc']
+#output_loc = para['output_loc']
 model_name = para['model_name']
 rich_name = para['rich_name']
 
@@ -88,7 +107,7 @@ if para['nbody'] == 'tng_dmo':
     readcat = ReadTNGDMO(para['nbody_loc'], halofinder, redshift)
     print('halofinder', halofinder)
 
-readcat.read_halos(Mmin, pec_vel=pec_vel, cluster_only=True)
+readcat.read_halos(Mmin, pec_vel=pec_vel)#, cluster_only=True)
 boxsize = readcat.boxsize
 OmegaM = readcat.OmegaM
 hubble = readcat.hubble
@@ -413,6 +432,7 @@ def calc_one_bin(ibin):
         cr = CalcRichness(pz_min=pz_min, pz_max=pz_max, px_min=px_min, px_max=px_max, py_min=py_min, py_max=py_max)
         cr.measure_richness()
 
+'''
 def merge_files(richnes_or_members='richness'):
     # merge all temp file and output a fits file with the same header
     fname_list = glob.glob(f'{out_path}/temp/{richnes_or_members}_{rich_name}_pz*.dat')
@@ -435,109 +455,11 @@ def merge_files(richnes_or_members='richness'):
         hdul.writeto(f'{out_path}/{richnes_or_members}_{rich_name}.fit', overwrite=True)
 
         os.system(f'rm -rf {out_path}/temp/{richnes_or_members}_{rich_name}_pz*.dat')
-
-'''
-def merge_files_richness_old():
-    fname_list = glob.glob(f'{out_path}/temp/richness_{rich_name}_pz*.dat')
-    nfiles = len(fname_list)
-    if nfiles < n_parallel:
-        print('missing ', n_parallel - nfiles, 'files, not merging')
-    else:
-        hid_out = []
-        m_out = []
-        x_out = []
-        y_out = []
-        z_out = []
-        rlam_out = []
-        lam_out = []
-
-        for fname in fname_list:
-            data = pd.read_csv(fname, sep=r'\s+', dtype=np.float64, comment='#', 
-                            names=['haloid', 'mass', 'px', 'py', 'pz', 'rlam', 'lam'], skiprows=1)
-            hid_out.extend(data['haloid'])
-            m_out.extend(data['mass'])
-            x_out.extend(data['px'])
-            y_out.extend(data['py'])
-            z_out.extend(data['pz'])
-            rlam_out.extend(data['rlam'])
-            lam_out.extend(data['lam'])
-            
-        hid_out = np.array(hid_out)
-        m_out = np.array(m_out)
-        x_out = np.array(x_out)
-        y_out = np.array(y_out)
-        z_out = np.array(z_out)
-        rlam_out = np.array(rlam_out)
-        lam_out = np.array(lam_out)
-
-        sel = np.argsort(-m_out)
-
-        cols = [
-            fits.Column(name='haloid', format='K' ,array=hid_out[sel]),
-            fits.Column(name='mass', format='E',array=m_out[sel]),
-            fits.Column(name='px', format='D' ,array=x_out[sel]),
-            fits.Column(name='py', format='D',array=y_out[sel]),
-            fits.Column(name='pz', format='D',array=z_out[sel]),
-            fits.Column(name='Rlambda', format='D',array=rlam_out[sel]),
-            fits.Column(name='lambda', format='D',array=lam_out[sel]),
-        ]
-        coldefs = fits.ColDefs(cols)
-        tbhdu = fits.BinTableHDU.from_columns(coldefs)
-        tbhdu.writeto(f'{out_path}/richness_{rich_name}_old.fit', overwrite=True)
-
-
-def merge_files_members_old():
-    fname_list = glob.glob(f'{out_path}/temp/members_{rich_name}_pz*.dat')
-    nfiles = len(fname_list)
-    if nfiles < n_parallel:
-        print('missing ', n_parallel - nfiles, 'files, not merging')
-    else:
-        print('nfiles', nfiles)
-        hid_out = []
-        x_out = []
-        y_out = []
-        z_out = []
-        dz_out = []
-        r_out = []
-        pmem_out = []
-
-        for fname in fname_list:
-            data = pd.read_csv(fname, sep=r'\s+', dtype=np.float64, comment='#', 
-                            names=['haloid', 'px', 'py', 'pz', 'dz', 'r', 'pmem'], skiprows=1)
-            hid_out.extend(data['haloid'])
-            x_out.extend(data['px'])
-            y_out.extend(data['py'])
-            z_out.extend(data['pz'])
-            dz_out.extend(data['dz'])
-            r_out.extend(data['r'])
-            pmem_out.extend(data['pmem'])
-            
-        hid_out = np.array(hid_out)
-        x_out = np.array(x_out)
-        y_out = np.array(y_out)
-        z_out = np.array(z_out)
-        dz_out = np.array(dz_out)
-        r_out = np.array(r_out)
-        pmem_out = np.array(pmem_out)
-
-        cols = [
-            fits.Column(name='haloid', format='K' ,array=hid_out),
-            fits.Column(name='px_gal', format='D' ,array=x_out),
-            fits.Column(name='py_gal', format='D',array=y_out),
-            fits.Column(name='pz_gal', format='D',array=z_out),
-            fits.Column(name='dz_gal', format='D',array=dz_out),
-            fits.Column(name='r_over_rlambda', format='D',array=r_out),
-            fits.Column(name='pmem', format='D',array=pmem_out),
-        ]
-        coldefs = fits.ColDefs(cols)
-        tbhdu = fits.BinTableHDU.from_columns(coldefs)
-        tbhdu.writeto(f'{out_path}/members_{rich_name}_old.fit', overwrite=True)
-        #os.system(f'rm -rf {out_path}/temp/members_{rich_name}_pz*.dat')
 '''
 
 if __name__ == '__main__':
     #calc_one_bin(0)
-    
+    #exit()
     
     stop = timeit.default_timer()
     print('calc_richness.py prep took', '%.2g'%((stop - start)/60), 'mins')
@@ -554,9 +476,14 @@ if __name__ == '__main__':
     print('richness took', '%.2g'%((stop - start)/60), 'mins')
     start = stop
     
-    merge_files('richness')
+    merge_files(in_fname=f'{out_path}/temp/richness_{rich_name}_*.dat', 
+        out_fname=f'{out_path}/richness_{rich_name}.fit', 
+        nfiles_expected=n_parallel)
+    
     if save_members == True:
-        merge_files('members')
+        merge_files(in_fname=f'{out_path}/temp/members_{rich_name}_*.dat', 
+            out_fname=f'{out_path}/members_{rich_name}.fit', 
+            nfiles_expected=n_parallel)
 
     stop = timeit.default_timer()
     print('merging took', '%.2g'%((stop - start)/60), 'mins')

@@ -1,21 +1,22 @@
 #!/usr/bin/env python
+from concurrent.futures import ProcessPoolExecutor
+#import h5py
+import numpy as np
+import os
+import pandas as pd
+#from astropy.io import fits
+import sys
 import timeit
+import yaml
+
 start = timeit.default_timer()
 start_master = start * 1
-import numpy as np
-import pandas as pd
-import h5py
-from astropy.io import fits
-import pandas as pd
-import os
-import sys
-import glob
-import yaml
-from concurrent.futures import ProcessPoolExecutor
 
 #### my functions ####
 sys.path.append('../utils')
 from fid_hod import Ngal_S20_poisson
+from print_memory import print_memory
+from merge_files import merge_files
 
 #### read in the yaml file  ####
 yml_fname = sys.argv[1]
@@ -28,18 +29,19 @@ with open(yml_fname, 'r') as stream:
     except yaml.YAMLError as exc:
         print(exc)
 
+#print_memory(message='after open yml')
+
 
 #### For AbacusSummit ####
-cosmo_id = para.get('cosmo_id', None)
-hod_id = para.get('hod_id', None)
-phase = para.get('phase', None)
-redshift = para['redshift']
-if redshift == 0.3: z_str = '0p300'
-
-if cosmo_id != None:
+if para['nbody'] == 'abacus_summit':
+    cosmo_id = para.get('cosmo_id', None)
+    hod_id = para.get('hod_id', None)
+    phase = para.get('phase', None)
+    redshift = para['redshift']
+    if redshift == 0.3: z_str = '0p300'
     output_loc = para['output_loc']+f'/base_c{cosmo_id:0>3d}_ph{phase:0>3d}/z{z_str}/'
-print(output_loc)
-
+else:
+   output_loc = para['output_loc']
 
 
 model_name = para['model_name']
@@ -110,6 +112,8 @@ with open(f'{out_path}/para.yml', 'w') as outfile:
 
 print('output is at ' + out_path)
 
+#print_memory(message='before readcat')
+
 if para['nbody'] == 'mini_uchuu':
     from read_mini_uchuu import ReadMiniUchuu
     readcat = ReadMiniUchuu(para['nbody_loc'], redshift)
@@ -142,7 +146,10 @@ if pec_vel == True:
     vy_halo_all = readcat.vy
     vz_halo_all = readcat.vz
 
+print_memory(message='done readcat')
+
 def calc_one_layer(pz_min, pz_max):
+    print_memory(message='before calc_one_layer')
     if sat_from_part == True:
         dsp_part.particle_in_one_layer(pz_min, pz_max)
 
@@ -178,8 +185,12 @@ def calc_one_layer(pz_min, pz_max):
         if Ncen > 0.5:
             hid_out.append(hid_sub[ih])
             iscen_out.append(1)
-            from_part_out.append(1)
             m_out.append(mass_sub[ih])
+
+            if sat_from_part == True:
+                from_part_out.append(1)
+            else:
+                from_part_out.append(0)
 
             px_out.append(px_halo_sub[ih])
             py_out.append(py_halo_sub[ih])
@@ -247,7 +258,10 @@ def calc_one_layer(pz_min, pz_max):
     #print(len(hid_out), len(from_part_out))
     data = np.array([hid_out, m_out, px_out, py_out, pz_out, vx_out, vy_out, vz_out, iscen_out, from_part_out]).transpose()
     ofname = f'{out_path}/temp/gals_{pz_min}_{pz_max}.dat'
-    np.savetxt(ofname, data, fmt='%-12i %-15.12e %-12.12g %-12.12g %-12.12g  %-12.12g %-12.12g %-12.12g %-12i %-12i', header='haloid, M200m, px, py, pz, vx, vy, vz, iscen, from_part') # need a few more decimal places
+    np.savetxt(ofname, data, fmt='%-12i %-15.12e %-12.12g %-12.12g %-12.12g  %-12.12g %-12.12g %-12.12g %-12i %-12i', header='haloid mass px py pz vx vy vz iscen from_part', comments='') # need a few more decimal places
+
+
+    print_memory(message='done calc_one_layer')
 
 n_parallel = 100
 n_layer = boxsize / n_parallel
@@ -259,62 +273,66 @@ def calc_one_bin(ibin):
     if True:#os.path.exists(ofname) == False:
         calc_one_layer(pz_min=pz_min, pz_max=pz_max)
 
-def merge_files():
-    fname_list = glob.glob(f'{out_path}/temp/gals_*.dat')
-    hid_out = []
-    m_out = []
-    px_out = []
-    py_out = []
-    pz_out = []
-    vx_out = []
-    vy_out = []
-    vz_out = []
-    iscen_out = []
-    from_part_out = []
-    for fname in fname_list:
-        data = pd.read_csv(fname, sep=r'\s+', dtype=np.float64, 
-            comment='#', 
-            names=['haloid', 'm', 'px', 'py', 'pz', 'vx', 'vy', 'vz', 'iscen','from_part'])
-        hid_out.extend(data['haloid'])
-        m_out.extend(data['m'])
-        px_out.extend(data['px'])
-        py_out.extend(data['py'])
-        pz_out.extend(data['pz'])
-        vx_out.extend(data['vx'])
-        vy_out.extend(data['vy'])
-        vz_out.extend(data['vz'])
-        iscen_out.extend(data['iscen'])
-        from_part_out.extend(data['from_part'])
-    hid_out = np.array(hid_out)
-    m_out = np.array(m_out)
-    px_out = np.array(px_out)
-    py_out = np.array(py_out)
-    pz_out = np.array(pz_out)
-    vx_out = np.array(vx_out)
-    vy_out = np.array(vy_out)
-    vz_out = np.array(vz_out)
-    iscen_out = np.array(iscen_out)
-    from_part_out = np.array(from_part_out)
-    sel = np.argsort(-m_out)
 
-    cols=[
-      fits.Column(name='haloid', format='K', array=hid_out[sel]),
-      fits.Column(name='M200m', format='E', array=m_out[sel]),
-      fits.Column(name='px', format='D', array=px_out[sel]),
-      fits.Column(name='py', format='D', array=py_out[sel]),
-      fits.Column(name='pz', format='D', array=pz_out[sel]),
-      fits.Column(name='vx', format='D', array=vx_out[sel]),
-      fits.Column(name='vy', format='D', array=vy_out[sel]),
-      fits.Column(name='vz', format='D', array=vz_out[sel]),
-      fits.Column(name='iscen', format='K',array=iscen_out[sel]),
-      fits.Column(name='from_part', format='K',array=from_part_out[sel])
-    ]
-    coldefs = fits.ColDefs(cols)
-    tbhdu = fits.BinTableHDU.from_columns(coldefs)
-    fname = 'gals.fit'
-    tbhdu.writeto(f'{out_path}/{fname}', overwrite=True)
 
-    #os.system(f'rm -rf {out_path}/temp/gals_*.dat')
+
+
+# def merge_files_old():
+#     fname_list = glob.glob(f'{out_path}/temp/gals_*.dat')
+#     hid_out = []
+#     m_out = []
+#     px_out = []
+#     py_out = []
+#     pz_out = []
+#     vx_out = []
+#     vy_out = []
+#     vz_out = []
+#     iscen_out = []
+#     from_part_out = []
+#     for fname in fname_list:
+#         data = pd.read_csv(fname, sep=r'\s+', dtype=np.float64, 
+#             comment='#', 
+#             names=['haloid', 'm', 'px', 'py', 'pz', 'vx', 'vy', 'vz', 'iscen','from_part'])
+#         hid_out.extend(data['haloid'])
+#         m_out.extend(data['m'])
+#         px_out.extend(data['px'])
+#         py_out.extend(data['py'])
+#         pz_out.extend(data['pz'])
+#         vx_out.extend(data['vx'])
+#         vy_out.extend(data['vy'])
+#         vz_out.extend(data['vz'])
+#         iscen_out.extend(data['iscen'])
+#         from_part_out.extend(data['from_part'])
+#     hid_out = np.array(hid_out)
+#     m_out = np.array(m_out)
+#     px_out = np.array(px_out)
+#     py_out = np.array(py_out)
+#     pz_out = np.array(pz_out)
+#     vx_out = np.array(vx_out)
+#     vy_out = np.array(vy_out)
+#     vz_out = np.array(vz_out)
+#     iscen_out = np.array(iscen_out)
+#     from_part_out = np.array(from_part_out)
+#     sel = np.argsort(-m_out)
+
+#     cols=[
+#       fits.Column(name='haloid', format='K', array=hid_out[sel]),
+#       fits.Column(name='M200m', format='E', array=m_out[sel]),
+#       fits.Column(name='px', format='D', array=px_out[sel]),
+#       fits.Column(name='py', format='D', array=py_out[sel]),
+#       fits.Column(name='pz', format='D', array=pz_out[sel]),
+#       fits.Column(name='vx', format='D', array=vx_out[sel]),
+#       fits.Column(name='vy', format='D', array=vy_out[sel]),
+#       fits.Column(name='vz', format='D', array=vz_out[sel]),
+#       fits.Column(name='iscen', format='K',array=iscen_out[sel]),
+#       fits.Column(name='from_part', format='K',array=from_part_out[sel])
+#     ]
+#     coldefs = fits.ColDefs(cols)
+#     tbhdu = fits.BinTableHDU.from_columns(coldefs)
+#     fname = 'gals.fit'
+#     tbhdu.writeto(f'{out_path}/{fname}', overwrite=True)
+
+#     #os.system(f'rm -rf {out_path}/temp/gals_*.dat')
 
 
 if __name__ == '__main__':
@@ -325,14 +343,25 @@ if __name__ == '__main__':
 
     start = stop
 
-    with ProcessPoolExecutor() as pool:
+    assigned_cpus = os.getenv('SLURM_CPUS_PER_TASK') 
+    if assigned_cpus is not None:
+        assigned_cpus = int(assigned_cpus)
+        print(f'Assigned CPUs: {assigned_cpus}') 
+    else:
+        print('Not running under SLURM or the variable is not set.') 
+        assigned_cpus = 1
+
+    max_workers = assigned_cpus
+
+    with ProcessPoolExecutor(max_workers=max_workers) as pool:
         for result in pool.map(calc_one_bin, range(n_parallel)):
             if result: print(result)  # output error
     stop = timeit.default_timer()
     print('galaxies took', '%.2g'%((stop - start)/60), 'mins')
 
+
     start = stop
-    merge_files()
+    merge_files(in_fname=f'{out_path}/temp/gals_*.dat', out_fname=f'{out_path}/gals.fit', nfiles_expected=n_parallel)
     stop = timeit.default_timer()
     print('merging took', '%.2g'%((stop - start)/60), 'mins')
 

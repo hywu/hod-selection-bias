@@ -16,17 +16,31 @@ with open(yml_fname, 'r') as stream:
     except yaml.YAMLError as exc:
         print(exc)
 
+#### For AbacusSummit ####
+if para['nbody'] == 'abacus_summit':
+    cosmo_id = para.get('cosmo_id', None)
+    hod_id = para.get('hod_id', None)
+    phase = para.get('phase', None)
+    redshift = para['redshift']
+    if redshift == 0.3: z_str = '0p300'
+    output_loc = para['output_loc']+f'/base_c{cosmo_id:0>3d}_ph{phase:0>3d}/z{z_str}/'
+else:
+   output_loc = para['output_loc']
+   redshift = para['redshift']
+
+
+
 depth = para['depth']
-output_loc = para['output_loc']
+#output_loc = para['output_loc']
 model_name = para['model_name']
 rich_name = para['rich_name']
 
 out_path = f'{output_loc}/model_{model_name}/'
-los_in = para.get('los', 'z')
-if los_in == 'xyz':
-    los_list = ['x', 'y', 'z']
-else:
-    los_list = ['z']
+# los_in = para.get('los', 'z')
+# if los_in == 'xyz':
+#     los_list = ['x', 'y', 'z']
+# else:
+#     los_list = ['z']
 
 print('rich_name', rich_name)
 
@@ -36,6 +50,8 @@ if os.path.exists(out_path+'gals.fit'):
 else:
     print('need galaxies')
     os.system(f'./make_gal_cat.py {yml_fname}')
+
+'''
 
 #### calculate richness ####
 for los in los_list:
@@ -47,7 +63,7 @@ for los in los_list:
         print('richness done')
     else:
         print('need richness')
-        os.system(f'./calc_richness.py {yml_fname} {los}')
+        os.system(f'./calc_richness_halo.py {yml_fname} {los}')
     
     #### calculate lensing ####
 
@@ -86,7 +102,7 @@ for los in los_list:
 if los_in == 'xyz':
     os.system(f'./avg_xyz_lensing.py {yml_fname}')
 
-
+'''
 stop = timeit.default_timer()
 dtime = (stop - start_master)/60.
 print(f'total time {dtime:.2g} mins')
