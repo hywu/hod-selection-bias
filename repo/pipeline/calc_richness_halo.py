@@ -12,8 +12,7 @@ import yaml
 # from astropy.io import fits
 # from astropy.table import Table
 start = timeit.default_timer()
-
-
+start_master = start * 1
 
 sys.path.append('../utils')
 from periodic_boundary_condition import periodic_boundary_condition
@@ -95,7 +94,7 @@ if para['nbody'] == 'uchuu':
 if para['nbody'] == 'abacus_summit':
     #sys.path.append('../abacus_summit')
     from read_abacus_summit import ReadAbacusSummit
-    readcat = ReadAbacusSummit(para['nbody_loc'], redshift)
+    readcat = ReadAbacusSummit(para['nbody_loc'], redshift, cosmo_id=cosmo_id)
 
 if para['nbody'] == 'flamingo':
     from read_flamingo import ReadFlamingo
@@ -382,7 +381,7 @@ class CalcRichness(object): # one pz slice at a time
         ofname1 = f'{out_path}/temp/richness_{rich_name}_pz{self.pz_min:.0f}_{self.pz_max:.0f}_px{self.px_min:.0f}_{self.px_max:.0f}_py{self.py_min:.0f}_{self.py_max:.0f}.dat'
         outfile1 = open(ofname1, 'w')
         #outfile1.write('#hid, mass, px, py, pz, rlam, lam \n')
-        outfile1.write('haloid mass px py pz rlambda lambda \n')
+        outfile1.write('haloid mass_host px py pz rlambda lambda \n')
 
         #### member files: only write header (optional) ####
         if save_members == True:
@@ -432,7 +431,7 @@ def calc_one_bin(ibin):
         cr = CalcRichness(pz_min=pz_min, pz_max=pz_max, px_min=px_min, px_max=px_max, py_min=py_min, py_max=py_max)
         cr.measure_richness()
 
-'''
+r'''
 def merge_files(richnes_or_members='richness'):
     # merge all temp file and output a fits file with the same header
     fname_list = glob.glob(f'{out_path}/temp/{richnes_or_members}_{rich_name}_pz*.dat')
@@ -465,13 +464,30 @@ if __name__ == '__main__':
     print('calc_richness.py prep took', '%.2g'%((stop - start)/60), 'mins')
     start = stop
     
-    n_cpu = os.cpu_count()
+
+    n_cpu = os.getenv('SLURM_CPUS_PER_TASK') 
+    if n_cpu is not None:
+        n_cpu = int(n_cpu)
+        print(f'Assigned CPUs: {n_cpu}') 
+    else:
+        print('Not running under SLURM or the variable is not set.') 
+        n_cpu = 1
+        
+    with ProcessPoolExecutor(max_workers=n_cpu) as pool:
+        for result in pool.map(calc_one_bin, range(n_parallel)):
+            if result: print(result)  # output error
+    stop = timeit.default_timer()
+    print('galaxies took', '%.2g'%((stop - start)/60), 'mins')
+
+
+    '''
+    #n_cpu = os.cpu_count()
     n_repeat = int(np.ceil(n_parallel/n_cpu))
     for i_repeat in range(n_repeat):
-        with ProcessPoolExecutor() as pool:
+        with ProcessPoolExecutor(max_workers=n_cpu) as pool:
             for result in pool.map(calc_one_bin, range(i_repeat*n_cpu, min(n_parallel, (i_repeat+1)*n_cpu))):
                 if result: print(result)  # output error
-
+    '''
     stop = timeit.default_timer()
     print('richness took', '%.2g'%((stop - start)/60), 'mins')
     start = stop
@@ -488,7 +504,7 @@ if __name__ == '__main__':
     stop = timeit.default_timer()
     print('merging took', '%.2g'%((stop - start)/60), 'mins')
 
-    '''
+    r'''
     start = stop
     merge_files_richness_old()
     if save_members == True:
@@ -496,3 +512,7 @@ if __name__ == '__main__':
     stop = timeit.default_timer()
     print('old merging took', '%.2g'%((stop - start)/60), 'mins')
     '''
+
+    stop = timeit.default_timer()
+    dtime = (stop - start_master)/60.
+    print(f'total time {dtime:.2g} mins')

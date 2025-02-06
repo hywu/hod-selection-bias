@@ -15,7 +15,7 @@ start_master = start * 1
 #### my functions ####
 sys.path.append('../utils')
 from fid_hod import Ngal_S20_poisson
-from print_memory import print_memory
+#from print_memory import print_memory
 from merge_files import merge_files
 
 #### read in the yaml file  ####
@@ -124,7 +124,7 @@ if para['nbody'] == 'uchuu':
 
 if para['nbody'] == 'abacus_summit':
     from read_abacus_summit import ReadAbacusSummit
-    readcat = ReadAbacusSummit(para['nbody_loc'], redshift)
+    readcat = ReadAbacusSummit(para['nbody_loc'], redshift, cosmo_id=cosmo_id)
 
 if para['nbody'] == 'tng_dmo':
     from read_tng_dmo import ReadTNGDMO
@@ -146,10 +146,10 @@ if pec_vel == True:
     vy_halo_all = readcat.vy
     vz_halo_all = readcat.vz
 
-print_memory(message='done readcat')
+#print_memory(message='done readcat')
 
 def calc_one_layer(pz_min, pz_max):
-    print_memory(message='before calc_one_layer')
+    #print_memory(message='before calc_one_layer')
     if sat_from_part == True:
         dsp_part.particle_in_one_layer(pz_min, pz_max)
 
@@ -261,7 +261,7 @@ def calc_one_layer(pz_min, pz_max):
     np.savetxt(ofname, data, fmt='%-12i %-15.12e %-12.12g %-12.12g %-12.12g  %-12.12g %-12.12g %-12.12g %-12i %-12i', header='haloid mass px py pz vx vy vz iscen from_part', comments='') # need a few more decimal places
 
 
-    print_memory(message='done calc_one_layer')
+    #print_memory(message='done calc_one_layer')
 
 n_parallel = 100
 n_layer = boxsize / n_parallel
@@ -340,20 +340,17 @@ if __name__ == '__main__':
 
     stop = timeit.default_timer()
     print('make_gal_cat.py prep took', '%.2g'%((stop - start)/60), 'mins')
-
+    
     start = stop
-
-    assigned_cpus = os.getenv('SLURM_CPUS_PER_TASK') 
-    if assigned_cpus is not None:
-        assigned_cpus = int(assigned_cpus)
-        print(f'Assigned CPUs: {assigned_cpus}') 
+    n_cpu = os.getenv('SLURM_CPUS_PER_TASK') # os.cpu_count() not working
+    if n_cpu is not None:
+        n_cpu = int(n_cpu)
+        print(f'Assigned CPUs: {n_cpu}') 
     else:
         print('Not running under SLURM or the variable is not set.') 
-        assigned_cpus = 1
+        n_cpu = 1
 
-    max_workers = assigned_cpus
-
-    with ProcessPoolExecutor(max_workers=max_workers) as pool:
+    with ProcessPoolExecutor(max_workers=n_cpu) as pool:
         for result in pool.map(calc_one_bin, range(n_parallel)):
             if result: print(result)  # output error
     stop = timeit.default_timer()

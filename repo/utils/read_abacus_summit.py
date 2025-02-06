@@ -44,7 +44,7 @@ def get_cosmo_para(cosmo_id_wanted):
 
 
 class ReadAbacusSummit(object):
-    def __init__(self, nbody_loc, redshift, cosmo_id=0, phase=0): #):
+    def __init__(self, nbody_loc, redshift, cosmo_id, phase=0): #):
 
         cosmo_para = get_cosmo_para(cosmo_id)
         self.hubble = cosmo_para['hubble']
@@ -57,8 +57,8 @@ class ReadAbacusSummit(object):
 
         self.boxsize = 2000
         rhocrit = 2.77536627e11 #h^-1 M_sun Mpc^-3
-        part_fname = self.input_loc + f'subsample_particles_A_base_c{cosmo_id:0>3d}_ph{phase:0>3d}_z{z_str}.h5'
-        f = h5py.File(part_fname, 'r')
+        self.part_fname = self.input_loc + f'subsample_particles_A_base_c{cosmo_id:0>3d}_ph{phase:0>3d}_z{z_str}.h5'
+        f = h5py.File(self.part_fname, 'r')
         particles = f['particles']
         npart = np.shape(particles)[0]
         self.mpart = self.OmegaM * rhocrit * self.boxsize**3 / npart
@@ -127,8 +127,8 @@ class ReadAbacusSummit(object):
             self.vz = data['vz'][sel][sort]
 
     # def read_particles(self, pec_vel=False): #small enough to read both
-    #     part_fname = self.input_loc + 'subsample_particles_A_base_c000_ph000_z0p300.h5'
-    #     f = h5py.File(part_fname, 'r')
+    #     self.part_fname = self.input_loc + 'subsample_particles_A_base_c000_ph000_z0p300.h5'
+    #     f = h5py.File(self.part_fname, 'r')
     #     particles = f['particles']
     #     self.xp = particles['x']
     #     self.yp = particles['y']
@@ -140,8 +140,8 @@ class ReadAbacusSummit(object):
 
 
     def read_particle_positions(self):
-        part_fname = self.input_loc + 'subsample_particles_A_base_c000_ph000_z0p300.h5'
-        f = h5py.File(part_fname, 'r')
+        #self.part_fname = self.input_loc + 'subsample_particles_A_base_c000_ph000_z0p300.h5'
+        f = h5py.File(self.part_fname, 'r')
         particles = f['particles']
         self.xp = particles['x']
         self.yp = particles['y']
@@ -151,8 +151,8 @@ class ReadAbacusSummit(object):
     def read_particle_velocities(self):
         pass
         # Some files don't have particle velocities
-        # part_fname = self.input_loc + 'subsample_particles_A_base_c000_ph000_z0p300.h5'
-        # f = h5py.File(part_fname, 'r')
+        # self.part_fname = self.input_loc + 'subsample_particles_A_base_c000_ph000_z0p300.h5'
+        # f = h5py.File(self.part_fname, 'r')
         # data = f['particles']
         # print(data.dtype)
         # self.vxp = data['vx']

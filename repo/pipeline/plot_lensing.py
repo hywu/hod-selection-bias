@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+'conda activate corrfuncenv'
 import numpy as np
 from numpy.random import default_rng
 import matplotlib.pyplot as plt
@@ -8,6 +9,11 @@ import os
 import sys
 import yaml
 from scipy.interpolate import interp1d
+
+import timeit
+start = timeit.default_timer()
+start_master = start * 1
+
 sys.path.append('../utils')
 from measure_lensing import MeasureLensing
 from sample_matching_mass import sample_matching_mass
@@ -44,10 +50,29 @@ class PlotLensing(object):
             self.lam_max_list = np.array([140])
             self.nbins = len(self.lam_min_list)
 
-        output_loc = para['output_loc']
+        if self.survey == 'sdssbins':
+            self.lam_min_list = np.array([20, 30, 45, 60])
+            self.lam_max_list = np.array([30, 45, 60, 1000])
+            self.nbins = len(self.lam_min_list)
+
+        #### For AbacusSummit ####
+        if para['nbody'] == 'abacus_summit':
+            cosmo_id = para.get('cosmo_id', None)
+            hod_id = para.get('hod_id', None)
+            phase = para.get('phase', None)
+            redshift = para['redshift']
+            if redshift == 0.3: z_str = '0p300'
+            output_loc = para['output_loc']+f'/base_c{cosmo_id:0>3d}_ph{phase:0>3d}/z{z_str}/'
+        else:
+           output_loc = para['output_loc']
+
+
+
+        #output_loc = para['output_loc']
         model_name = para['model_name']
         self.rich_name = para['rich_name']
         self.out_path = f'{output_loc}/model_{model_name}'
+        print('output is at ' + self.out_path)
 
 
         #use_pmem = para.get('use_pmem', False)
@@ -78,7 +103,7 @@ class PlotLensing(object):
 
         if para['nbody'] == 'abacus_summit':
             from read_abacus_summit import ReadAbacusSummit
-            self.readcat = ReadAbacusSummit(para['nbody_loc'], redshift)
+            self.readcat = ReadAbacusSummit(para['nbody_loc'], redshift, cosmo_id=cosmo_id)
 
         if para['nbody'] == 'flamingo':
             from read_flamingo import ReadFlamingo
@@ -90,7 +115,7 @@ class PlotLensing(object):
             self.readcat = ReadTNGDMO(para['nbody_loc'], halofinder)
             print('halofinder', halofinder)
 
-        #self.mpart = self.readcat.mpart # moved to below
+        self.mpart = self.readcat.mpart
         self.boxsize = self.readcat.boxsize
         self.hubble = self.readcat.hubble
         self.vol = self.boxsize**3
@@ -133,7 +158,6 @@ class PlotLensing(object):
 
     def calc_lensing(self):
         xp_in, yp_in, zp_in = self.readcat.read_particle_positions()
-        self.mpart = self.readcat.mpart
         if self.los == 'z':
             self.xp = xp_in
             self.yp = yp_in
@@ -157,7 +181,7 @@ class PlotLensing(object):
             data, header = fitsio.read(fname2, header=True)
             mass_all = data['mass_best_match']
         else:
-            data, header = fitsio.read(fname2, header=True)
+            data, header = fitsio.read(fname, header=True)
             mass_all = data['mass_host']
 
         xh_all = data['px']
@@ -386,3 +410,7 @@ if __name__ == "__main__":
     #plt.show()
     # rp, DS = plmu.get_lensing_data_vector()
     # print(np.shape(rp))
+
+    stop = timeit.default_timer()
+    dtime = (stop - start_master)/60.
+    print(f'total time {dtime:.2g} mins')
