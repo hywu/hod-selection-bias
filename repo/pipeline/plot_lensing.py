@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-'conda activate corrfuncenv'
 import numpy as np
 from numpy.random import default_rng
 import matplotlib.pyplot as plt
@@ -17,6 +16,7 @@ start_master = start * 1
 sys.path.append('../utils')
 from measure_lensing import MeasureLensing
 from sample_matching_mass import sample_matching_mass
+from print_memory import print_memory
 
 class PlotLensing(object):
     def __init__(self, yml_fname, abundance_matching, thresholded):
@@ -60,19 +60,18 @@ class PlotLensing(object):
             cosmo_id = para.get('cosmo_id', None)
             hod_id = para.get('hod_id', None)
             phase = para.get('phase', None)
+            #model_name = f'hod{hod_id:0>5d}'
             redshift = para['redshift']
             if redshift == 0.3: z_str = '0p300'
             output_loc = para['output_loc']+f'/base_c{cosmo_id:0>3d}_ph{phase:0>3d}/z{z_str}/'
         else:
-           output_loc = para['output_loc']
-
-
+            output_loc = para['output_loc']
 
         #output_loc = para['output_loc']
         model_name = para['model_name']
-        self.rich_name = para['rich_name']
         self.out_path = f'{output_loc}/model_{model_name}'
-        print('output is at ' + self.out_path)
+        #print('output is at ' + self.out_path)
+        self.rich_name = para['rich_name']
 
 
         #use_pmem = para.get('use_pmem', False)
@@ -157,6 +156,7 @@ class PlotLensing(object):
         self.fname4 = f'{self.obs_path}/lam_{self.outname}'
 
     def calc_lensing(self):
+        print_memory('before reading particles')
         xp_in, yp_in, zp_in = self.readcat.read_particle_positions()
         if self.los == 'z':
             self.xp = xp_in
@@ -170,7 +170,7 @@ class PlotLensing(object):
             self.xp = zp_in
             self.yp = xp_in
             self.zp = yp_in
-        print('finished reading particles')
+        print_memory('finished reading particles')
 
         # get clusters
         fname = f'{self.out_path}/richness_{self.rich_name}.fit'
@@ -207,6 +207,7 @@ class PlotLensing(object):
             lam_all = lam_all[sort]
 
         for ibin in range(self.nbins):
+            print_memory(f'doing bin{ibin}')
             if self.abundance_matching == False:
                 lam_min = self.lam_min_list[ibin]
                 lam_max = self.lam_max_list[ibin]
@@ -339,7 +340,7 @@ class PlotLensing(object):
                 # ax.axhline(1, c='gray', ls='--')
 
                 ax = axes[ibin]
-                ax.semilogx(rp, DS_bias, label=label)
+                ax.semilogx(rp, DS_bias, label=label, color=color, lw=lw)
                 ax.set_title(title)
                 ax.legend()
                 ax.set_xlabel(r'$\rm r_p$')

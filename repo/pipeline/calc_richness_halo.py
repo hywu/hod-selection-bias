@@ -7,10 +7,7 @@ import pandas as pd
 from scipy import spatial
 import sys
 import timeit
-#import glob
 import yaml
-# from astropy.io import fits
-# from astropy.table import Table
 start = timeit.default_timer()
 start_master = start * 1
 
@@ -30,20 +27,27 @@ with open(yml_fname, 'r') as stream:
     except yaml.YAMLError as exc:
         print(exc)
 
+redshift = para['redshift']
 
 #### For AbacusSummit ####
 if para['nbody'] == 'abacus_summit':
     cosmo_id = para.get('cosmo_id', None)
     hod_id = para.get('hod_id', None)
     phase = para.get('phase', None)
-    redshift = para['redshift']
     if redshift == 0.3: z_str = '0p300'
     output_loc = para['output_loc']+f'/base_c{cosmo_id:0>3d}_ph{phase:0>3d}/z{z_str}/'
 else:
    output_loc = para['output_loc']
-   redshift = para['redshift']
 
+model_name = para['model_name']
+out_path = f'{output_loc}/model_{model_name}/'
 
+if os.path.isdir(out_path)==False:
+    os.makedirs(out_path)
+if os.path.isdir(out_path+'/temp/')==False:
+    os.makedirs(out_path+'/temp/')
+
+rich_name = para['rich_name']
 depth = para['depth']
 perc = para['perc']
 use_rlambda = para['use_rlambda']
@@ -72,15 +76,6 @@ n_parallel = n_parallel_z * n_parallel_x * n_parallel_y
 z_padding_halo = 0
 z_padding_gal = 0
 
-#output_loc = para['output_loc']
-model_name = para['model_name']
-rich_name = para['rich_name']
-
-out_path = f'{output_loc}/model_{model_name}/'
-if os.path.isdir(out_path)==False:
-    os.makedirs(out_path)
-if os.path.isdir(out_path+'/temp/')==False:
-    os.makedirs(out_path+'/temp/')
 
 # read in halos
 if para['nbody'] == 'mini_uchuu':
@@ -138,17 +133,12 @@ if los == 'y':
 if use_pmem == True:
     use_cylinder = False
     which_pmem = para.get('which_pmem')
-    # if which_pmem == 'myles3':
-    #     from pmem_weights_myles3 import pmem_weights
-    # if which_pmem == 'buzzard':
-    #     from pmem_weights_buzzard import pmem_weights
     if which_pmem == 'quad':
         from pmem_weights_quad import pmem_weights_dchi, volume_dchi
     if which_pmem == 'gauss':
         from pmem_weights_gauss import pmem_weights_dchi, volume_dchi
     if which_pmem == 'uniform':
         from pmem_weights_uniform import pmem_weights_dchi, volume_dchi
-
 
     depth = -1
     dz_max = 0.5 * boxsize * Ez / 3000. # need to be smaller than half box size, otherwise the same galaxies will be counted twice
@@ -431,31 +421,6 @@ def calc_one_bin(ibin):
         cr = CalcRichness(pz_min=pz_min, pz_max=pz_max, px_min=px_min, px_max=px_max, py_min=py_min, py_max=py_max)
         cr.measure_richness()
 
-r'''
-def merge_files(richnes_or_members='richness'):
-    # merge all temp file and output a fits file with the same header
-    fname_list = glob.glob(f'{out_path}/temp/{richnes_or_members}_{rich_name}_pz*.dat')
-    nfiles = len(fname_list)
-    if nfiles < n_parallel:
-        print('missing ', n_parallel - nfiles, 'files, not merging')
-    else:
-        df_list = [pd.read_csv(file, sep=r'\s+') for file in fname_list]
-        merged_df = pd.concat(df_list, ignore_index=True)
-        # Turn it into a fits file
-        table = Table.from_pandas(merged_df)
-        # Create FITS Header based on CSV column names
-        hdr = fits.Header()
-        column_names = merged_df.columns.tolist()
-        for idx, col in enumerate(column_names):
-            hdr[f'COLUMN{idx+1}'] = col
-        primary_hdu = fits.PrimaryHDU(header=hdr)
-        table_hdu = fits.BinTableHDU(table)
-        hdul = fits.HDUList([primary_hdu, table_hdu])
-        hdul.writeto(f'{out_path}/{richnes_or_members}_{rich_name}.fit', overwrite=True)
-
-        os.system(f'rm -rf {out_path}/temp/{richnes_or_members}_{rich_name}_pz*.dat')
-'''
-
 if __name__ == '__main__':
     #calc_one_bin(0)
     #exit()
@@ -472,7 +437,8 @@ if __name__ == '__main__':
     else:
         print('Not running under SLURM or the variable is not set.') 
         n_cpu = 1
-        
+
+    n_workers = min(0, n_cpu-1)
     with ProcessPoolExecutor(max_workers=n_cpu) as pool:
         for result in pool.map(calc_one_bin, range(n_parallel)):
             if result: print(result)  # output error

@@ -25,7 +25,7 @@ def get_cosmo_para(cosmo_id_wanted):
         cosmo_id = int(root[-3:])
 
         if cosmo_id == cosmo_id_wanted:
-            print('cosmo_id', cosmo_id)
+            #print('cosmo_id', cosmo_id)
             hubble = row['h']
             OmegaB = row['omega_b']/hubble**2
             if len(row['omega_ncdm']) == 12:
@@ -39,7 +39,7 @@ def get_cosmo_para(cosmo_id_wanted):
             ns = row['n_s']
             break
 
-    cosmo_dict = {'OmegaM': OmegaM, 'OmegaL': OmegaL,'hubble': hubble,'sigma8': sigma8,'OmegaB': OmegaB,'ns': ns}
+    cosmo_dict = {'cosmo_id': cosmo_id, 'OmegaM': OmegaM, 'OmegaL': OmegaL,'hubble': hubble,'sigma8': sigma8,'OmegaB': OmegaB,'ns': ns}
     return cosmo_dict
 
 

@@ -20,9 +20,23 @@ class PlotHOD(object):
 
         self.redshift = self.para['redshift']
         self.mdef = self.para['mdef']
-        self.Om0 = self.para['OmegaM']
+        #if self.mdef == 'R200m':
+        #
 
-        output_loc = self.para['output_loc']
+        #### For AbacusSummit ####
+        if self.para['nbody'] == 'abacus_summit':
+            self.cosmo_id = self.para.get('cosmo_id', None)
+            hod_id = self.para.get('hod_id', None)
+            phase = self.para.get('phase', None)
+            redshift = self.para['redshift']
+            if redshift == 0.3: z_str = '0p300'
+            output_loc = self.para['output_loc']+f'/base_c{self.cosmo_id:0>3d}_ph{phase:0>3d}/z{z_str}/'
+
+        else:
+           output_loc = self.para['output_loc']
+           self.Om0 = self.para['OmegaM']
+
+        #output_loc = self.para['output_loc']
         model_name = self.para['model_name']
         self.out_path = f'{output_loc}/model_{model_name}/'
         self.ofname1 = f'{self.out_path}/mass_Ngal.fit'
@@ -40,7 +54,8 @@ class PlotHOD(object):
 
         if self.para['nbody'] == 'abacus_summit':
             from read_abacus_summit import ReadAbacusSummit
-            readcat = ReadAbacusSummit(self.para['nbody_loc'], self.redshift)
+            readcat = ReadAbacusSummit(self.para['nbody_loc'], self.redshift, self.cosmo_id)
+            self.Om0 = readcat.OmegaM
 
         if self.para['nbody'] == 'flamingo':
             from read_flamingo import ReadFlamingo
@@ -217,7 +232,7 @@ if __name__ == "__main__":
     #./plot_hod.py ../yml/mini_uchuu/mini_uchuu_fid_hod.yml
 
     ch = PlotHOD(yml_fname)
-    mass, hod_mean, hod_std = ch.calc_hod(Mmin=1e11)
+    mass, hod_mean, hod_std = ch.calc_hod(Mmin=1e15)
 
     
     # use plot_hod_mor.ipynb for plotting
