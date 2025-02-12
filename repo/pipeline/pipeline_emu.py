@@ -102,16 +102,22 @@ if __name__ == "__main__":
         #print(out_path+'gals.fit')
     else:
         print('need galaxies')
-        subprocess.run(f'./make_gal_cat.py {yml_fname}', 
-            shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        os.system(f'./make_gal_cat.py {yml_fname}')
+        
+        # subprocess.run(['./make_gal_cat.py', yml_fname], capture_output=True, text=True)
+        # print("STDOUT:", result.stdout)  # not saving messages for some reason
+        # print("STDERR:", result.stderr)
 
     if os.path.exists(out_path+f'richness_{rich_name}.fit'):
         print('richness done')
         #print(out_path+f'richness_{rich_name}.fit')
     else:
         print('need richness')
-        subprocess.run(f'./calc_richness_halo.py {yml_fname}', 
-            shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        os.system(f'./calc_richness_halo.py {yml_fname}')
+
+        #subprocess.run(['./calc_richness_halo.py', yml_fname], capture_output=True, text=True)
+        # print("STDOUT:", result.stdout)
+        # print("STDERR:", result.stderr), 
 
     
     survey = para.get('survey', 'desy1')
@@ -125,8 +131,11 @@ if __name__ == "__main__":
         print('lensing done')
     else:
         print('need lensing')
-        subprocess.run(f'./plot_lensing.py {yml_fname}', 
-            shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        os.system(f'./plot_lensing.py {yml_fname}')
+
+        #subprocess.run(['./plot_lensing.py', yml_fname], capture_output=True, text=True)
+        # print("STDOUT:", result.stdout)
+        # print("STDERR:", result.stderr), 
     '''
     #### sanity checks ####
     subprocess.run(f'./plot_counts_richness.py {yml_fname}', shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)

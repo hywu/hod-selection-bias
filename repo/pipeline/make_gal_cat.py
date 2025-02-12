@@ -56,7 +56,7 @@ print('output is at ' + out_path)
 
 def get_hod_para(hod_id_wanted):
     #df = pd.read_csv('/projects/hywu/cluster_sims/cluster_finding/work/hod/repo/abacus_summit/hod_params.csv', sep=',')
-    df = pd.read_csv('/projects/hywu/cluster_sims/cluster_finding/work/hod/repo/abacus_summit/hod_latin.csv', sep=',')
+    df = pd.read_csv('/users/hywu/work/hod/repo/abacus_summit/hod_latin.csv', sep=',')
     nrows = df.shape[0]
     for irow in np.arange(nrows):
         row = df.iloc[irow]

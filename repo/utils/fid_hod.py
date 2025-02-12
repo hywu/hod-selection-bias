@@ -12,7 +12,7 @@ def Ngal_S20_noscatt(M, alpha=1., lgM1=12.9, kappa=1., lgMcut=11.7, sigmalogM=0.
     x = (np.log10(M)-np.log10(Mcut))/sigmalogM
     Ncen = 0.5 * (1 + special.erf(x))
     y = (M - kappa * Mcut) / M1
-    y[y < 0] = 0
+    y = np.maximum(y, 0)
     Nsat = Ncen * (y ** alpha)
     #Nsat = max(0, Nsat)
     return Ncen, Nsat
@@ -37,8 +37,9 @@ def Ngal_S20_poisson(M, alpha=1., lgM1=12.9, kappa=1., lgMcut=11.7, sigmalogM=0.
     Ncen_mean = 0.5 * (1 + special.erf(x))
     Ncen = bernoulli.rvs(Ncen_mean)
     y = (M - kappa * Mcut) / M1
+    y = np.maximum(y, 0)
     Nsat_mean = Ncen * (y ** alpha)
-    Nsat_mean = max(0, Nsat_mean)
+    #Nsat_mean = max(0, Nsat_mean)
     Nsat = poisson.rvs(Nsat_mean)
     #print('Ncen, Nsat', Ncen, Nsat)
     return Ncen, Nsat
