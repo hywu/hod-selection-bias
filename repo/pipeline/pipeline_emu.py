@@ -5,7 +5,7 @@ import subprocess
 import yaml
 
 nbody_loc_master = '/projects/hywu/cluster_sims/cluster_finding/data/AbacusSummit_base/'
-output_loc_master = '/projects/hywu/cluster_sims/cluster_finding/data/emulator/'
+output_loc_master = '/projects/hywu/cluster_sims/cluster_finding/data/emulator_data/'
 
 rich_name = 'd90'
 zid = 3
@@ -75,8 +75,12 @@ if __name__ == "__main__":
 
     i = int(sys.argv[1]) # job array ID
     
-    cosmo_list = np.zeros(100, dtype=int)
-    hod_list = np.arange(100, 200, dtype=int)
+    # cosmo_list = np.zeros(100, dtype=int)
+    # hod_list = np.arange(100, 200, dtype=int)
+
+    cosmo_list = [0]#np.arange(130, 182, dtype=int)
+    hod_list = [0]#np.zeros(52, dtype=int)
+
     cosmo_hod_list = np.column_stack((cosmo_list, hod_list))
 
     cosmo_id, hod_id = cosmo_hod_list[i]
@@ -107,7 +111,7 @@ if __name__ == "__main__":
         # subprocess.run(['./make_gal_cat.py', yml_fname], capture_output=True, text=True)
         # print("STDOUT:", result.stdout)  # not saving messages for some reason
         # print("STDERR:", result.stderr)
-
+    
     if os.path.exists(out_path+f'richness_{rich_name}.fit'):
         print('richness done')
         #print(out_path+f'richness_{rich_name}.fit')
@@ -136,6 +140,7 @@ if __name__ == "__main__":
         #subprocess.run(['./plot_lensing.py', yml_fname], capture_output=True, text=True)
         # print("STDOUT:", result.stdout)
         # print("STDERR:", result.stderr), 
+    
     '''
     #### sanity checks ####
     subprocess.run(f'./plot_counts_richness.py {yml_fname}', shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)

@@ -11,7 +11,7 @@ def print_memory(message='now'):
     cpu_id = np.mod(os.getpid(), 1000)
     memory = psutil.virtual_memory()
     cpu_percent = psutil.cpu_percent()
-    print(f"{message}: CPU: {cpu_id} Memory: {memory_size:.2g} GB or {memory.percent}%, CPU usage: {cpu_percent}%")
+    print(f"{message}: CPU: {cpu_id}, Memory: {memory_size:.2g} GB or {memory.percent}%, CPU usage: {cpu_percent}%")
 
 
 if __name__ == "__main__":

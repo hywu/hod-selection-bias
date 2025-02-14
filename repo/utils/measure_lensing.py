@@ -12,7 +12,7 @@ class MeasureLensing(object):
         self.pimax = pimax
 
         n_decade = (np.log10(Rmax)-np.log10(Rmin))
-        nrp_per_decade = 5
+        nrp_per_decade = 15 #5
         self.n_rp = int(nrp_per_decade*n_decade + 1 + 0.001) ## adding the inner most bin
         self.binfile = self.out_loc+'rp_bins.dat'
 

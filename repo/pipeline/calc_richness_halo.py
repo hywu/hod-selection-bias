@@ -438,8 +438,8 @@ if __name__ == '__main__':
         print('Not running under SLURM or the variable is not set.') 
         n_cpu = 1
 
-    n_workers = min(0, n_cpu-1)
-    with ProcessPoolExecutor(max_workers=n_cpu) as pool:
+    n_workers = max(1, n_cpu*0.8)
+    with ProcessPoolExecutor(max_workers=n_workers) as pool:
         for result in pool.map(calc_one_bin, range(n_parallel)):
             if result: print(result)  # output error
     stop = timeit.default_timer()

@@ -29,7 +29,7 @@ def merge_files(in_fname='x*.dat', out_fname='x.fit', nfiles_expected=100):
         os.system('rm -rf ' + in_fname)
 
 if __name__ == '__main__':
-    out_path = '/projects/hywu/cluster_sims/cluster_finding/data/emulator/base_c000_ph000/z0p300/model_hod000/'
+    out_path = '/projects/hywu/cluster_sims/cluster_finding/data/emulator_data/base_c000_ph000/z0p300/model_hod000/'
     merge_files(in_fname=f'{out_path}/temp/gals_*.dat', out_fname=f'{out_path}/gals.fit', nfiles_expected=100)
 
 
