@@ -5,14 +5,14 @@ from scipy.interpolate import interp1d
 from Corrfunc._countpairs import countpairs_rp_pi
 
 class MeasureLensing(object):
-    def __init__(self, out_loc, Rmin, Rmax, pimax): # pimax cannot be too large for TNG 
+    def __init__(self, out_loc, Rmin, Rmax, pimax, nrp_per_decade=5): # pimax cannot be too large for TNG 
         self.out_loc = out_loc
         self.Rmin = Rmin
         self.Rmax = Rmax
         self.pimax = pimax
 
         n_decade = (np.log10(Rmax)-np.log10(Rmin))
-        nrp_per_decade = 15 #5
+        #nrp_per_decade = 15 #5
         self.n_rp = int(nrp_per_decade*n_decade + 1 + 0.001) ## adding the inner most bin
         self.binfile = self.out_loc+'rp_bins.dat'
 

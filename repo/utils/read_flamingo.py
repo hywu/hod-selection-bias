@@ -31,6 +31,18 @@ class ReadFlamingo(object):
         snap_id = snap_id_list[idx]
         self.snap_name = f'{snap_id:0>4d}'
 
+        # calculate mpart ignoring gas. assuming all have the same mass
+        #self.boxsize = max(self.xp) # Mpc/h
+        fname = self.input_loc + f'snapshots_downsampled/flamingo_{self.snap_name}.hdf5'
+        f = h5py.File(fname,'r')
+        coord = f['DMParticles/Coordinates']
+        npart = np.shape(coord)[0]
+        
+        rhocrit = 2.77536627e11 # h^2 Msun Mpc^-3
+        total_mass_in_box_hiMsun = self.boxsize**3 * self.OmegaM * rhocrit
+        self.mpart = total_mass_in_box_hiMsun / npart # Msun/h
+        #print(f'npart={npart}, mpart={self.mpart:e}')
+
     def read_halos(self, Mmin, pec_vel=False, cluster_only=False, halo_loc='/cosma8/data/do012/dc-wu5/cylinder/output_HYDRO_PLANCK/'):
         # sigh... temporary solution for halo loc
         
@@ -88,11 +100,7 @@ class ReadFlamingo(object):
         self.yp = coord[:,1] * self.hubble
         self.zp = coord[:,2] * self.hubble
 
-        # calculate mpart ignoring gas. assuming all have the same mass
-        #self.boxsize = max(self.xp) # Mpc/h
-        rhocrit = 2.77536627e11 # h^2 Msun Mpc^-3
-        total_mass_in_box_hiMsun = self.boxsize**3 * self.OmegaM * rhocrit
-        self.mpart = total_mass_in_box_hiMsun / len(self.xp) # Msun/h
+
 
         return self.xp, self.yp, self.zp
 
@@ -109,9 +117,9 @@ class ReadFlamingo(object):
 if __name__ == '__main__':
     nbody_loc = f'/cosma8/data/dp004/flamingo/Runs/L1000N1800/HYDRO_PLANCK/'
     rfl = ReadFlamingo(nbody_loc=nbody_loc, redshift=0.3)
-    rfl.read_halos(Mmin=1e14, pec_vel=True)
-    print(len(rfl.xh))
-    print('max', np.max(rfl.vx))
+    # rfl.read_halos(Mmin=1e14, pec_vel=True)
+    # print(len(rfl.xh))
+    # print('max', np.max(rfl.vx))
     
     # rfl.read_particle_positions()
     # print(len(rfl.xp))

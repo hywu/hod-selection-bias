@@ -40,6 +40,7 @@ else:
    output_loc = para['output_loc']
 
 model_name = para['model_name']
+rich_name = para['rich_name']
 out_path = f'{output_loc}/model_{model_name}/'
 
 if os.path.isdir(out_path)==False:
@@ -47,7 +48,6 @@ if os.path.isdir(out_path)==False:
 if os.path.isdir(out_path+'/temp/')==False:
     os.makedirs(out_path+'/temp/')
 
-rich_name = para['rich_name']
 depth = para['depth']
 perc = para['perc']
 use_rlambda = para['use_rlambda']
@@ -55,6 +55,11 @@ use_pmem = para.get('use_pmem', False)
 los = para.get('los', 'z')
 if los == 'xyz':
     los = sys.argv[2]
+
+
+# save a back-up parameter file
+with open(f'{out_path}/para_{rich_name}.yml', 'w') as outfile:
+    yaml.dump(para, outfile)
 
 save_members = para.get('save_members', False)
 pec_vel = para.get('pec_vel', False)

@@ -275,10 +275,10 @@ class PlotLensing(object):
             lnM = np.loadtxt(f'{self.fname3}_{ibin}.dat')
             ax = axes[ibin]
             ax.hist(lnM/np.log(10.), density=True, fc='none', 
-                histtype='step', label=label, lw=lw)
-
+                histtype='step', label=len(lnM), lw=lw)
+            ax.legend()
             if ibin == 0: # self.nbins - 1: 
-                ax.legend()
+                plt.title(label)
             ax.set_xlabel(r'$\rm  \log_{10} M$')
             ax.set_ylabel(r'PDF')
 

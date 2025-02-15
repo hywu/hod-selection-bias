@@ -232,7 +232,7 @@ if __name__ == "__main__":
     #./plot_hod.py ../yml/mini_uchuu/mini_uchuu_fid_hod.yml
 
     ch = PlotHOD(yml_fname)
-    mass, hod_mean, hod_std = ch.calc_hod(Mmin=1e15)
+    mass, hod_mean, hod_std = ch.calc_hod(Mmin=2e11)#Mmin=1e15)
 
     
     # use plot_hod_mor.ipynb for plotting
