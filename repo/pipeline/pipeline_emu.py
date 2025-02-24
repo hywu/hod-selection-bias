@@ -33,7 +33,7 @@ def check_files_needed(zid):
     return cosmo_id_needed
 
 
-def write_yml(cosmo_id, hid_id):
+def write_yml(cosmo_id, hod_id):
     out_string = f"""cosmo_id: {cosmo_id}
 hod_id: {hod_id}
 model_name: hod{hod_id:0>5d}
@@ -73,20 +73,20 @@ if __name__ == "__main__":
     # i = int(sys.argv[1]) # job array ID
     # print('doing ', cosmo_id)
 
-    i = int(sys.argv[1]) # job array ID
+    job_id = int(sys.argv[1]) # job array ID
     
     # cosmo_list = np.zeros(100, dtype=int)
     # hod_list = np.arange(100, 200, dtype=int)
 
-    cosmo_list = [0]#np.arange(130, 182, dtype=int)
-    hod_list = [0]#np.zeros(52, dtype=int)
+    cosmo_list = np.zeros(100)#[0]#np.arange(130, 182, dtype=int)
+    hod_list = 100 + np.arange(100) #np.zeros(52, dtype=int)
 
     cosmo_hod_list = np.column_stack((cosmo_list, hod_list))
 
-    cosmo_id, hod_id = cosmo_hod_list[i]
+    cosmo_id, hod_id = cosmo_hod_list[job_id]
     cosmo_id = int(cosmo_id)
     hod_id = int(hod_id)
-    print(cosmo_id, hod_id)
+    print('cosmo_id', cosmo_id, 'hod_id', hod_id)
 
     yml_fname = write_yml(cosmo_id, hod_id)
     with open(yml_fname, 'r') as stream:
@@ -108,6 +108,7 @@ if __name__ == "__main__":
         print('need galaxies')
         os.system(f'./make_gal_cat.py {yml_fname}')
         
+        '''
         # subprocess.run(['./make_gal_cat.py', yml_fname], capture_output=True, text=True)
         # print("STDOUT:", result.stdout)  # not saving messages for some reason
         # print("STDERR:", result.stderr)
@@ -140,7 +141,7 @@ if __name__ == "__main__":
         #subprocess.run(['./plot_lensing.py', yml_fname], capture_output=True, text=True)
         # print("STDOUT:", result.stdout)
         # print("STDERR:", result.stderr), 
-    
+    '''
     '''
     #### sanity checks ####
     subprocess.run(f'./plot_counts_richness.py {yml_fname}', shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
