@@ -20,6 +20,7 @@ class MeasureLensing(object):
         lnrp = np.linspace(np.log(self.Rmin), np.log(self.Rmax), self.n_rp)
         rp = np.exp(lnrp)
         outfile = open(self.binfile, 'w')
+        outfile.write('#rp_min [Mpc/h], rp_max [Mpc/h] \n')
         outfile.write('%g %g \n'%(0, rp[0]))
         for ir in range(self.n_rp-1):
             outfile.write('%g %g \n'%(rp[ir], rp[ir+1]))

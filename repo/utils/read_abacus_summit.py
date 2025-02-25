@@ -10,7 +10,6 @@ import pandas as pd
 #from readGadgetSnapshot import readGadgetSnapshot
 
 
-
 #### cosmo_c***_ph***_z0p***.param files seem unreliable. 
 #### read directly from the csv file
 def get_cosmo_para(cosmo_id_wanted):
@@ -35,7 +34,7 @@ def get_cosmo_para(cosmo_id_wanted):
 
             OmegaM = row['omega_cdm']/hubble**2 + OmegaB + Oncdm
             OmegaL = 1 - OmegaM
-            sigma8 = row['sigma8_cb'] # baryons-plus-cdm-only  (CLASS)
+            sigma8 = row['sigma8_cb'] # baryons-plus-cdm-only (CLASS)
             ns = row['n_s']
             break
 

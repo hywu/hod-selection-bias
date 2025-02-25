@@ -3,7 +3,7 @@ import numpy as np
 from numpy.random import default_rng
 import matplotlib.pyplot as plt
 import fitsio
-import h5py
+#import h5py
 import os
 import sys
 import yaml
@@ -30,6 +30,7 @@ class PlotLensing(object):
         self.Rmin = para.get('Rmin', 0.01)
         self.Rmax = para.get('Rmax', 100)
         self.pimax = para.get('pimax', 100)
+        self.nrp_per_decade = para.get('nrp_per_decade', 10)
         #self.depth = para['depth']
 
         seed = para.get('seed', 42)
@@ -84,11 +85,11 @@ class PlotLensing(object):
         #if self.los != 'z':
         #    self.rich_name = f'{self.rich_name}_{self.los}'
 
-        pec_vel = para.get('pec_vel', False)
+        #pec_vel = para.get('pec_vel', False)
         #if pec_vel == True:
         #    self.rich_name += '_vel'
 
-        sat_from_part = para.get('sat_from_part', False)
+        #sat_from_part = para.get('sat_from_part', False)
         #if sat_from_part == True:
         #    self.rich_name += '_from_part'
 
@@ -119,8 +120,6 @@ class PlotLensing(object):
         self.hubble = self.readcat.hubble
         self.vol = self.boxsize**3
 
-
-
         if abundance_matching == True:
             if self.survey == 'desy1':
                 cum_den = np.loadtxt('../y1/data/cluster_cumulative_density_z_0.2_0.35.dat')
@@ -145,7 +144,6 @@ class PlotLensing(object):
         else:
             self.outname += '_bin'
 
-
         self.obs_path = f'{self.out_path}/obs_{self.rich_name}_{self.survey}/'
         if os.path.isdir(self.obs_path)==False: 
             os.makedirs(self.obs_path)
@@ -154,6 +152,9 @@ class PlotLensing(object):
         self.fname2 = f'{self.obs_path}/DS_{self.outname}'
         self.fname3 = f'{self.obs_path}/mass_{self.outname}'
         self.fname4 = f'{self.obs_path}/lam_{self.outname}'
+
+        self.fname5 = f'{self.obs_path}/DS_phys_noh_{self.outname}' ## NEW!
+
 
     def calc_lensing(self):
         print_memory('before reading particles')
@@ -177,7 +178,7 @@ class PlotLensing(object):
         fname2 = f'{self.out_path}/richness_{self.rich_name}_best_match.fit'
         
         if os.path.exists(fname2):
-            print('use best_match mass' )
+            print('use best_match mass')
             data, header = fitsio.read(fname2, header=True)
             mass_all = data['mass_best_match']
         else:
@@ -238,28 +239,34 @@ class PlotLensing(object):
 
             #out_loc = f'{self.out_path}/obs_{self.rich_name}/'
 
-            ml = MeasureLensing(self.obs_path, self.Rmin, self.Rmax, self.pimax)
+            ml = MeasureLensing(self.obs_path, self.Rmin, self.Rmax, self.pimax, self.nrp_per_decade)
             ml.write_bin_file()
             xh_mat, yh_mat, zh_mat, lnM_matched = sample_matching_mass(lnM_sel, lnM_all, xh_all, yh_all, zh_all)
             rp, Sigma_sel, DS_sel = ml.measure_lensing(xh_sel, yh_sel, zh_sel, self.xp, self.yp, self.zp, self.boxsize, self.mpart)
             rp, Sigma_mat, DS_mat = ml.measure_lensing(xh_mat, yh_mat, zh_mat, self.xp, self.yp, self.zp, self.boxsize, self.mpart)
-            sel = (rp > 0.1)
+            sel = (rp > 0.05)
+
             x = rp[sel]
             y = Sigma_sel[sel]
             z = Sigma_mat[sel]
             data1 = np.array([x,y,z]).transpose()
-            np.savetxt(f'{self.fname1}_{ibin}.dat', data1, fmt='%-12g', header='rp, Sigma_sel, Sigma_matched')
+            np.savetxt(f'{self.fname1}_{ibin}.dat', data1, fmt='%-12g', header='rp [cMpc/h], Sigma_sel [h Msun/pc^2], Sigma_matched')
 
             x = rp[sel]
             y = DS_sel[sel]
             z = DS_mat[sel]
-
             data2 = np.array([x,y,z]).transpose()
-            np.savetxt(f'{self.fname2}_{ibin}.dat', data2, fmt='%-12g', header='rp, DS_sel, DS_matched')
+            np.savetxt(f'{self.fname2}_{ibin}.dat', data2, fmt='%-12g', header='rp [cMpc/h], DS_sel [h Msun/pc^2], DS_matched')
+
+            # extra: save physical no-h units, used for emulator
+            x = rp[sel] / self.hubble * self.scale_factor
+            y = DS_sel[sel] * self.hubble / self.scale_factor**2
+            data5 = np.array([x,y]).transpose()
+            np.savetxt(f'{self.fname5}_{ibin}.dat', data5, fmt='%-12g', header='rp [pMpc], DS [Msun/pc^2]')
 
             # these two files are for sanity checks
             data3 = np.array([lnM_sel]).transpose()
-            np.savetxt(f'{self.fname3}_{ibin}.dat', data3, fmt='%-12g', header='lnMass')
+            np.savetxt(f'{self.fname3}_{ibin}.dat', data3, fmt='%-12g', header='lnMass [Msun/h]')
 
             data4 = np.array([lam_sel]).transpose()
             np.savetxt(f'{self.fname4}_{ibin}.dat', data4, fmt='%-12g', header='lambda')
@@ -379,10 +386,11 @@ class PlotLensing(object):
                     DS_sel = DS_sel * 1e-12 * self.hubble / self.scale_factor**2
                     #print(DS_sel)
                     DS_interp = interp1d(rp, DS_sel)
-
-
                     rp_all.append(rp_y1)
                     DS_all.append(DS_interp(rp_y1))
+
+
+
                 # except:
                 #     print(f'need to run {self.fname2}_{ibin}.dat')
 

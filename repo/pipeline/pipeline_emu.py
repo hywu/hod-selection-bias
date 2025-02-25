@@ -78,8 +78,15 @@ if __name__ == "__main__":
     # cosmo_list = np.zeros(100, dtype=int)
     # hod_list = np.arange(100, 200, dtype=int)
 
-    cosmo_list = np.zeros(100)#[0]#np.arange(130, 182, dtype=int)
-    hod_list = 100 + np.arange(100) #np.zeros(52, dtype=int)
+    # fix cosmo, vary hod
+    cosmo_list = np.zeros(100)
+    hod_list = 100 + np.arange(100)
+
+    # fix hod, vary cosmo
+    # cosmo_list = [0]
+    # cosmo_list.extend(range(130, 182))
+    # hod_list = np.zeros(53, dtype=int)
+
 
     cosmo_hod_list = np.column_stack((cosmo_list, hod_list))
 
@@ -108,7 +115,7 @@ if __name__ == "__main__":
         print('need galaxies')
         os.system(f'./make_gal_cat.py {yml_fname}')
         
-        '''
+        
         # subprocess.run(['./make_gal_cat.py', yml_fname], capture_output=True, text=True)
         # print("STDOUT:", result.stdout)  # not saving messages for some reason
         # print("STDERR:", result.stderr)
@@ -128,7 +135,7 @@ if __name__ == "__main__":
     survey = para.get('survey', 'desy1')
     obs_path = f'{out_path}/obs_{rich_name}_{survey}/'
     if survey == 'desy1':
-        lens_fname = obs_path+'DS_abun_bin_3.dat'
+        lens_fname = obs_path+'DS_phys_noh_abun_bin_3.dat'
     if survey == 'sdss':
         lens_fname = obs_path+'DS_abun_bin_0.dat'
 
@@ -141,7 +148,7 @@ if __name__ == "__main__":
         #subprocess.run(['./plot_lensing.py', yml_fname], capture_output=True, text=True)
         # print("STDOUT:", result.stdout)
         # print("STDERR:", result.stderr), 
-    '''
+    
     '''
     #### sanity checks ####
     subprocess.run(f'./plot_counts_richness.py {yml_fname}', shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
