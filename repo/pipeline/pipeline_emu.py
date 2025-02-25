@@ -8,7 +8,7 @@ nbody_loc_master = '/projects/hywu/cluster_sims/cluster_finding/data/AbacusSummi
 output_loc_master = '/projects/hywu/cluster_sims/cluster_finding/data/emulator_data/'
 
 rich_name = 'd90'
-zid = 3
+zid = 5
 phase = 0
 
 def check_files_needed(zid):
