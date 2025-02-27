@@ -7,8 +7,8 @@ import yaml
 nbody_loc_master = '/projects/hywu/cluster_sims/cluster_finding/data/AbacusSummit_base/'
 output_loc_master = '/projects/hywu/cluster_sims/cluster_finding/data/emulator_data/'
 
-rich_name = 'd90'
-zid = 5
+rich_name = 'g110_bg'
+zid = 3
 phase = 0
 
 def check_files_needed(zid):
@@ -45,15 +45,19 @@ output_loc: {output_loc_master}
 redshift: 0.3
 phase: 0
 
-# richness
-depth: 90
-perc: True
-use_rlambda: True
-use_pmem: False
-pec_vel: True
-save_members: False
+# galaxies 
 mdef: vir
 sat_from_part: False
+
+# richness
+perc: True
+use_rlambda: True
+save_members: False
+use_pmem: True
+which_pmem: gauss
+depth: 110
+subtract_background: True
+
 """
     yml_fname = output_loc_master + f'yml/c{cosmo_id:0>3d}_hod{hod_id:0>5d}.yml'
     f = open(yml_fname, "w")
@@ -79,8 +83,10 @@ if __name__ == "__main__":
     # hod_list = np.arange(100, 200, dtype=int)
 
     # fix cosmo, vary hod
-    cosmo_list = np.zeros(100)
-    hod_list = 100 + np.arange(100)
+    cosmo_list = [0]
+    hod_list = [0]
+    cosmo_list.extend(np.zeros(100))
+    hod_list.extend(100 + np.arange(100))
 
     # fix hod, vary cosmo
     # cosmo_list = [0]
@@ -131,7 +137,7 @@ if __name__ == "__main__":
         # print("STDOUT:", result.stdout)
         # print("STDERR:", result.stderr), 
 
-    
+    '''
     survey = para.get('survey', 'desy1')
     obs_path = f'{out_path}/obs_{rich_name}_{survey}/'
     if survey == 'desy1':
@@ -151,10 +157,11 @@ if __name__ == "__main__":
     
     '''
     #### sanity checks ####
-    subprocess.run(f'./plot_counts_richness.py {yml_fname}', shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    os.system(f'./plot_counts_richness.py {yml_fname}')
+    
     os.chdir('../utils')
-    subprocess.run(f'./plot_mor.py {yml_fname}', shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-
+    os.system(f'./plot_mor.py {yml_fname}')
+    '''
     #subprocess.run(f'./plot_hod.py {yml_fname}', shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     '''
     

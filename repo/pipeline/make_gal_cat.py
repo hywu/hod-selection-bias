@@ -93,7 +93,7 @@ kappa = 10**lgkappa
 #     M1 = 20**(-1/alpha) *(10**lgM20 - 10**lgkappa * 10**lgMcut)
 #     lgM1 = np.log10(M1)
 
-pec_vel = para.get('pec_vel', False)
+pec_vel = para.get('pec_vel', True)
 
 seed = para.get('seed', 42)
 np.random.seed(seed=seed) # for scipy
