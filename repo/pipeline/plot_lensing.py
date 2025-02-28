@@ -152,7 +152,6 @@ class PlotLensing(object):
         self.fname2 = f'{self.obs_path}/DS_{self.outname}'
         self.fname3 = f'{self.obs_path}/mass_{self.outname}'
         self.fname4 = f'{self.obs_path}/lam_{self.outname}'
-
         self.fname5 = f'{self.obs_path}/DS_phys_noh_{self.outname}' ## NEW!
 
 
@@ -223,7 +222,7 @@ class PlotLensing(object):
                 lnM_sel = lnM_all[sel]
                 lam_sel = lam_all[sel]
 
-            if self.abundance_matching == True:
+            else: #if self.abundance_matching == True:
                 if self.thresholded == True:
                     counts_min = self.counts_min_list[ibin]
                     counts_max = 0
@@ -237,6 +236,7 @@ class PlotLensing(object):
                 lnM_sel = lnM_all[counts_max:counts_min]
                 lam_sel = lam_all[counts_max:counts_min]
 
+
             #out_loc = f'{self.out_path}/obs_{self.rich_name}/'
 
             ml = MeasureLensing(self.obs_path, self.Rmin, self.Rmax, self.pimax, self.nrp_per_decade)
@@ -245,7 +245,7 @@ class PlotLensing(object):
             rp, Sigma_sel, DS_sel = ml.measure_lensing(xh_sel, yh_sel, zh_sel, self.xp, self.yp, self.zp, self.boxsize, self.mpart)
             rp, Sigma_mat, DS_mat = ml.measure_lensing(xh_mat, yh_mat, zh_mat, self.xp, self.yp, self.zp, self.boxsize, self.mpart)
             sel = (rp > 0.05)
-
+            print('saving', self.fname1)
             x = rp[sel]
             y = Sigma_sel[sel]
             z = Sigma_mat[sel]
@@ -413,7 +413,7 @@ if __name__ == "__main__":
     #./plot_lensing.py ../scripts/yml/uchuu_fid_hod.yml
 
     yml_fname = sys.argv[1]
-    plmu = PlotLensing(yml_fname, abundance_matching=True, thresholded=False)
+    plmu = PlotLensing(yml_fname, abundance_matching=False, thresholded=False)
     plmu.calc_lensing()
     #plmu.plot_lensing()
     #plt.show()

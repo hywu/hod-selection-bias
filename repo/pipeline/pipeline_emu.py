@@ -6,10 +6,23 @@ import yaml
 
 nbody_loc_master = '/projects/hywu/cluster_sims/cluster_finding/data/AbacusSummit_base/'
 output_loc_master = '/projects/hywu/cluster_sims/cluster_finding/data/emulator_data/'
-
-rich_name = 'g110_bg'
 zid = 3
 phase = 0
+
+# which_pmem = 'uniform'
+# depth = 100
+# subtract_background = False
+# rich_name = 'd100'
+
+# which_pmem = 'uniform'
+# depth = 100
+# subtract_background = True
+# rich_name = 'd100_bg'
+
+which_pmem = 'quad'
+depth = 180
+subtract_background = False
+rich_name = 'q180'
 
 def check_files_needed(zid):
     # check if N-body exists or not
@@ -54,9 +67,9 @@ perc: True
 use_rlambda: True
 save_members: False
 use_pmem: True
-which_pmem: gauss
-depth: 110
-subtract_background: True
+which_pmem: {which_pmem}
+depth: {depth}
+subtract_background: {subtract_background}
 
 """
     yml_fname = output_loc_master + f'yml/c{cosmo_id:0>3d}_hod{hod_id:0>5d}.yml'
@@ -87,6 +100,8 @@ if __name__ == "__main__":
     hod_list = [0]
     cosmo_list.extend(np.zeros(100))
     hod_list.extend(100 + np.arange(100))
+
+    hod_id_4x_counts = np.loadtxt('hod_id_4x_counts.dat', dtype=int)
 
     # fix hod, vary cosmo
     # cosmo_list = [0]
@@ -120,8 +135,7 @@ if __name__ == "__main__":
     else:
         print('need galaxies')
         os.system(f'./make_gal_cat.py {yml_fname}')
-        
-        
+
         # subprocess.run(['./make_gal_cat.py', yml_fname], capture_output=True, text=True)
         # print("STDOUT:", result.stdout)  # not saving messages for some reason
         # print("STDERR:", result.stderr)
@@ -137,19 +151,26 @@ if __name__ == "__main__":
         # print("STDOUT:", result.stdout)
         # print("STDERR:", result.stderr), 
 
-    '''
-    survey = para.get('survey', 'desy1')
-    obs_path = f'{out_path}/obs_{rich_name}_{survey}/'
-    if survey == 'desy1':
-        lens_fname = obs_path+'DS_phys_noh_abun_bin_3.dat'
-    if survey == 'sdss':
-        lens_fname = obs_path+'DS_abun_bin_0.dat'
+    os.system(f'./plot_counts_richness.py {yml_fname}')
+    
+    # os.chdir('../utils')
+    # os.system(f'./plot_mor.py {yml_fname}')
 
-    if os.path.exists(lens_fname):
-        print('lensing done')
-    else:
-        print('need lensing')
-        os.system(f'./plot_lensing.py {yml_fname}')
+    if hod_id in hod_id_4x_counts:
+        os.chdir('../pipeline')
+        
+        survey = para.get('survey', 'desy1')
+        obs_path = f'{out_path}/obs_{rich_name}_{survey}/'
+        if survey == 'desy1':
+            lens_fname = obs_path+'DS_phys_noh_lam_bin_3.dat'
+        if survey == 'sdss':
+            lens_fname = obs_path+'DS_abun_bin_0.dat'
+        
+        if os.path.exists(lens_fname):
+            print('lensing done')
+        else:
+            print('need lensing')
+            os.system(f'./plot_lensing.py {yml_fname}')
 
         #subprocess.run(['./plot_lensing.py', yml_fname], capture_output=True, text=True)
         # print("STDOUT:", result.stdout)
@@ -157,11 +178,8 @@ if __name__ == "__main__":
     
     '''
     #### sanity checks ####
-    os.system(f'./plot_counts_richness.py {yml_fname}')
-    
-    os.chdir('../utils')
-    os.system(f'./plot_mor.py {yml_fname}')
+
     '''
     #subprocess.run(f'./plot_hod.py {yml_fname}', shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    '''
+    
     
