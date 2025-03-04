@@ -94,16 +94,16 @@ if __name__ == "__main__":
     
 
     # fix hod, vary dosmo
-    cosmo_list = [0]
-    hod_list = [0]
-    cosmo_list.extend(range(130, 182))
-    hod_list.extend(np.zeros(52))
-
-    # fix cosmo, vary hod
     # cosmo_list = [0]
     # hod_list = [0]
-    # cosmo_list.extend(np.zeros(10))
-    # hod_list.extend(np.arange(1,11))
+    # cosmo_list.extend(range(130, 182))
+    # hod_list.extend(np.zeros(52))
+
+    # fix cosmo, vary hod
+    cosmo_list = [0]
+    hod_list = [0]
+    cosmo_list.extend(np.zeros(100))
+    hod_list.extend(np.arange(100,200))
 
 
 

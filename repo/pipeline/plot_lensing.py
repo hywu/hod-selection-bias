@@ -18,9 +18,6 @@ from measure_lensing import MeasureLensing
 from sample_matching_mass import sample_matching_mass
 from print_memory import print_memory
 
-
-
-
 class PlotLensing(object):
     def __init__(self, yml_fname, abundance_matching, thresholded):
 
@@ -408,10 +405,13 @@ if __name__ == "__main__":
     #./plot_lensing.py ../yml/mini_uchuu/mini_uchuu_fid_hod.yml
 
     yml_fname = sys.argv[1]
-    plmu = PlotLensing(yml_fname)
+    plmu = PlotLensing(yml_fname, abundance_matching=False, thresholded=False)
     plmu.read_particles()
-    plmu.calc_lensing(abundance_matching=False, thresholded=False)
-    plmu.calc_lensing(abundance_matching=True, thresholded=False)
+    plmu.calc_lensing()
+
+    plmu = PlotLensing(yml_fname, abundance_matching=False, thresholded=False)
+    plmu.read_particles()
+    plmu.calc_lensing()
 
     #plmu.plot_lensing()
     #plt.show()
