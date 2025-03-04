@@ -19,6 +19,8 @@ class ReadAbacusSummit(object):
         #print(cosmo_para)
 
         if redshift == 0.3: z_str = '0p300'
+        if redshift == 0.4: z_str = '0p400'
+        if redshift == 0.5: z_str = '0p500'
 
         self.input_loc = nbody_loc + f'/base_c{cosmo_id:0>3d}/base_c{cosmo_id:0>3d}_ph{phase:0>3d}/z{z_str}/'
 
@@ -27,8 +29,8 @@ class ReadAbacusSummit(object):
         self.part_fname = self.input_loc + f'subsample_particles_A_base_c{cosmo_id:0>3d}_ph{phase:0>3d}_z{z_str}.h5'
         f = h5py.File(self.part_fname, 'r')
         particles = f['particles']
-        npart = np.shape(particles)[0]
-        self.mpart = self.OmegaM * rhocrit * self.boxsize**3 / npart
+        self.npart = np.shape(particles)[0]
+        self.mpart = self.OmegaM * rhocrit * self.boxsize**3 / self.npart
         #print('mpart%e'%self.mpart)
         #exit()
         #self.input_loc = '/bsuhome/hwu/scratch/abacus_summit/'

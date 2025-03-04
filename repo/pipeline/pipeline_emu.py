@@ -168,11 +168,12 @@ if __name__ == "__main__":
         survey = para.get('survey', 'desy1')
         obs_path = f'{out_path}/obs_{rich_name}_{survey}/'
         if survey == 'desy1':
-            lens_fname = obs_path+'DS_phys_noh_abun_bin_3.dat'
+            lens_fname1 = obs_path+'DS_phys_noh_abun_bin_3.dat'
+            lens_fname2 = obs_path+'DS_phys_noh_lam_bin_3.dat'
         if survey == 'sdss':
             lens_fname = obs_path+'DS_abun_bin_0.dat'
         
-        if os.path.exists(lens_fname):
+        if os.path.exists(lens_fname1) and os.path.exists(lens_fname2):
             print('lensing done')
         else:
             print('need lensing')

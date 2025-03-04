@@ -1,5 +1,5 @@
 model_name: fid_hod_z0.1
-rich_name: d90_vel
+rich_name: q180
 
 nbody: mini_uchuu
 nbody_loc: /projects/hywu/cluster_sims/cluster_finding/data/MiniUchuu/

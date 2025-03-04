@@ -18,8 +18,11 @@ from measure_lensing import MeasureLensing
 from sample_matching_mass import sample_matching_mass
 from print_memory import print_memory
 
+
+
+
 class PlotLensing(object):
-    def __init__(self, yml_fname):
+    def __init__(self, yml_fname, abundance_matching, thresholded):
 
         with open(yml_fname, 'r') as stream:
             try:
@@ -75,23 +78,11 @@ class PlotLensing(object):
         self.rich_name = para['rich_name']
 
 
-        #use_pmem = para.get('use_pmem', False)
         self.los = para.get('los', 'z')
-        #if use_pmem == True:
-        #    self.rich_name = f'pmem'
-        #else:
-        #    self.rich_name = f'd{self.depth:.0f}'
 
         #if self.los != 'z':
         #    self.rich_name = f'{self.rich_name}_{self.los}'
 
-        #pec_vel = para.get('pec_vel', False)
-        #if pec_vel == True:
-        #    self.rich_name += '_vel'
-
-        #sat_from_part = para.get('sat_from_part', False)
-        #if sat_from_part == True:
-        #    self.rich_name += '_from_part'
 
         if para['nbody'] == 'mini_uchuu':
             from read_mini_uchuu import ReadMiniUchuu
@@ -115,31 +106,15 @@ class PlotLensing(object):
             self.readcat = ReadTNGDMO(para['nbody_loc'], halofinder)
             print('halofinder', halofinder)
 
-        print_memory('before reading particles')
-        xp_in, yp_in, zp_in = self.readcat.read_particle_positions()
-        if self.los == 'z':
-            self.xp = xp_in
-            self.yp = yp_in
-            self.zp = zp_in
-        if self.los == 'x':
-            self.xp = yp_in
-            self.yp = zp_in
-            self.zp = xp_in
-        if self.los == 'y':
-            self.xp = zp_in
-            self.yp = xp_in
-            self.zp = yp_in
-        print_memory('finished reading particles')
-
         self.mpart = self.readcat.mpart
         self.boxsize = self.readcat.boxsize
         self.hubble = self.readcat.hubble
         self.vol = self.boxsize**3
 
+        self.abundance_matching = abundance_matching
+        self.thresholded = thresholded
 
-    def calc_lensing(self, abundance_matching, thresholded):
-
-        if abundance_matching == True:
+        if self.abundance_matching == True:
             if self.survey == 'desy1':
                 cum_den = np.loadtxt('../y1/data/cluster_cumulative_density_z_0.2_0.35.dat')
             if self.survey == 'sdss':
@@ -150,8 +125,6 @@ class PlotLensing(object):
             self.counts_min_list = counts_list[0:-1]
             self.counts_max_list = counts_list[1:]
 
-        self.abundance_matching = abundance_matching
-        self.thresholded = thresholded
 
         if self.abundance_matching == True:
             self.outname = 'abun'
@@ -174,8 +147,26 @@ class PlotLensing(object):
         self.fname5 = f'{self.obs_path}/DS_phys_noh_{self.outname}' ## NEW!
 
 
+    def read_particles(self):
+        print_memory('before reading particles')
+        xp_in, yp_in, zp_in = self.readcat.read_particle_positions()
+        if self.los == 'z':
+            self.xp = xp_in
+            self.yp = yp_in
+            self.zp = zp_in
+        if self.los == 'x':
+            self.xp = yp_in
+            self.yp = zp_in
+            self.zp = xp_in
+        if self.los == 'y':
+            self.xp = zp_in
+            self.yp = xp_in
+            self.zp = yp_in
+        print_memory('finished reading particles')
 
 
+
+    def calc_lensing(self):
 
         # get clusters
         fname = f'{self.out_path}/richness_{self.rich_name}.fit'
@@ -418,8 +409,10 @@ if __name__ == "__main__":
 
     yml_fname = sys.argv[1]
     plmu = PlotLensing(yml_fname)
-    plmu.calc_lensing(abundance_matching=True, thresholded=False)
+    plmu.read_particles()
     plmu.calc_lensing(abundance_matching=False, thresholded=False)
+    plmu.calc_lensing(abundance_matching=True, thresholded=False)
+
     #plmu.plot_lensing()
     #plt.show()
     # rp, DS = plmu.get_lensing_data_vector()
