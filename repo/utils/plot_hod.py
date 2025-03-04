@@ -6,9 +6,9 @@ import yaml
 import fitsio
 from astropy.io import fits
 import sys
-from fid_hod import Ngal_S20_noscatt
 from scipy.optimize import minimize
-
+from periodic_boundary_condition import periodic_boundary_condition
+from fid_hod import Ngal_S20_noscatt
 
 class PlotHOD(object):
     def __init__(self, yml_fname):
@@ -74,13 +74,22 @@ class PlotHOD(object):
         x_halo = readcat.xh
         y_halo = readcat.yh
         z_halo = readcat.zh
+        boxsize = readcat.boxsize
 
         gal_fname = f'{self.out_path}/gals.fit'
         data, header = fitsio.read(gal_fname, header=True)
 
-        x_gal = data['px']
-        y_gal = data['py']
-        z_gal = data['pz']
+        x_gal_in = data['px']
+        y_gal_in = data['py']
+        z_gal_in = data['pz']
+
+        x_padding = 3
+        y_padding = 3
+        z_padding = 3
+
+        x_gal, y_gal, z_gal = periodic_boundary_condition(
+            x_gal_in, y_gal_in, z_gal_in, 
+            boxsize, x_padding, y_padding, z_padding)
 
         gal_position = np.dstack([x_gal, y_gal, z_gal])[0]
         gal_tree = spatial.cKDTree(gal_position)
@@ -230,6 +239,7 @@ class PlotHOD(object):
 if __name__ == "__main__":
     yml_fname = sys.argv[1] 
     #./plot_hod.py ../yml/mini_uchuu/mini_uchuu_fid_hod.yml
+    #./plot_hod.py ../yml/flamingo/flamingo_galaxies.yml
 
     ch = PlotHOD(yml_fname)
     mass, hod_mean, hod_std = ch.calc_hod(Mmin=2e11)#Mmin=1e15)

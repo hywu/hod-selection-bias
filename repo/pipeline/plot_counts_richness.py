@@ -93,6 +93,10 @@ class PlotCountsRichness(object):
             self.readcat = ReadTNGDMO(self.para['nbody_loc'], halofinder, redshift)
             print('halofinder', halofinder)
 
+        if self.para['nbody'] == 'flamingo':
+            from read_flamingo import ReadFlamingo
+            self.readcat = ReadFlamingo(self.para['nbody_loc'], redshift)
+
         #self.mpart = self.readcat.mpart
         self.boxsize = self.readcat.boxsize
         #self.hubble = self.readcat.hubble
