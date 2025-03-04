@@ -2,8 +2,8 @@ model_name: fid_hod_z0.1
 rich_name: d90_vel
 
 nbody: mini_uchuu
-nbody_loc: /bsuhome/hwu/scratch/uchuu/MiniUchuu/
-output_loc: /bsuhome/hwu/scratch/hod-selection-bias/output_mini_uchuu/
+nbody_loc: /projects/hywu/cluster_sims/cluster_finding/data/MiniUchuu/
+output_loc: /projects/hywu/cluster_sims/cluster_finding/data/hod-selection-bias/output_mini_uchuu/
 redshift: 0.1
 
 # HOD parameters 
@@ -15,10 +15,13 @@ sigmalogM: 0.1
 sigmaintr: 0
 
 # richness
-depth: 90
 perc: True
 use_rlambda: True
-save_members: True
+save_members: False
+use_pmem: True
+which_pmem: quad
+depth: 180
+subtract_background: False
 
 # Cosmology
 # http://skiesanduniverses.org/Simulations/Uchuu/

@@ -6,41 +6,9 @@ import fitsio
 import os
 import sys
 import pandas as pd
-#sys.path.append('../utils')
+sys.path.append('../utils')
+from get_para import get_cosmo_para
 #from readGadgetSnapshot import readGadgetSnapshot
-
-
-#### cosmo_c***_ph***_z0p***.param files seem unreliable. 
-#### read directly from the csv file
-def get_cosmo_para(cosmo_id_wanted):
-    df = pd.read_csv('/projects/hywu/cluster_sims/cluster_finding/data/AbacusSummit_base/cosmologies.csv', sep=',')
-    df.columns = df.columns.str.replace(' ', '')
-    #print(df.columns)
-    nrows = df.shape[0]
-    for irow in np.arange(nrows):
-        # retrieve one cosmology at a time
-        row = df.iloc[irow]
-        root = row['root'].replace(' ', '')
-        cosmo_id = int(root[-3:])
-
-        if cosmo_id == cosmo_id_wanted:
-            #print('cosmo_id', cosmo_id)
-            hubble = row['h']
-            OmegaB = row['omega_b']/hubble**2
-            if len(row['omega_ncdm']) == 12:
-                Oncdm = float(row['omega_ncdm'])/hubble**2
-            else:
-                Oncdm = float(row['omega_ncdm'][0:10])/hubble**2
-
-            OmegaM = row['omega_cdm']/hubble**2 + OmegaB + Oncdm
-            OmegaL = 1 - OmegaM
-            sigma8 = row['sigma8_cb'] # baryons-plus-cdm-only (CLASS)
-            ns = row['n_s']
-            break
-
-    cosmo_dict = {'cosmo_id': cosmo_id, 'OmegaM': OmegaM, 'OmegaL': OmegaL,'hubble': hubble,'sigma8': sigma8,'OmegaB': OmegaB,'ns': ns}
-    return cosmo_dict
-
 
 class ReadAbacusSummit(object):
     def __init__(self, nbody_loc, redshift, cosmo_id, phase=0): #):

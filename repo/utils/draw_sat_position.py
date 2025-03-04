@@ -10,7 +10,7 @@ from colossus.cosmology import cosmology
 from colossus.halo import concentration
 from colossus.halo import mass_defs
 
-from read_abacus_summit import get_cosmo_para
+from get_para import get_cosmo_para
 
 class DrawSatPosition(object):
     def __init__(self, yml_fname):

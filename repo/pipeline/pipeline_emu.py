@@ -56,7 +56,7 @@ nbody: abacus_summit
 nbody_loc: {nbody_loc_master}
 output_loc: {output_loc_master}
 redshift: 0.3
-phase: 0
+phase: {phase}
 
 # galaxies 
 mdef: vir
@@ -92,16 +92,22 @@ if __name__ == "__main__":
 
     job_id = int(sys.argv[1]) # job array ID
     
-    # cosmo_list = np.zeros(100, dtype=int)
-    # hod_list = np.arange(100, 200, dtype=int)
 
-    # fix cosmo, vary hod
+    # fix hod, vary dosmo
     cosmo_list = [0]
     hod_list = [0]
-    cosmo_list.extend(np.zeros(100))
-    hod_list.extend(100 + np.arange(100))
+    cosmo_list.extend(range(130, 182))
+    hod_list.extend(np.zeros(52))
 
-    hod_id_4x_counts = np.loadtxt('hod_id_4x_counts.dat', dtype=int)
+    # fix cosmo, vary hod
+    # cosmo_list = [0]
+    # hod_list = [0]
+    # cosmo_list.extend(np.zeros(10))
+    # hod_list.extend(np.arange(1,11))
+
+
+
+    #hod_id_4x_counts = np.loadtxt('hod_id_4x_counts.dat', dtype=int)
 
     # fix hod, vary cosmo
     # cosmo_list = [0]
@@ -156,13 +162,13 @@ if __name__ == "__main__":
     # os.chdir('../utils')
     # os.system(f'./plot_mor.py {yml_fname}')
 
-    if hod_id in hod_id_4x_counts:
+    if True:#hod_id in hod_id_4x_counts:
         os.chdir('../pipeline')
         
         survey = para.get('survey', 'desy1')
         obs_path = f'{out_path}/obs_{rich_name}_{survey}/'
         if survey == 'desy1':
-            lens_fname = obs_path+'DS_phys_noh_lam_bin_3.dat'
+            lens_fname = obs_path+'DS_phys_noh_abun_bin_3.dat'
         if survey == 'sdss':
             lens_fname = obs_path+'DS_abun_bin_0.dat'
         

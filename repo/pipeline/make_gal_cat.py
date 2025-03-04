@@ -13,6 +13,7 @@ start_master = start * 1
 #### my functions ####
 sys.path.append('../utils')
 from fid_hod import Ngal_S20_poisson
+from get_para import get_hod_para
 #from print_memory import print_memory
 from merge_files import merge_files
 
@@ -53,18 +54,6 @@ with open(f'{out_path}/para.yml', 'w') as outfile:
     yaml.dump(para, outfile, default_flow_style=False)
 
 print('output is at ' + out_path)
-
-def get_hod_para(hod_id_wanted):
-    #df = pd.read_csv('/users/hywu/work/hod/repo/abacus_summit/hod_params.csv', sep=',')
-    df = pd.read_csv('/users/hywu/work/hod/repo/abacus_summit/hod_latin.csv', sep=',')
-    nrows = df.shape[0]
-    for irow in np.arange(nrows):
-        row = df.iloc[irow]
-        hod_id = row['hod_id']
-        if hod_id == hod_id_wanted:
-            row_output = row
-            break
-    return row_output # it's a data frame, but it can be used as a dictionary
 
 
 alpha = para.get('alpha', None)
