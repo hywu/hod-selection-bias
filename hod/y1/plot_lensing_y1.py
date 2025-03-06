@@ -19,7 +19,9 @@ def plot_lensing_y1(thresholded, axes=None):
         marker = 'o'
 
     for ibin in range(nbins):
-        out_loc = 'data' #'/bsuhome/hwu/work/hod/output/plots_for_paper/y1/'
+        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+        out_loc = os.path.join(BASE_DIR, 'data')
+        #out_loc = 'data' #'/bsuhome/hwu/work/hod/output/plots_for_paper/y1/'
         rp, DS, dDS = np.loadtxt(f'{out_loc}/y1_DS_{bin_or_threshold}_z_0.2_0.35_lam_{ibin}.dat', unpack=True)
         sel = (DS > 0)&(rp >= 0.25)
         ax = axes[ibin]

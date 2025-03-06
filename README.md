@@ -12,4 +12,5 @@ Requirements: corrfunc 2.5.0
 
 
 add this to your `~/.bashrc`
+
 `export PYTHONPATH="/your/project/hod-selection/bias:$PYTHONPATH"`

@@ -11,9 +11,9 @@ import yaml
 start = timeit.default_timer()
 start_master = start * 1
 
-sys.path.append('../utils')
-from periodic_boundary_condition import periodic_boundary_condition
-from merge_files import merge_files
+from hod.utils.read_sim import read_sim
+from hod.utils.periodic_boundary_condition import periodic_boundary_condition
+from hod.utils.merge_files import merge_files
 
 yml_fname = sys.argv[1]
 ##srun -A hywu_cluster_sims_0001 -p dev -c 1 --mem=8GB -t 120 --pty /bin/bash
@@ -80,29 +80,30 @@ z_padding_gal = 0
 
 
 # read in halos
-if para['nbody'] == 'mini_uchuu':
-    from read_mini_uchuu import ReadMiniUchuu
-    readcat = ReadMiniUchuu(para['nbody_loc'], redshift)
+# if para['nbody'] == 'mini_uchuu':
+#     from read_mini_uchuu import ReadMiniUchuu
+#     readcat = ReadMiniUchuu(para['nbody_loc'], redshift)
 
-if para['nbody'] == 'uchuu':
-    from read_uchuu import ReadUchuu
-    readcat = ReadUchuu(para['nbody_loc'], redshift)
+# if para['nbody'] == 'uchuu':
+#     from read_uchuu import ReadUchuu
+#     readcat = ReadUchuu(para['nbody_loc'], redshift)
 
-if para['nbody'] == 'abacus_summit':
-    #sys.path.append('../abacus_summit')
-    from read_abacus_summit import ReadAbacusSummit
-    readcat = ReadAbacusSummit(para['nbody_loc'], redshift, cosmo_id=cosmo_id)
+# if para['nbody'] == 'abacus_summit':
+#     #sys.path.append('../abacus_summit')
+#     from read_abacus_summit import ReadAbacusSummit
+#     readcat = ReadAbacusSummit(para['nbody_loc'], redshift, cosmo_id=cosmo_id)
 
-if para['nbody'] == 'flamingo':
-    from read_flamingo import ReadFlamingo
-    readcat = ReadFlamingo(para['nbody_loc'], redshift)
+# if para['nbody'] == 'flamingo':
+#     from read_flamingo import ReadFlamingo
+#     readcat = ReadFlamingo(para['nbody_loc'], redshift)
 
-if para['nbody'] == 'tng_dmo':
-    from read_tng_dmo import ReadTNGDMO
-    halofinder = para.get('halofinder', 'rockstar')
-    readcat = ReadTNGDMO(para['nbody_loc'], halofinder, redshift)
-    print('halofinder', halofinder)
+# if para['nbody'] == 'tng_dmo':
+#     from read_tng_dmo import ReadTNGDMO
+#     halofinder = para.get('halofinder', 'rockstar')
+#     readcat = ReadTNGDMO(para['nbody_loc'], halofinder, redshift)
+#     print('halofinder', halofinder)
 
+readcat = read_sim(para)
 readcat.read_halos(Mmin, pec_vel=pec_vel)#, cluster_only=True)
 boxsize = readcat.boxsize
 OmegaM = readcat.OmegaM

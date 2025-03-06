@@ -5,7 +5,8 @@ import numpy as np
 import os
 import sys
 import yaml
-sys.path.append('../utils')
+import read_sim
+#sys.path.append('../utils')
 
 #./plot_counts_richness.py ../yml/mini_uchuu/mini_uchuu_fid_hod.yml
 #./plot_counts_richness.py yml/abacus_summit_fid_hod.yml
@@ -74,28 +75,7 @@ class PlotCountsRichness(object):
         if os.path.isdir(self.obs_path)==False: 
             os.makedirs(self.obs_path)
 
-        if self.para['nbody'] == 'mini_uchuu':
-            from read_mini_uchuu import ReadMiniUchuu
-            self.readcat = ReadMiniUchuu(self.para['nbody_loc'], redshift)
-
-        if self.para['nbody'] == 'uchuu':
-            from read_uchuu import ReadUchuu
-            self.readcat = ReadUchuu(self.para['nbody_loc'], redshift)
-
-        if self.para['nbody'] == 'abacus_summit':
-            sys.path.append('../abacus_summit')
-            from read_abacus_summit import ReadAbacusSummit
-            self.readcat = ReadAbacusSummit(self.para['nbody_loc'], redshift, cosmo_id=cosmo_id)
-
-        if self.para['nbody'] == 'tng_dmo':
-            from read_tng_dmo import ReadTNGDMO
-            halofinder = self.para.get('halofinder', 'rockstar')
-            self.readcat = ReadTNGDMO(self.para['nbody_loc'], halofinder, redshift)
-            print('halofinder', halofinder)
-
-        if self.para['nbody'] == 'flamingo':
-            from read_flamingo import ReadFlamingo
-            self.readcat = ReadFlamingo(self.para['nbody_loc'], redshift)
+        self.readcat = read_sim(para)
 
         #self.mpart = self.readcat.mpart
         self.boxsize = self.readcat.boxsize
