@@ -5,7 +5,7 @@ import numpy as np
 import os
 import sys
 import yaml
-import read_sim
+from hod.utils.read_sim import read_sim
 #sys.path.append('../utils')
 
 #./plot_counts_richness.py ../yml/mini_uchuu/mini_uchuu_fid_hod.yml
@@ -75,7 +75,7 @@ class PlotCountsRichness(object):
         if os.path.isdir(self.obs_path)==False: 
             os.makedirs(self.obs_path)
 
-        self.readcat = read_sim(para)
+        self.readcat = read_sim(self.para)
 
         #self.mpart = self.readcat.mpart
         self.boxsize = self.readcat.boxsize

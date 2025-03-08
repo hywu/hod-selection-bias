@@ -33,18 +33,20 @@ class ReadFlamingo(object):
 
         # calculate mpart ignoring gas. assuming all have the same mass
         #self.boxsize = max(self.xp) # Mpc/h
-        fname = self.input_loc + f'snapshots_downsampled/flamingo_{self.snap_name}.hdf5'
-        f = h5py.File(fname,'r')
-        coord = f['DMParticles/Coordinates']
-        npart = np.shape(coord)[0]
-        
-        rhocrit = 2.77536627e11 # h^2 Msun Mpc^-3
-        total_mass_in_box_hiMsun = self.boxsize**3 * self.OmegaM * rhocrit
-        self.mpart = total_mass_in_box_hiMsun / npart # Msun/h
-        #print(f'npart={npart}, mpart={self.mpart:e}')
 
-    def read_halos(self, Mmin, pec_vel=False, cluster_only=False, halo_loc='/cosma8/data/do012/dc-wu5/cylinder/output_HYDRO_PLANCK/'):
-        # sigh... temporary solution for halo loc
+        fname = self.input_loc + f'snapshots_downsampled/flamingo_{self.snap_name}.hdf5'
+        if os.path.exists(fname) == True: ## TODO! what are the "reduced?"
+            f = h5py.File(fname,'r')
+            coord = f['DMParticles/Coordinates']
+            npart = np.shape(coord)[0]
+            
+            rhocrit = 2.77536627e11 # h^2 Msun Mpc^-3
+            total_mass_in_box_hiMsun = self.boxsize**3 * self.OmegaM * rhocrit
+            self.mpart = total_mass_in_box_hiMsun / npart # Msun/h
+            #print(f'npart={npart}, mpart={self.mpart:e}')
+
+    def read_halos(self, Mmin, pec_vel=False, cluster_only=False, halo_loc='/cosma8/data/do012/dc-wu5/cylinder/output_L1000N3600/HYDRO_FIDUCIAL/'):
+        # TODO!!! temporary solution for halo loc
         
         #if cluster_only == True:
         #    fname = self.input_loc+f'host_halos_{self.snap_name}_M12.5.fit'
