@@ -6,8 +6,12 @@ sys.path.append('../utils')
 import yaml
 
 class ReadFlamingo(object):
-    def __init__(self, nbody_loc, redshift):
+    def __init__(self, nbody_loc, redshift, subsample_loc=None):
         self.input_loc = nbody_loc
+        if subsample_loc == None:
+            self.subsample_loc = nbody_loc
+        else:
+            self.subsample_loc = subsample_loc
 
         # get the cosmological parameters from header
         yml_fname = self.input_loc + 'used_parameters.yml'
@@ -34,24 +38,37 @@ class ReadFlamingo(object):
         # calculate mpart ignoring gas. assuming all have the same mass
         #self.boxsize = max(self.xp) # Mpc/h
 
-        fname = self.input_loc + f'snapshots_downsampled/flamingo_{self.snap_name}.hdf5'
-        if os.path.exists(fname) == True: ## TODO! what are the "reduced?"
-            f = h5py.File(fname,'r')
+        self.fname_part = self.input_loc + f'snapshots_downsampled/flamingo_{self.snap_name}.hdf5'
+        self.fname_part_2 = self.subsample_loc + f'particles_{self.snap_name}_0.1percent.h5'
+        
+        if os.path.exists(self.fname_part) == True: ## Don't use "reduced" (those are halo particles)
+            f = h5py.File(self.fname_part,'r')
             coord = f['DMParticles/Coordinates']
             npart = np.shape(coord)[0]
-            
-            rhocrit = 2.77536627e11 # h^2 Msun Mpc^-3
-            total_mass_in_box_hiMsun = self.boxsize**3 * self.OmegaM * rhocrit
-            self.mpart = total_mass_in_box_hiMsun / npart # Msun/h
             #print(f'npart={npart}, mpart={self.mpart:e}')
 
-    def read_halos(self, Mmin, pec_vel=False, cluster_only=False, halo_loc='/cosma8/data/do012/dc-wu5/cylinder/output_L1000N3600/HYDRO_FIDUCIAL/'):
+        elif os.path.exists(self.fname_part_2) == True:
+            f = h5py.File(self.fname_part_2,'r')
+            coord = f['part']
+            npart = np.shape(coord)[0]
+        else:
+            print('cannot find particle file')
+
+        rhocrit = 2.77536627e11 # h^2 Msun Mpc^-3
+        total_mass_in_box_hiMsun = self.boxsize**3 * self.OmegaM * rhocrit
+        self.mpart = total_mass_in_box_hiMsun / npart # Msun/h
+        print('npart = ', npart, 'mpart = %e'%self.mpart)
+
+
+
+    def read_halos(self, Mmin, pec_vel=False, cluster_only=False):
+    #, halo_loc='/cosma8/data/do012/dc-wu5/cylinder/output_L1000N3600/HYDRO_FIDUCIAL/'):
         # TODO!!! temporary solution for halo loc
         
         #if cluster_only == True:
         #    fname = self.input_loc+f'host_halos_{self.snap_name}_M12.5.fit'
         #else:
-        fname = halo_loc + f'host_halos_{self.snap_name}.fit'
+        fname = self.subsample_loc + f'host_halos_{self.snap_name}.fit'
         data = fitsio.read(fname)
         Mvir = data['Mvir']
         sel = (Mvir >= Mmin)
@@ -69,9 +86,8 @@ class ReadFlamingo(object):
             self.vy = data['vy'][sel][sort]
             self.vz = data['vz'][sel][sort]
 
-
-    def read_halos_orig(self, Mmin=1e11, pec_vel=False, cluster_only=False):
-        
+    '''
+    def read_halos_orig(self, Mmin=1e11, pec_vel=False, cluster_only=False): ## VR are deprecated
         fname = self.input_loc + f'SOAP/halo_properties_{self.snap_name}.hdf5'
         f = h5py.File(fname,'r')
         Mvir = f['SO/BN98/TotalMass'][:] * self.hubble # make it Msun/h
@@ -93,16 +109,25 @@ class ReadFlamingo(object):
             self.vx = vel[:,0][sel][sort]
             self.vy = vel[:,1][sel][sort]
             self.vz = vel[:,2][sel][sort]
+    '''
 
     def read_particle_positions(self):
-        fname = self.input_loc + f'snapshots_downsampled/flamingo_{self.snap_name}.hdf5'
-        f = h5py.File(fname,'r')
-        coord = f['DMParticles/Coordinates']
-        self.xp = coord[:,0] * self.hubble # make it Mpc/h
-        self.yp = coord[:,1] * self.hubble
-        self.zp = coord[:,2] * self.hubble
+        if os.path.exists(self.fname_part):
+            f = h5py.File(self.fname_part,'r')
+            coord = f['DMParticles/Coordinates']
+            self.xp = coord[:,0] * self.hubble # make it Mpc/h
+            self.yp = coord[:,1] * self.hubble
+            self.zp = coord[:,2] * self.hubble
 
+        elif os.path.exists(self.fname_part_2):
+            f = h5py.File(self.fname_part_2,'r')
+            coord = f['part']
+            self.xp = coord['x'] * self.hubble # make it Mpc/h
+            self.yp = coord['y'] * self.hubble
+            self.zp = coord['z'] * self.hubble
 
+        else: 
+            print('missing', self.fname_part_2)
 
         return self.xp, self.yp, self.zp
 
@@ -117,8 +142,17 @@ class ReadFlamingo(object):
 
 
 if __name__ == '__main__':
-    nbody_loc = f'/cosma8/data/dp004/flamingo/Runs/L1000N1800/HYDRO_PLANCK/'
-    rfl = ReadFlamingo(nbody_loc=nbody_loc, redshift=0.3)
+    nbody_loc = f'/cosma8/data/dp004/flamingo/Runs/L1000N3600/HYDRO_FIDUCIAL/'
+    subsample_loc = f'/cosma8/data/do012/dc-wu5/cylinder/output_L1000N3600/HYDRO_FIDUCIAL/'
+    rfl = ReadFlamingo(nbody_loc=nbody_loc, redshift=0.3, subsample_loc=subsample_loc)
+    rfl.read_halos(Mmin=1e14, pec_vel=False)
+
+    rfl.read_particle_positions()
+    print(len(rfl.xp))
+    print('downsampled particle mass %e Msun/h'%rfl.mpart)
+
+    #nbody_loc = f'/cosma8/data/dp004/flamingo/Runs/L1000N1800/HYDRO_PLANCK/'
+    #rfl = ReadFlamingo(nbody_loc=nbody_loc, redshift=0.3)
     # rfl.read_halos(Mmin=1e14, pec_vel=True)
     # print(len(rfl.xh))
     # print('max', np.max(rfl.vx))

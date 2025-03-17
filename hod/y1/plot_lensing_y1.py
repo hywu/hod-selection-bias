@@ -2,6 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
+import os
 
 lam_min_list = np.array([20, 30, 45, 60])
 lam_max_list = np.array([30, 45, 60, 1000])

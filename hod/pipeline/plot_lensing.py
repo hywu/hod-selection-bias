@@ -13,10 +13,10 @@ import timeit
 start = timeit.default_timer()
 start_master = start * 1
 
-sys.path.append('../utils')
-from measure_lensing import MeasureLensing
-from sample_matching_mass import sample_matching_mass
-from print_memory import print_memory
+#sys.path.append('../utils')
+from hod.utils.measure_lensing import MeasureLensing
+from hod.utils.sample_matching_mass import sample_matching_mass
+from hod.utils.print_memory import print_memory
 
 class PlotLensing(object):
     def __init__(self, yml_fname, abundance_matching, thresholded):
@@ -30,7 +30,7 @@ class PlotLensing(object):
         self.Rmin = para.get('Rmin', 0.01)
         self.Rmax = para.get('Rmax', 100)
         self.pimax = para.get('pimax', 100)
-        self.nrp_per_decade = para.get('nrp_per_decade', 10)
+        self.nrp_per_decade = para.get('nrp_per_decade', 5)
         #self.depth = para['depth']
 
         seed = para.get('seed', 42)
@@ -94,8 +94,8 @@ class PlotLensing(object):
             self.readcat = ReadAbacusSummit(para['nbody_loc'], redshift, cosmo_id=cosmo_id)
 
         if para['nbody'] == 'flamingo':
-            from read_flamingo import ReadFlamingo
-            self.readcat = ReadFlamingo(para['nbody_loc'], redshift)
+            from hod.utils.read_flamingo import ReadFlamingo
+            self.readcat = ReadFlamingo(para['nbody_loc'], redshift, subsample_loc=para['output_loc'])
 
         if para['nbody'] == 'tng_dmo':
             from read_tng_dmo import ReadTNGDMO
@@ -113,7 +113,9 @@ class PlotLensing(object):
 
         if self.abundance_matching == True:
             if self.survey == 'desy1':
-                cum_den = np.loadtxt('../y1/data/cluster_cumulative_density_z_0.2_0.35.dat')
+                BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+                out_loc = os.path.join(BASE_DIR, '../y1/data/')
+                cum_den = np.loadtxt(out_loc+'cluster_cumulative_density_z_0.2_0.35.dat')
             if self.survey == 'sdss':
                 cum_den = np.array([1.400836e-04])
 
