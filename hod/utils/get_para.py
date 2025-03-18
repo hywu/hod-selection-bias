@@ -1,0 +1,56 @@
+#!/usr/bin/env python
+import pandas as pd
+
+
+#### cosmo_c***_ph***_z0p***.param files seem unreliable. 
+#### read directly from the csv file
+def get_cosmo_para(cosmo_id_wanted):
+    df = pd.read_csv('/projects/hywu/cluster_sims/cluster_finding/data/AbacusSummit_base/cosmologies.csv', sep=',')
+    df.columns = df.columns.str.replace(' ', '')
+    #print(df.columns)
+    nrows = df.shape[0]
+    for irow in range(nrows):
+        # retrieve one cosmology at a time
+        row = df.iloc[irow]
+        root = row['root'].replace(' ', '')
+        cosmo_id = int(root[-3:])
+
+        if cosmo_id == cosmo_id_wanted:
+            #print('cosmo_id', cosmo_id)
+            hubble = row['h']
+            OmegaB = row['omega_b']/hubble**2
+            if len(row['omega_ncdm']) == 12:
+                Oncdm = float(row['omega_ncdm'])/hubble**2
+            else:
+                Oncdm = float(row['omega_ncdm'][0:10])/hubble**2
+
+            OmegaM = row['omega_cdm']/hubble**2 + OmegaB + Oncdm
+            OmegaL = 1 - OmegaM
+            #sigma8 = row['sigma8_cb'] # baryons-plus-cdm-only (CLASS)
+            sigma8 = row['sigma8_m']
+            ns = row['n_s']
+            break
+
+    cosmo_dict = {'cosmo_id': cosmo_id, 'OmegaM': OmegaM, 'OmegaL': OmegaL,'hubble': hubble,'sigma8': sigma8,'OmegaB': OmegaB,'ns': ns}
+    return cosmo_dict
+
+
+def get_hod_para(hod_id_wanted):
+    df1 = pd.read_csv('/users/hywu/work/hod/repo/abacus_summit/hod_params.csv', sep=',')
+    df2 = pd.read_csv('/users/hywu/work/hod/repo/abacus_summit/hod_plusminus.csv', sep=',')
+    df3 = pd.read_csv('/users/hywu/work/hod/repo/abacus_summit/hod_latin.csv', sep=',')
+    dfs = [df1, df2, df3]
+    df = pd.concat(dfs, axis=0)  # Vertical stacking (rows)
+    #print(df)
+
+    nrows = df.shape[0]
+    for irow in range(nrows):
+        row = df.iloc[irow]
+        hod_id = row['hod_id']
+        if hod_id == hod_id_wanted:
+            row_output = row
+            break
+    return row_output # it's a data frame, but it can be used as a dictionary
+
+#print(get_cosmo_para(0))
+#print(get_hod_para(0))
