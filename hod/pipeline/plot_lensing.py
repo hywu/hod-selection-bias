@@ -19,7 +19,7 @@ from hod.utils.sample_matching_mass import sample_matching_mass
 from hod.utils.print_memory import print_memory
 
 class PlotLensing(object):
-    def __init__(self, yml_fname, abundance_matching, thresholded):
+    def __init__(self, yml_fname, abundance_matching=None, thresholded=False):
 
         with open(yml_fname, 'r') as stream:
             try:
@@ -32,6 +32,12 @@ class PlotLensing(object):
         self.pimax = para.get('pimax', 100)
         self.nrp_per_decade = para.get('nrp_per_decade', 5)
         #self.depth = para['depth']
+
+
+        if abundance_matching == None:
+            self.abundance_matching = para.get('abundance_matching', False)
+        else:
+            self.abundance_matching = abundance_matching
 
         seed = para.get('seed', 42)
         self.rng = default_rng(seed)
@@ -108,8 +114,7 @@ class PlotLensing(object):
         self.hubble = self.readcat.hubble
         self.vol = self.boxsize**3
 
-        self.abundance_matching = abundance_matching
-        self.thresholded = thresholded
+
 
         if self.abundance_matching == True:
             if self.survey == 'desy1':
@@ -144,7 +149,6 @@ class PlotLensing(object):
         self.fname3 = f'{self.obs_path}/mass_{self.outname}'
         self.fname4 = f'{self.obs_path}/lam_{self.outname}'
         self.fname5 = f'{self.obs_path}/DS_phys_noh_{self.outname}' ## NEW!
-
 
     def read_particles(self):
         print_memory('before reading particles')
@@ -411,9 +415,9 @@ if __name__ == "__main__":
     plmu.read_particles()
     plmu.calc_lensing()
 
-    plmu = PlotLensing(yml_fname, abundance_matching=False, thresholded=False)
-    plmu.read_particles()
-    plmu.calc_lensing()
+    # plmu = PlotLensing(yml_fname, abundance_matching=False, thresholded=False)
+    # plmu.read_particles()
+    # plmu.calc_lensing()
 
     #plmu.plot_lensing()
     #plt.show()
