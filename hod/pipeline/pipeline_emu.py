@@ -23,6 +23,7 @@ which_pmem = 'quad'
 depth = 180
 subtract_background = False
 rich_name = 'q180'
+abundance_matching = False
 
 def check_files_needed(zid):
     # check if N-body exists or not
@@ -40,7 +41,11 @@ def check_files_needed(zid):
             model_name = f'hod{hod_id:0>5d}'
             output_loc = output_loc_master + f'base_c{cosmo_id:0>3d}_ph{phase:0>3d}/z0p{zid}00/'
             out_path = f'{output_loc}/model_{model_name}/'
-            lens_fname = f'{out_path}/obs_{rich_name}_desy1/DS_abun_bin_3.dat'
+            if abundance_matching == True:
+                outname = 'abun'
+            else:
+                outname = 'lam'
+            lens_fname = f'{out_path}/obs_{rich_name}_desy1/DS_{outname}_bin_3.dat'
             if os.path.exists(lens_fname) == False:
                 cosmo_id_needed.append(cosmo_id)
     return cosmo_id_needed
@@ -71,6 +76,9 @@ which_pmem: {which_pmem}
 depth: {depth}
 subtract_background: {subtract_background}
 
+# lensing
+abundance_matching: {abundance_matching}
+
 """
     yml_fname = output_loc_master + f'yml/c{cosmo_id:0>3d}_hod{hod_id:0>5d}.yml'
     f = open(yml_fname, "w")
@@ -94,16 +102,16 @@ if __name__ == "__main__":
     
 
     # fix hod, vary dosmo
-    # cosmo_list = [0]
-    # hod_list = [0]
-    # cosmo_list.extend(range(130, 182))
-    # hod_list.extend(np.zeros(52))
-
-    # fix cosmo, vary hod
     cosmo_list = [0]
     hod_list = [0]
-    cosmo_list.extend(np.zeros(100))
-    hod_list.extend(np.arange(100,200))
+    cosmo_list.extend(range(130, 182))
+    hod_list.extend(np.zeros(52))
+
+    # fix cosmo, vary hod
+    # cosmo_list = [0]
+    # hod_list = [0]
+    # cosmo_list.extend(np.zeros(100))
+    # hod_list.extend(np.arange(100,200))
 
 
 
