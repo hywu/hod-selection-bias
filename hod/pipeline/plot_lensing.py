@@ -67,7 +67,7 @@ class PlotLensing(object):
             cosmo_id = para.get('cosmo_id', None)
             hod_id = para.get('hod_id', None)
             phase = para.get('phase', None)
-            #model_name = f'hod{hod_id:0>5d}'
+            #model_name = f'hod{hod_id:0>6d}'
             redshift = para['redshift']
             if redshift == 0.3: z_str = '0p300'
             output_loc = para['output_loc']+f'/base_c{cosmo_id:0>3d}_ph{phase:0>3d}/z{z_str}/'

@@ -38,7 +38,7 @@ def check_files_needed(zid):
             print('missing', nbody_loc)
         else:
             #yml_fname = write_yml(cosmo_id, hod_id)
-            model_name = f'hod{hod_id:0>5d}'
+            model_name = f'hod{hod_id:0>6d}'
             output_loc = output_loc_master + f'base_c{cosmo_id:0>3d}_ph{phase:0>3d}/z0p{zid}00/'
             out_path = f'{output_loc}/model_{model_name}/'
             if abundance_matching == True:
@@ -54,7 +54,7 @@ def check_files_needed(zid):
 def write_yml(cosmo_id, hod_id):
     out_string = f"""cosmo_id: {cosmo_id}
 hod_id: {hod_id}
-model_name: hod{hod_id:0>5d}
+model_name: hod{hod_id:0>6d}
 rich_name: {rich_name}
 
 nbody: abacus_summit
@@ -80,7 +80,7 @@ subtract_background: {subtract_background}
 abundance_matching: {abundance_matching}
 
 """
-    yml_fname = output_loc_master + f'yml/c{cosmo_id:0>3d}_hod{hod_id:0>5d}.yml'
+    yml_fname = output_loc_master + f'yml/c{cosmo_id:0>3d}_hod{hod_id:0>6d}.yml'
     f = open(yml_fname, "w")
     print(out_string, file=f)
     f.close()
@@ -138,7 +138,7 @@ if __name__ == "__main__":
             print(exc)
 
     #model_name = para['model_name']
-    model_name = f'hod{hod_id:0>5d}'
+    model_name = f'hod{hod_id:0>6d}'
 
     output_loc = output_loc_master + f'/base_c{cosmo_id:0>3d}_ph{phase:0>3d}/z0p{zid}00/'
     out_path = f'{output_loc}/model_{model_name}/'
@@ -165,8 +165,8 @@ if __name__ == "__main__":
         # print("STDOUT:", result.stdout)
         # print("STDERR:", result.stderr), 
 
-    os.system(f'./plot_counts_richness.py {yml_fname}')
-    
+    #os.system(f'./plot_counts_richness.py {yml_fname}')
+    os.system(f'./plot_abundance.py {yml_fname}')
     # os.chdir('../utils')
     # os.system(f'./plot_mor.py {yml_fname}')
 

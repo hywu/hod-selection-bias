@@ -7,7 +7,7 @@ import os
 import sys
 import pandas as pd
 sys.path.append('../utils')
-from get_para import get_cosmo_para
+from get_para_abacus_summit import get_cosmo_para
 #from readGadgetSnapshot import readGadgetSnapshot
 
 class ReadAbacusSummit(object):

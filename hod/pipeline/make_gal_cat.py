@@ -13,7 +13,7 @@ start_master = start * 1
 #### my functions ####
 sys.path.append('../utils')
 from fid_hod import Ngal_S20_poisson
-from get_para import get_hod_para
+from get_para_abacus_summit import get_hod_para
 #from print_memory import print_memory
 from merge_files import merge_files
 
