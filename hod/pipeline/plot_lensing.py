@@ -14,6 +14,7 @@ start = timeit.default_timer()
 start_master = start * 1
 
 #sys.path.append('../utils')
+from hod.utils.read_sim import read_sim
 from hod.utils.measure_lensing import MeasureLensing
 from hod.utils.sample_matching_mass import sample_matching_mass
 from hod.utils.print_memory import print_memory
@@ -86,7 +87,7 @@ class PlotLensing(object):
         #if self.los != 'z':
         #    self.rich_name = f'{self.rich_name}_{self.los}'
 
-
+        '''
         if para['nbody'] == 'mini_uchuu':
             from read_mini_uchuu import ReadMiniUchuu
             self.readcat = ReadMiniUchuu(para['nbody_loc'], redshift)
@@ -108,7 +109,8 @@ class PlotLensing(object):
             halofinder = para.get('halofinder', 'rockstar')
             self.readcat = ReadTNGDMO(para['nbody_loc'], halofinder)
             print('halofinder', halofinder)
-
+        '''
+        self.readcat = read_sim(para)
         self.mpart = self.readcat.mpart
         self.boxsize = self.readcat.boxsize
         self.hubble = self.readcat.hubble

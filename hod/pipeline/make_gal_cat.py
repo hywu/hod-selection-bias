@@ -11,7 +11,8 @@ start = timeit.default_timer()
 start_master = start * 1
 
 #### my functions ####
-sys.path.append('../utils')
+#sys.path.append('../utils')
+from hod.utils.read_sim import read_sim
 from fid_hod import Ngal_S20_poisson
 from get_para_abacus_summit import get_hod_para
 #from print_memory import print_memory
@@ -103,7 +104,7 @@ dsp_mc = DrawSatPosition(yml_fname)
 
 
 #print_memory(message='before readcat')
-
+'''
 if para['nbody'] == 'mini_uchuu':
     from read_mini_uchuu import ReadMiniUchuu
     readcat = ReadMiniUchuu(para['nbody_loc'], redshift)
@@ -121,7 +122,8 @@ if para['nbody'] == 'tng_dmo':
     halofinder = para.get('halofinder', 'rockstar')
     readcat = ReadTNGDMO(para['nbody_loc'], halofinder, redshift)
     print('halofinder', halofinder)
-
+'''
+readcat = read_sim(para)
 readcat.read_halos(Mmin, pec_vel=pec_vel)
 boxsize = readcat.boxsize
 px_halo_all = readcat.xh

@@ -102,16 +102,16 @@ if __name__ == "__main__":
     
 
     # fix hod, vary dosmo
-    cosmo_list = [0]
-    hod_list = [0]
-    cosmo_list.extend(range(130, 182))
-    hod_list.extend(np.zeros(52))
-
-    # fix cosmo, vary hod
     # cosmo_list = [0]
     # hod_list = [0]
-    # cosmo_list.extend(np.zeros(100))
-    # hod_list.extend(np.arange(100,200))
+    # cosmo_list.extend(range(130, 182))
+    # hod_list.extend(np.zeros(52))
+
+    # fix cosmo, vary hod
+    cosmo_list = [0]
+    hod_list = [0]
+    cosmo_list.extend(np.zeros(100))
+    hod_list.extend(np.arange(100,200))
 
 
 
@@ -170,7 +170,7 @@ if __name__ == "__main__":
     # os.chdir('../utils')
     # os.system(f'./plot_mor.py {yml_fname}')
 
-    if True:#hod_id in hod_id_4x_counts:
+    if False:#True:#hod_id in hod_id_4x_counts:
         os.chdir('../pipeline')
         
         survey = para.get('survey', 'desy1')
@@ -181,7 +181,7 @@ if __name__ == "__main__":
         if survey == 'sdss':
             lens_fname = obs_path+'DS_abun_bin_0.dat'
         
-        if os.path.exists(lens_fname1) and os.path.exists(lens_fname2):
+        if os.path.exists(lens_fname2): #os.path.exists(lens_fname1) and 
             print('lensing done')
         else:
             print('need lensing')

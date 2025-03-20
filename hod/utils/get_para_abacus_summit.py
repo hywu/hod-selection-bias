@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import pandas as pd
-
+import os
 
 #### cosmo_c***_ph***_z0p***.param files seem unreliable. 
 #### read directly from the csv file
@@ -31,14 +31,19 @@ def get_cosmo_para(cosmo_id_wanted):
             ns = row['n_s']
             break
 
-    cosmo_dict = {'cosmo_id': cosmo_id, 'OmegaM': OmegaM, 'OmegaL': OmegaL,'hubble': hubble,'sigma8': sigma8,'OmegaB': OmegaB,'ns': ns}
+    cosmo_dict = {'cosmo_id': cosmo_id, 'OmegaM': OmegaM, 'OmegaL': OmegaL,
+        'hubble': hubble,'sigma8': sigma8,'OmegaB': OmegaB,'ns': ns, 
+        'w0': row['w0_fld'], 'wa': row['wa_fld'], 'alpha_s': row['alpha_s'],
+        'Nur': row['N_ur']}
     return cosmo_dict
 
 
 def get_hod_para(hod_id_wanted):
-    df1 = pd.read_csv('/users/hywu/work/hod/repo/abacus_summit/hod_params.csv', sep=',')
-    df2 = pd.read_csv('/users/hywu/work/hod/repo/abacus_summit/hod_plusminus.csv', sep=',')
-    df3 = pd.read_csv('/users/hywu/work/hod/repo/abacus_summit/hod_latin.csv', sep=',')
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    loc = os.path.join(BASE_DIR, '../../repo/abacus_summit/')
+    df1 = pd.read_csv(loc+'/hod_params.csv', sep=',')
+    df2 = pd.read_csv(loc+'hod_plusminus.csv', sep=',')
+    df3 = pd.read_csv(loc+'hod_latin.csv', sep=',')
     dfs = [df1, df2, df3]
     df = pd.concat(dfs, axis=0)  # Vertical stacking (rows)
     #print(df)
@@ -50,7 +55,8 @@ def get_hod_para(hod_id_wanted):
         if hod_id == hod_id_wanted:
             row_output = row
             break
-    return row_output # it's a data frame, but it can be used as a dictionary
+    return row_output.to_dict() # converting a data frame to a dictionary
 
-#print(get_cosmo_para(0))
-#print(get_hod_para(0))
+if __name__ == "__main__":
+    print(get_cosmo_para(0))
+    print(get_hod_para(0))
