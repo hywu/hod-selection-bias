@@ -104,7 +104,8 @@ class PlotCountsRichness(object):
         for lam_min in lam_min_list:
             sel = (lam >= lam_min)
             den_list.append(len(lam[sel])/self.vol)
-
+        '''
+        # moved to cal_gal_den.py
         # calculate galaxy density
         den_fname = f'{self.out_path}/gal_density.dat'
         if os.path.exists(den_fname) == False:
@@ -114,7 +115,7 @@ class PlotCountsRichness(object):
                 gal_fname = f'{self.out_path}/gals.fit'
                 data, header = fitsio.read(gal_fname, header=True)
                 x_gal_in = data['px']
-
+            
             # if gal_cat_format == 'h5':
             #     import h5py
             #     loc = '/bsuhome/hwu/scratch/abacus_summit/'
@@ -127,6 +128,7 @@ class PlotCountsRichness(object):
             ngal = len(x_gal_in)/self.vol
             data = np.array([ngal]).transpose()
             np.savetxt(den_fname, data, fmt='%-12g', header='ngal (h^3 Mpc^-3)')
+            '''
 
         data = np.array([lam_min_list, den_list]).transpose()
         np.savetxt(self.ofname, data, fmt='%-12g', header='lam_min, den')

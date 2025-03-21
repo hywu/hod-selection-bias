@@ -6,22 +6,23 @@ import pandas as pd
 import sys
 import timeit
 import yaml
+#import fitsio
 
 start = timeit.default_timer()
 start_master = start * 1
 
 #### my functions ####
-#sys.path.append('../utils')
 from hod.utils.read_sim import read_sim
-from fid_hod import Ngal_S20_poisson
-from get_para_abacus_summit import get_hod_para
-#from print_memory import print_memory
-from merge_files import merge_files
+from hod.utils.fid_hod import Ngal_S20_poisson
+from hod.utils.get_para_abacus_summit import get_hod_para
+from hod.utils.print_memory import print_memory
+from hod.utils.merge_files import merge_files
+from hod.utils.draw_sat_position import DrawSatPosition
 
 #### read in the yaml file  ####
 yml_fname = sys.argv[1]
 #./make_gal_cat.py ../yml/mini_uchuu/mini_uchuu_fid_hod.yml
-#./make_gal_cat.py ../yml/abacus_summit/abacus_summit_fid_hod.yml
+#./make_gal_cat.py ../yml/abacus_summit/abacus_summit_template.yml
 
 with open(yml_fname, 'r') as stream:
     try:
@@ -95,11 +96,10 @@ if sat_from_part == True:
     print('drawing sat from particles')
     #from draw_sat_positions_from_particles import DrawSatPositionsFromParticles
     #dsp_part = DrawSatPositionsFromParticles(yml_fname)
-    from draw_sat_positions_from_particles_layer import DrawSatPositionsFromParticlesLayer
+    from hod.utils.draw_sat_positions_from_particles_layer import DrawSatPositionsFromParticlesLayer
     dsp_part = DrawSatPositionsFromParticlesLayer(yml_fname)
     Mmin_part = 10**12.5 # only draw particles for halos above this mass
 
-from draw_sat_position import DrawSatPosition
 dsp_mc = DrawSatPosition(yml_fname)
 
 
@@ -138,7 +138,7 @@ if pec_vel == True:
     vy_halo_all = readcat.vy
     vz_halo_all = readcat.vz
 
-#print_memory(message='done readcat')
+print_memory(message='done readcat')
 
 def calc_one_layer(pz_min, pz_max):
     #print_memory(message='before calc_one_layer')
@@ -266,6 +266,8 @@ def calc_one_bin(ibin):
         calc_one_layer(pz_min=pz_min, pz_max=pz_max)
 
 
+
+
 if __name__ == '__main__':
     #calc_one_bin(0)
 
@@ -297,4 +299,5 @@ if __name__ == '__main__':
     stop = timeit.default_timer()
     dtime = (stop - start_master)/60.
     print(f'total time {dtime:.2g} mins')
+    
     

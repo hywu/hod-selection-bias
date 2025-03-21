@@ -43,8 +43,9 @@ def get_hod_para(hod_id_wanted):
     loc = os.path.join(BASE_DIR, '../../repo/abacus_summit/')
     df1 = pd.read_csv(loc+'/hod_params.csv', sep=',')
     df2 = pd.read_csv(loc+'hod_plusminus.csv', sep=',')
-    df3 = pd.read_csv(loc+'hod_latin.csv', sep=',')
-    dfs = [df1, df2, df3]
+    df3 = pd.read_csv(loc+'hod_latin1.csv', sep=',')
+    df4 = pd.read_csv(loc+'hod_latin2.csv', sep=',')
+    dfs = [df1, df2, df3, df4]
     df = pd.concat(dfs, axis=0)  # Vertical stacking (rows)
     #print(df)
 
@@ -59,4 +60,4 @@ def get_hod_para(hod_id_wanted):
 
 if __name__ == "__main__":
     print(get_cosmo_para(0))
-    print(get_hod_para(0))
+    print(get_hod_para(201))

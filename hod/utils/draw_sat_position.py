@@ -4,13 +4,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from numpy.random import default_rng
 from scipy.interpolate import interp1d
-import configparser
+#import configparser
 
 from colossus.cosmology import cosmology
 from colossus.halo import concentration
 from colossus.halo import mass_defs
 
-from get_para_abacus_summit import get_cosmo_para
+from hod.utils.get_para_abacus_summit import get_cosmo_para
 
 class DrawSatPosition(object):
     def __init__(self, yml_fname):

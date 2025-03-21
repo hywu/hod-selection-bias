@@ -25,6 +25,7 @@ subtract_background = False
 rich_name = 'q180'
 abundance_matching = False
 
+'''
 def check_files_needed(zid):
     # check if N-body exists or not
     # if yes, check if the lensing exists or not
@@ -49,7 +50,7 @@ def check_files_needed(zid):
             if os.path.exists(lens_fname) == False:
                 cosmo_id_needed.append(cosmo_id)
     return cosmo_id_needed
-
+'''
 
 def write_yml(cosmo_id, hod_id):
     out_string = f"""cosmo_id: {cosmo_id}
@@ -110,8 +111,8 @@ if __name__ == "__main__":
     # fix cosmo, vary hod
     cosmo_list = [0]
     hod_list = [0]
-    cosmo_list.extend(np.zeros(100))
-    hod_list.extend(np.arange(100,200))
+    cosmo_list.extend(np.zeros(100, dtype=int))
+    hod_list.extend(np.arange(200,300, dtype=int))
 
 
 
@@ -150,51 +151,70 @@ if __name__ == "__main__":
         print('need galaxies')
         os.system(f'./make_gal_cat.py {yml_fname}')
 
-        # subprocess.run(['./make_gal_cat.py', yml_fname], capture_output=True, text=True)
-        # print("STDOUT:", result.stdout)  # not saving messages for some reason
-        # print("STDERR:", result.stderr)
-    
-    if os.path.exists(out_path+f'richness_{rich_name}.fit'):
-        print('richness done')
-        #print(out_path+f'richness_{rich_name}.fit')
+
+    os.system(f'./calc_gal_den.py {yml_fname}')
+    # from hod.utils.calc_gal_den import calc_gal_den 
+    # calc_gal_den(out_path)
+    '''
+    ## only keep galaxy density within a factor of 4
+    ## check the galaxy ensity
+    ngal_target = np.loadtxt('/projects/hywu/cluster_sims/cluster_finding/data/emulator_data/base_c000_ph000/z0p300/model_hod000000/gal_density.dat') # TODO: update to data
+    '''
+    ngal = np.loadtxt(out_path+'gal_density.dat')
+    if False:#ngal < 0.25 * ngal_target or ngal > 4 * ngal:
+        print('unrealistic ngal, stop this model')
     else:
-        print('need richness')
-        os.system(f'./calc_richness_halo.py {yml_fname}')
+        print('ngal within 4x')
+        if os.path.exists(out_path+f'richness_{rich_name}.fit'):
+            print('richness done')
+            #print(out_path+f'richness_{rich_name}.fit')
+        else:
+            print('need richness')
+            os.system(f'./calc_richness_halo.py {yml_fname}')
 
-        #subprocess.run(['./calc_richness_halo.py', yml_fname], capture_output=True, text=True)
-        # print("STDOUT:", result.stdout)
-        # print("STDERR:", result.stderr), 
 
-    #os.system(f'./plot_counts_richness.py {yml_fname}')
-    os.system(f'./plot_abundance.py {yml_fname}')
-    # os.chdir('../utils')
-    # os.system(f'./plot_mor.py {yml_fname}')
-
-    if False:#True:#hod_id in hod_id_4x_counts:
-        os.chdir('../pipeline')
-        
         survey = para.get('survey', 'desy1')
         obs_path = f'{out_path}/obs_{rich_name}_{survey}/'
-        if survey == 'desy1':
-            lens_fname1 = obs_path+'DS_phys_noh_abun_bin_3.dat'
-            lens_fname2 = obs_path+'DS_phys_noh_lam_bin_3.dat'
-        if survey == 'sdss':
-            lens_fname = obs_path+'DS_abun_bin_0.dat'
         
-        if os.path.exists(lens_fname2): #os.path.exists(lens_fname1) and 
-            print('lensing done')
-        else:
-            print('need lensing')
-            os.system(f'./plot_lensing.py {yml_fname}')
+        #os.system(f'./plot_counts_richness.py {yml_fname}')
+        os.system(f'./plot_abundance.py {yml_fname}')
 
-        #subprocess.run(['./plot_lensing.py', yml_fname], capture_output=True, text=True)
-        # print("STDOUT:", result.stdout)
-        # print("STDERR:", result.stderr), 
+        x, x, Nc_target = np.loadtxt('/projects/hywu/cluster_sims/cluster_finding/data/emulator_data/base_c000_ph000/z0p300/model_hod000000/obs_q180_desy1/abundance.dat', unpack=True) # TODO
+
+        x, x, Nc = np.loadtxt(obs_path+'abundance.dat', unpack=True)
+        Nc_ratio = np.mean(Nc / Nc_target)
+        if Nc_ratio < 0.25 or Nc_ratio > 4:
+            print('unrealistic Nc, stop this model')
+        else:
+            print('reasonable Nc')
+            # os.chdir('../utils')
+            # os.system(f'./plot_mor.py {yml_fname}')
+
+            if True:#hod_id in hod_id_4x_counts:
+                #os.chdir('../pipeline')
+                
+
+                if survey == 'desy1':
+                    lens_fname1 = obs_path+'DS_phys_noh_abun_bin_3.dat'
+                    lens_fname2 = obs_path+'DS_phys_noh_lam_bin_3.dat'
+                if survey == 'sdss':
+                    lens_fname = obs_path+'DS_abun_bin_0.dat'
+                
+                if os.path.exists(lens_fname2): #os.path.exists(lens_fname1) and 
+                    print('lensing done')
+                else:
+                    print('need lensing')
+                    os.system(f'./plot_lensing.py {yml_fname}')
+
+                #subprocess.run(['./plot_lensing.py', yml_fname], capture_output=True, text=True)
+                # print("STDOUT:", result.stdout)
+                # print("STDERR:", result.stderr), 
+        
     
-    '''
+    
     #### sanity checks ####
 
-    '''
+    
     #subprocess.run(f'./plot_hod.py {yml_fname}', shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     
     

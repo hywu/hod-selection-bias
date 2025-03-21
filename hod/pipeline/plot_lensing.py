@@ -40,6 +40,8 @@ class PlotLensing(object):
         else:
             self.abundance_matching = abundance_matching
 
+        self.thresholded = thresholded
+        
         seed = para.get('seed', 42)
         self.rng = default_rng(seed)
 
