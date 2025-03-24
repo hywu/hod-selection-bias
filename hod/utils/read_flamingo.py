@@ -61,9 +61,9 @@ class ReadFlamingo(object):
 
 
 
+
+
     def read_halos(self, Mmin, pec_vel=False, cluster_only=False):
-    #, halo_loc='/cosma8/data/do012/dc-wu5/cylinder/output_L1000N3600/HYDRO_FIDUCIAL/'):
-        # TODO!!! temporary solution for halo loc
         
         #if cluster_only == True:
         #    fname = self.input_loc+f'host_halos_{self.snap_name}_M12.5.fit'

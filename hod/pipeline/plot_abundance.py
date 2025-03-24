@@ -37,6 +37,8 @@ class PlotAbundance(object):
             output_loc = self.para['output_loc']+f'/base_c{cosmo_id:0>3d}_ph{phase:0>3d}/z{z_str}/'
             from hod.utils.get_para_abacus_summit import get_cosmo_para
             cosmo_abacus = get_cosmo_para(cosmo_id)
+            #h = cosmo_abacus['hubble']
+            Om0=cosmo_abacus['OmegaM']
         else:
            output_loc = self.para['output_loc']
 
@@ -55,17 +57,16 @@ class PlotAbundance(object):
 
 
         self.boxsize = self.readcat.boxsize
-        
+        Om0 = self.readcat.OmegaM
         self.sim_vol = self.boxsize**3
         #print('sim_vol', self.sim_vol)
 
         self.ofname = f'{self.obs_path}/abundance.dat'
         
         fsky = survey_area_sq_deg/41253.
-        h = cosmo_abacus['hubble']
-        cosmo = FlatLambdaCDM(H0=h*100, Om0=cosmo_abacus['OmegaM'])
+        cosmo = FlatLambdaCDM(H0=100, Om0=Om0)
         
-        self.survey_vol = fsky * 4. * np.pi/3. * (cosmo.comoving_distance(zmax).value**3 - cosmo.comoving_distance(zmin).value**3) * h**3  # (h/Mpc)**3
+        self.survey_vol = fsky * 4. * np.pi/3. * (cosmo.comoving_distance(zmax).value**3 - cosmo.comoving_distance(zmin).value**3) #* h**3  # (h/Mpc)**3
         #print('sim_vol', self.sim_vol)
         #print('survey_vol', self.survey_vol)
 

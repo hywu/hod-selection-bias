@@ -24,6 +24,6 @@ def read_sim(para):
 
     if para['nbody'] == 'flamingo':
         from hod.utils.read_flamingo import ReadFlamingo
-        readcat = ReadFlamingo(para['nbody_loc'], para['redshift'])
+        readcat = ReadFlamingo(para['nbody_loc'], para['redshift'], subsample_loc=para['output_loc'])
 
     return readcat
