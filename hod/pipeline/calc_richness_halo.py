@@ -347,7 +347,7 @@ class CalcRichness(object): # one pz slice at a time
                 # if use_cylinder == True:
                 #     self.gal_taken[np.array(gal_ind)[sel_z][sel_mem]] = 1
                 # if use_pmem == True: # probabilistic percolation
-                    self.gal_taken[np.array(gal_ind)[sel_z][sel_mem]] += pmem[sel_mem]
+                self.gal_taken[np.array(gal_ind)[sel_z][sel_mem]] += pmem[sel_mem]
 
         #### Step 5 (optional): save the member galaxies ####
         if save_members == True:
