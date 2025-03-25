@@ -118,8 +118,6 @@ class PlotLensing(object):
         self.hubble = self.readcat.hubble
         self.vol = self.boxsize**3
 
-
-
         if self.abundance_matching == True:
             if self.survey == 'desy1':
                 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -419,9 +417,9 @@ if __name__ == "__main__":
     plmu.read_particles()
     plmu.calc_lensing()
 
-    # plmu = PlotLensing(yml_fname, abundance_matching=False, thresholded=False)
-    # plmu.read_particles()
-    # plmu.calc_lensing()
+    plmu = PlotLensing(yml_fname, abundance_matching=True, thresholded=False)
+    plmu.read_particles()
+    plmu.calc_lensing()
 
     #plmu.plot_lensing()
     #plt.show()
