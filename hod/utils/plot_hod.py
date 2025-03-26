@@ -7,8 +7,10 @@ import fitsio
 from astropy.io import fits
 import sys
 from scipy.optimize import minimize
-from periodic_boundary_condition import periodic_boundary_condition
-from fid_hod import Ngal_S20_noscatt
+
+from hod.utils.periodic_boundary_condition import periodic_boundary_condition
+from hod.utils.fid_hod import Ngal_S20_noscatt
+from hod.utils.read_sim import read_sim
 
 class PlotHOD(object):
     def __init__(self, yml_fname):
@@ -44,30 +46,30 @@ class PlotHOD(object):
         self.ofname3 = f'{self.out_path}/hod_para_bestfit.yml'
 
     def calc_hod(self, Mmin):
-        if self.para['nbody'] == 'mini_uchuu':
-            from read_mini_uchuu import ReadMiniUchuu
-            readcat = ReadMiniUchuu(self.para['nbody_loc'], self.redshift)
+        # if self.para['nbody'] == 'mini_uchuu':
+        #     from read_mini_uchuu import ReadMiniUchuu
+        #     readcat = ReadMiniUchuu(self.para['nbody_loc'], self.redshift)
 
-        if self.para['nbody'] == 'uchuu':
-            from read_uchuu import ReadUchuu
-            readcat = ReadUchuu(self.para['nbody_loc'], self.redshift)
+        # if self.para['nbody'] == 'uchuu':
+        #     from read_uchuu import ReadUchuu
+        #     readcat = ReadUchuu(self.para['nbody_loc'], self.redshift)
 
-        if self.para['nbody'] == 'abacus_summit':
-            from read_abacus_summit import ReadAbacusSummit
-            readcat = ReadAbacusSummit(self.para['nbody_loc'], self.redshift, self.cosmo_id)
-            self.Om0 = readcat.OmegaM
+        # if self.para['nbody'] == 'abacus_summit':
+        #     from read_abacus_summit import ReadAbacusSummit
+        #     readcat = ReadAbacusSummit(self.para['nbody_loc'], self.redshift, self.cosmo_id)
+        #     self.Om0 = readcat.OmegaM
 
-        if self.para['nbody'] == 'flamingo':
-            from read_flamingo import ReadFlamingo
-            readcat = ReadFlamingo(self.para['nbody_loc'], self.redshift)
+        # if self.para['nbody'] == 'flamingo':
+        #     from read_flamingo import ReadFlamingo
+        #     readcat = ReadFlamingo(self.para['nbody_loc'], self.redshift)
 
-        if self.para['nbody'] == 'tng_dmo':
-            from read_tng_dmo import ReadTNGDMO
-            halofinder = para.get('halofinder', 'rockstar')
-            readcat = ReadTNGDMO(self.para['nbody_loc'], halofinder, self.redshift)
-            print('halofinder', halofinder)
+        # if self.para['nbody'] == 'tng_dmo':
+        #     from read_tng_dmo import ReadTNGDMO
+        #     halofinder = para.get('halofinder', 'rockstar')
+        #     readcat = ReadTNGDMO(self.para['nbody_loc'], halofinder, self.redshift)
+        #     print('halofinder', halofinder)
 
-       
+        readcat = read_sim(self.para)
         readcat.read_halos(Mmin)
         mass = readcat.mass
         id_halo = readcat.hid
@@ -170,7 +172,7 @@ class PlotHOD(object):
 
     def fit_hod(self):
         mass, hod_mean, hod_std = self.plot_hod()
-        sel = (hod_mean > 1e-2)
+        sel = (hod_mean > 1e-3)
         mass = mass[sel]
         hod_mean = hod_mean[sel]
         hod_std = hod_std[sel]
@@ -218,7 +220,7 @@ class PlotHOD(object):
 
     def plot_hod_bestfit(self):
         mass, hod_mean, hod_std = self.plot_hod()
-        sel = (hod_mean > 1e-2)
+        sel = (hod_mean > 1e-3)
         mass = mass[sel]
 
         with open(self.ofname3, 'r') as stream:

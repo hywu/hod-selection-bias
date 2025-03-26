@@ -57,7 +57,7 @@ class ReadFlamingo(object):
         rhocrit = 2.77536627e11 # h^2 Msun Mpc^-3
         total_mass_in_box_hiMsun = self.boxsize**3 * self.OmegaM * rhocrit
         self.mpart = total_mass_in_box_hiMsun / npart # Msun/h
-        print('npart = ', npart, 'mpart = %e'%self.mpart)
+        #print('npart = ', npart, 'mpart = %e'%self.mpart)
 
 
 
