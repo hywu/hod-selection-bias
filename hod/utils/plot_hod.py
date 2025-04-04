@@ -111,6 +111,7 @@ class PlotHOD(object):
             radius = (3 * mass / (4 * np.pi * rhocrit_z * Delta_vir_c))**(1./3.)
 
         nhalo = len(x_halo)
+        ##### all galaxies
         ngal = []
         for i_halo in range(nhalo):
             gal_ind = indexes_tree[i_halo]
@@ -124,11 +125,26 @@ class PlotHOD(object):
             ngal.append(len(indx))
         ngal = np.array(ngal)
 
+
+        ##### central ####
+        ncen = []
+        for i_halo in range(nhalo):
+            gal_ind = indexes_tree[i_halo]
+            x_cen = x_halo[i_halo]
+            y_cen = y_halo[i_halo]
+            z_cen = z_halo[i_halo]
+            indx = gal_tree.query_ball_point([x_cen, y_cen, z_cen], 1e-6)
+            ncen.append(len(indx))
+        ncen = np.array(ncen)
+
+
+
         #### save the Ngals ####
         col0 = fits.Column(name='haloid', unit='', format='D', array=id_halo)
         col1 = fits.Column(name='mass', unit='', format='D', array=mass)
         col2 = fits.Column(name='Ngal', unit='', format='D', array=ngal)
-        cols = [col0, col1, col2]
+        col3 = fits.Column(name='Ncen', unit='', format='D', array=ncen)
+        cols = [col0, col1, col2, col3]
         coldefs = fits.ColDefs(cols)
         hdu = fits.BinTableHDU.from_columns(coldefs)
         hdu.writeto(self.ofname1, overwrite=True)
