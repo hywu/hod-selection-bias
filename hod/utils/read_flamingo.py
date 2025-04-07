@@ -60,21 +60,23 @@ class ReadFlamingo(object):
         #print('npart = ', npart, 'mpart = %e'%self.mpart)
 
 
-
-
-
     def read_halos(self, Mmin, pec_vel=False, cluster_only=False):
         
         #if cluster_only == True:
         #    fname = self.input_loc+f'host_halos_{self.snap_name}_M12.5.fit'
         #else:
-        fname = self.subsample_loc + f'host_halos_{self.snap_name}.fit'
+        fname = self.subsample_loc + f'host_halos_{self.snap_name}_HBT_M200m_1e+11.fit'
         data = fitsio.read(fname)
-        Mvir = data['Mvir']
-        sel = (Mvir >= Mmin)
-        Mvir = Mvir[sel]
-        sort = np.argsort(-Mvir)
-        self.mass = Mvir[sort]
+        #Mvir = data['Mvir']
+        #sel = (Mvir >= Mmin)
+        #Mvir = Mvir[sel]
+        #sort = np.argsort(-Mvir)
+        #self.mass = Mvir[sort]
+        M200m = data['M200m']
+        sel = (M200m >= Mmin)
+        M200m = M200m[sel]
+        sort = np.argsort(-M200m)
+        self.mass = M200m[sort]
 
         self.hid = data['hid_host'][sel][sort]
         self.xh = data['px'][sel][sort]
