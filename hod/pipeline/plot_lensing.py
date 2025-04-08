@@ -33,6 +33,7 @@ class PlotLensing(object):
         self.pimax = para.get('pimax', 100)
         self.nrp_per_decade = para.get('nrp_per_decade', 5)
         #self.depth = para['depth']
+        self.miscentering = para.get('miscentering', False)
 
 
         if abundance_matching == None:
@@ -83,35 +84,10 @@ class PlotLensing(object):
         #print('output is at ' + self.out_path)
         self.rich_name = para['rich_name']
 
-
         self.los = para.get('los', 'z')
+        if self.los != 'z':
+            self.rich_name = f'{self.rich_name}_{self.los}'
 
-        #if self.los != 'z':
-        #    self.rich_name = f'{self.rich_name}_{self.los}'
-
-        '''
-        if para['nbody'] == 'mini_uchuu':
-            from read_mini_uchuu import ReadMiniUchuu
-            self.readcat = ReadMiniUchuu(para['nbody_loc'], redshift)
-
-        if para['nbody'] == 'uchuu':
-            from read_uchuu import ReadUchuu
-            self.readcat = ReadUchuu(para['nbody_loc'], redshift)
-
-        if para['nbody'] == 'abacus_summit':
-            from read_abacus_summit import ReadAbacusSummit
-            self.readcat = ReadAbacusSummit(para['nbody_loc'], redshift, cosmo_id=cosmo_id)
-
-        if para['nbody'] == 'flamingo':
-            from hod.utils.read_flamingo import ReadFlamingo
-            self.readcat = ReadFlamingo(para['nbody_loc'], redshift, subsample_loc=para['output_loc'])
-
-        if para['nbody'] == 'tng_dmo':
-            from read_tng_dmo import ReadTNGDMO
-            halofinder = para.get('halofinder', 'rockstar')
-            self.readcat = ReadTNGDMO(para['nbody_loc'], halofinder)
-            print('halofinder', halofinder)
-        '''
         self.readcat = read_sim(para)
         self.mpart = self.readcat.mpart
         self.boxsize = self.readcat.boxsize
@@ -141,6 +117,9 @@ class PlotLensing(object):
             self.outname += '_thre'
         else:
             self.outname += '_bin'
+
+        if self.miscentering == True:
+            self.outname += '_miscen'
 
         self.obs_path = f'{self.out_path}/obs_{self.rich_name}_{self.survey}/'
         if os.path.isdir(self.obs_path)==False: 
@@ -190,6 +169,15 @@ class PlotLensing(object):
         zh_all = data['pz']
         lnM_all = np.log(mass_all)
         lam_all = data['lambda']
+
+        if self.miscentering == True:
+            print('including miscentering')
+            from hod.utils.miscentering import Miscentering
+            Rlam_all = data['rlambda']
+            miscen = Miscentering(f_miscen=0.165, tau=0.165)
+            x_mis, y_mis = miscen.draw_miscen_pos(xh_all, yh_all, Rlam_all)
+            xh_all = x_mis * 1.
+            yh_all = y_mis * 1.
 
         # shuffle the sample to remove mass sorting
         shuff = self.rng.permutation(len(xh_all))
@@ -413,9 +401,9 @@ if __name__ == "__main__":
     #./plot_lensing.py ../yml/mini_uchuu/mini_uchuu_fid_hod.yml
 
     yml_fname = sys.argv[1]
-    plmu = PlotLensing(yml_fname, abundance_matching=False, thresholded=False)
-    plmu.read_particles()
-    plmu.calc_lensing()
+    # plmu = PlotLensing(yml_fname, abundance_matching=False, thresholded=False)
+    # plmu.read_particles()
+    # plmu.calc_lensing()
 
     plmu = PlotLensing(yml_fname, abundance_matching=True, thresholded=False)
     plmu.read_particles()

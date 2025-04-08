@@ -23,6 +23,9 @@ which_pmem: quad
 depth: 180
 subtract_background: False
 
+# lensing
+#miscentering: True
+
 # Cosmology
 # http://skiesanduniverses.org/Simulations/Uchuu/
 OmegaM: 0.3089

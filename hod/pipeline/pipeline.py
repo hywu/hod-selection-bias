@@ -6,9 +6,11 @@ import os
 import sys
 import yaml
 
+# Note!  Aways run the enire pipeline when 
+
 #./pipeline.py ../yml/mini_uchuu/mini_uchuu_fid_hod.yml
 
-yml_fname = sys.argv[1]
+yml_fname = '../yml/mini_uchuu/mini_uchuu_fid_hod.yml'  #sys.argv[1]
 
 with open(yml_fname, 'r') as stream:
     try:
