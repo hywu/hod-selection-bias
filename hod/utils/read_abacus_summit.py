@@ -8,10 +8,9 @@ import sys
 import pandas as pd
 sys.path.append('../utils')
 from get_para_abacus_summit import get_cosmo_para
-#from readGadgetSnapshot import readGadgetSnapshot
 
 class ReadAbacusSummit(object):
-    def __init__(self, nbody_loc, redshift, cosmo_id, phase=0): #):
+    def __init__(self, nbody_loc, redshift, cosmo_id, phase=0):
 
         cosmo_para = get_cosmo_para(cosmo_id)
         self.hubble = cosmo_para['hubble']
@@ -24,7 +23,7 @@ class ReadAbacusSummit(object):
 
         self.input_loc = nbody_loc + f'/base_c{cosmo_id:0>3d}/base_c{cosmo_id:0>3d}_ph{phase:0>3d}/z{z_str}/'
 
-        self.boxsize = 2000
+        self.boxsize = 2000.
         rhocrit = 2.77536627e11 #h^-1 M_sun Mpc^-3
         self.part_fname = self.input_loc + f'subsample_particles_A_base_c{cosmo_id:0>3d}_ph{phase:0>3d}_z{z_str}.h5'
         f = h5py.File(self.part_fname, 'r')

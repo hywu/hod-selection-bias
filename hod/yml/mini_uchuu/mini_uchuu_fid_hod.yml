@@ -24,7 +24,7 @@ depth: 180
 subtract_background: False
 
 # lensing
-#miscentering: True
+miscentering: True
 
 # Cosmology
 # http://skiesanduniverses.org/Simulations/Uchuu/

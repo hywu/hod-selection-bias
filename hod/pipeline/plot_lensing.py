@@ -32,7 +32,6 @@ class PlotLensing(object):
         self.Rmax = para.get('Rmax', 100)
         self.pimax = para.get('pimax', 100)
         self.nrp_per_decade = para.get('nrp_per_decade', 5)
-        #self.depth = para['depth']
         self.miscentering = para.get('miscentering', False)
 
 
@@ -401,13 +400,13 @@ if __name__ == "__main__":
     #./plot_lensing.py ../yml/mini_uchuu/mini_uchuu_fid_hod.yml
 
     yml_fname = sys.argv[1]
-    # plmu = PlotLensing(yml_fname, abundance_matching=False, thresholded=False)
-    # plmu.read_particles()
-    # plmu.calc_lensing()
-
-    plmu = PlotLensing(yml_fname, abundance_matching=True, thresholded=False)
+    plmu = PlotLensing(yml_fname, abundance_matching=False, thresholded=False)
     plmu.read_particles()
     plmu.calc_lensing()
+
+    # plmu = PlotLensing(yml_fname, abundance_matching=True, thresholded=False)
+    # plmu.read_particles()
+    # plmu.calc_lensing()
 
     #plmu.plot_lensing()
     #plt.show()

@@ -45,7 +45,8 @@ def get_hod_para(hod_id_wanted):
     df2 = pd.read_csv(loc+'hod_plusminus.csv', sep=',')
     df3 = pd.read_csv(loc+'hod_latin1.csv', sep=',')
     df4 = pd.read_csv(loc+'hod_latin2.csv', sep=',')
-    dfs = [df1, df2, df3, df4]
+    df5 = pd.read_csv(loc+'hod_latin3.csv', sep=',')
+    dfs = [df1, df2, df3, df4, df5]
     df = pd.concat(dfs, axis=0)  # Vertical stacking (rows)
     #print(df)
 

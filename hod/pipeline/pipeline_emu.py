@@ -112,7 +112,7 @@ if __name__ == "__main__":
     cosmo_list = [0]
     hod_list = [0]
     cosmo_list.extend(np.zeros(100, dtype=int))
-    hod_list.extend(np.arange(200,300, dtype=int))
+    hod_list.extend(np.arange(300,400, dtype=int))
 
 
 
@@ -192,7 +192,6 @@ if __name__ == "__main__":
 
             if True:#hod_id in hod_id_4x_counts:
                 #os.chdir('../pipeline')
-                
 
                 if survey == 'desy1':
                     lens_fname1 = obs_path+'DS_phys_noh_abun_bin_3.dat'
