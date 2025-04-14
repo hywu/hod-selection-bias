@@ -14,7 +14,7 @@ def read_sim(para):
 
     if para['nbody'] == 'abacus_summit':
         from hod.utils.read_abacus_summit import ReadAbacusSummit
-        readcat = ReadAbacusSummit(para['nbody_loc'], para['redshift'], cosmo_id=para['cosmo_id'])
+        readcat = ReadAbacusSummit(para['nbody_loc'], para['redshift'], cosmo_id=para['cosmo_id'], phase=para['phase'])
 
     if para['nbody'] == 'tng_dmo':
         from hod.utils.read_tng_dmo import ReadTNGDMO

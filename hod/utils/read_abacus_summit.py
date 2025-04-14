@@ -10,7 +10,7 @@ sys.path.append('../utils')
 from get_para_abacus_summit import get_cosmo_para
 
 class ReadAbacusSummit(object):
-    def __init__(self, nbody_loc, redshift, cosmo_id, phase=0):
+    def __init__(self, nbody_loc, redshift, cosmo_id, phase):
 
         cosmo_para = get_cosmo_para(cosmo_id)
         self.hubble = cosmo_para['hubble']
