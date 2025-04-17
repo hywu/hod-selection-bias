@@ -1,0 +1,138 @@
+#!/usr/bin/env python
+import numpy as np
+import matplotlib.pyplot as plt
+plt.style.use('MNRAS')
+import sys
+import numpy as np
+import matplotlib.pyplot as plt
+import joblib
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RBF
+
+#./train_gpr_per_radius.py > output.txt 2>&1 &
+
+ibin = int(sys.argv[1])
+abun_or_lam = 'lam' #sys.argv[2] ##'abun'
+
+alpha = 1e-6 #1e-3 #1e-5
+
+loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
+#emu_name = 'fixhod'
+#emu_name = 'fixcos'
+emu_name = 'all'
+
+train_loc = loc + f'emulator_train/{emu_name}/train/'
+plot_loc = f'../../plots/emulator/{emu_name}/'
+
+# data = np.loadtxt(f'{train_loc}/cosmologies_all.dat')
+# X_all = data[:,1:]
+data = np.loadtxt(f'{train_loc}/parameters_all.dat')
+#X_all = data[:,1:9] # cosmo only
+X_all = data[:,1:]
+
+DS_all = np.loadtxt(f'{train_loc}/DS_{abun_or_lam}_bin_{ibin}_rad.dat')
+
+ntrain, nrad = np.shape(DS_all)
+print('ntrain, nrad', ntrain, nrad)
+
+#### initial hyperparameters ####
+# if alpha=0, curve goes through all points (over-training)
+alpha_list = np.zeros(nrad) + alpha
+
+length_array_ini = np.std(X_all, axis=0) 
+length_scale_bounds = ([1e-4, 1e+2])
+
+DS_recon = np.zeros((ntrain, nrad)) # reconstruct the training set
+
+for irad in range(nrad): # train one PC at a time
+    print('training rad', irad)
+    y_all = DS_all[:,irad] 
+
+    alpha = alpha_list[irad]
+    kernel = np.var(y_all) * RBF(length_scale=length_array_ini, length_scale_bounds=length_scale_bounds)
+    
+    gpr = GaussianProcessRegressor(kernel=kernel, alpha=alpha, n_restarts_optimizer=9)
+    gpr.fit(X_all, y_all);
+
+    #print(f"Kernel parameters before fit:\n{kernel})")
+    print(
+    f"Kernel parameters after fit: \n{gpr.kernel_} \n"
+    f"Log-likelihood: {gpr.log_marginal_likelihood(gpr.kernel_.theta):.3f}")
+
+    # save the model using joblib
+    joblib.dump(gpr, f'{train_loc}/DS_{abun_or_lam}_bin_{ibin}_rad_{irad}_gpr_.pkl')
+    # Load the model later
+    # loaded_model = joblib.load('gpr_model.pkl')
+    # save the kernel parameters myself
+    np.savetxt(f'{train_loc}/DS_{abun_or_lam}_bin_{ibin}_rad_{irad}_kernel.dat', gpr.kernel_.theta)
+
+    DS_recon[:,irad], std_prediction = gpr.predict(X_all, return_std=True)
+ 
+if alpha==0:
+     print('recon?', np.allclose(DS_recon, DS_all)) # alpha=0 => perfect fit (passing all points)
+
+
+
+rp = np.loadtxt(f'{train_loc}/rp_rad.dat')
+
+# for i in range(ntrain):
+#     diff = DS_recon[i] - DS_all[i]
+#     plt.semilogx(rp, diff, c='gray', alpha=0.2)
+
+
+#### Leave-one-simulation-out-error (LOSOE) ####
+
+DS_recon_looe = np.zeros((ntrain, nrad))
+
+from sklearn.gaussian_process.kernels import ConstantKernel
+
+for ileave in range(ntrain):
+    for irad in range(nrad):
+        X_looe = np.delete(X_all, ileave, axis=0)  
+        y_looe = np.delete(DS_all[:,irad], ileave, axis=0)    
+        X_pred = np.array([X_all[ileave,:]])
+        
+        hyperpara = np.loadtxt(f'{train_loc}/DS_{abun_or_lam}_bin_{ibin}_rad_{irad}_kernel.dat')#, gpr.kernel_.theta)
+        hyperpara = np.exp(hyperpara)
+        a = hyperpara[0]
+        length_array = hyperpara[1:]
+        alpha = alpha_list[irad]
+        kernel = ConstantKernel(a, constant_value_bounds="fixed") * RBF(length_scale=length_array, length_scale_bounds="fixed")
+        gpr = GaussianProcessRegressor(kernel=kernel, alpha=alpha)#, n_restarts_optimizer=9)
+        gpr.fit(X_looe, y_looe)
+        
+        y_pred, std = gpr.predict(X_pred, return_std=True)
+        DS_recon_looe[ileave, irad] = y_pred[0]
+
+
+diff = (DS_recon_looe - DS_all)
+for ileave in range(ntrain):
+    plt.semilogx(rp, diff[ileave], c='gray', alpha=0.2)
+
+plt.semilogx(rp, np.median(diff, axis=0), c='C0')
+plt.semilogx(rp, np.percentile(diff, 16, axis=0), c='C0')
+plt.semilogx(rp, np.percentile(diff, 84, axis=0), c='C0')
+
+plt.xlabel(r'$r_{\rm p}$')
+plt.ylabel(r'$\ln \Delta\Sigma_{\rm emu} - \ln \Delta\Sigma_{\rm orig} $')
+plt.title(f'LOSOE, bin {ibin}, '+ r'$\alpha$=%.e'%alpha)
+#plt.ylim(-0.025, 0.025)
+
+#### add data error bars
+data_loc = '/projects/hywu/cluster_sims/cluster_finding/data/emulator_data/base_c000_ph000/z0p300/model_hod000000/obs_q180_desy1/'
+rp_rad = np.loadtxt(train_loc + f'rp_rad.dat')
+rp_in, DS_in = np.loadtxt(data_loc + f'DS_phys_noh_lam_bin_{ibin}.dat', unpack=True)
+from scipy.interpolate import interp1d
+DS_interp = interp1d(np.log(rp_in), np.log(DS_in))
+DS_data = (np.exp(DS_interp(np.log(rp_rad))))
+rp_in, DS_in = np.loadtxt(data_loc + f'DS_phys_noh_lam_bin_{ibin}.dat', unpack=True)
+cov_loc = '/users/hywu/work/cluster-lensing-cov-public/examples/abacus_summit_analytic/'
+z = [20, 30, 45, 60, 1000]
+rp_cov = np.loadtxt(cov_loc + f'rp_phys_noh_0.2_0.35_{z[ibin]}_{z[ibin+1]}.dat')
+cov = np.loadtxt(cov_loc + f'DeltaSigma_cov_combined_phys_noh_0.2_0.35_{z[ibin]}_{z[ibin+1]}.dat')
+sig = np.sqrt(np.diag(cov))
+plt.semilogx(rp_rad, sig[4:]/DS_data, c='gray', ls=':', label='data error bar')
+plt.semilogx(rp_rad, -sig[4:]/DS_data, c='gray', ls=':')
+
+
+plt.savefig(f'{plot_loc}/emu_per_radius_err_{abun_or_lam}_bin_{ibin}_alpha_{alpha:.0e}.png')
