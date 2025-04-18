@@ -96,20 +96,6 @@ class ReadAbacusSummit(object):
             self.mass = mass_sel[index]
             self.hid = hid_sel[index]
 
-        #### read from the original file # or if Mmin < 3e12:
-        #     halo_fname = self.input_loc + 'halo_base_c000_ph000_z0p300.h5'
-        #     print(halo_fname)
-        #     f = h5py.File(halo_fname,'r')
-        #     halos = f['halos']
-        #     mass = halos['mass']
-        #     sel = (mass > Mmin)
-        #     mass = mass[sel]
-        #     hid = halos['gid'][sel]
-        #     xh = halos['x'][sel]
-        #     yh = halos['y'][sel]
-        #     zh = halos['z'][sel]
-
-
     # def read_particles(self, pec_vel=False): #small enough to read both
     #     self.part_fname = self.input_loc + 'subsample_particles_A_base_c000_ph000_z0p300.h5'
     #     f = h5py.File(self.part_fname, 'r')

@@ -7,7 +7,7 @@ import sys
 import yaml
 from hod.utils.read_sim import read_sim
 
-
+## need 16G
 
 class CalcGalDen(object):
     def __init__(self, yml_fname):
