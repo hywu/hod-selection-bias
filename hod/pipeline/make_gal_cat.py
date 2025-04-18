@@ -40,6 +40,8 @@ if para['nbody'] == 'abacus_summit':
     hod_id = para.get('hod_id', None)
     phase = para.get('phase', None)
     if redshift == 0.3: z_str = '0p300'
+    if redshift == 0.4: z_str = '0p400'
+    if redshift == 0.5: z_str = '0p500'
     output_loc = para['output_loc']+f'/base_c{cosmo_id:0>3d}_ph{phase:0>3d}/z{z_str}/'
 else:
    output_loc = para['output_loc']

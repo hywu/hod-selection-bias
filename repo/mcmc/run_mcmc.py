@@ -119,7 +119,7 @@ for i in range(ndim):
     
 axes[-1].set_xlabel("step number");
 
-plt.savefig(plot_loc+f'samples_{run_name}.pdf')
+plt.savefig(plot_loc+f'samples_{run_name}.pdf', dpi=72)
 
 
 import corner
@@ -133,7 +133,7 @@ for i in range(ndim):
     ax = axes[i, i]
     ax.axvline(truth[i])
 
-plt.savefig(plot_loc+f'mcmc_{run_name}.pdf')
+plt.savefig(plot_loc+f'mcmc_{run_name}.pdf', dpi=72)
 
 
 

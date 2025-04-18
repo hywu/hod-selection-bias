@@ -15,7 +15,6 @@ class ReadAbacusSummit(object):
         cosmo_para = get_cosmo_para(cosmo_id)
         self.hubble = cosmo_para['hubble']
         self.OmegaM = cosmo_para['OmegaM']
-        #print(cosmo_para)
 
         if redshift == 0.3: z_str = '0p300'
         if redshift == 0.4: z_str = '0p400'
@@ -30,17 +29,74 @@ class ReadAbacusSummit(object):
         particles = f['particles']
         self.npart = np.shape(particles)[0]
         self.mpart = self.OmegaM * rhocrit * self.boxsize**3 / self.npart
-        #print('mpart%e'%self.mpart)
-        #exit()
-        #self.input_loc = '/bsuhome/hwu/scratch/abacus_summit/'
-        #snap_header = self.input_loc+'header'
-        # self.hubble = 0.6736
-        # self.OmegaM = 0.31519
-        # self.boxsize = 2e3
-        # self.mpart = 7.030000e+11#2.109e+09 / 0.003
+
+        self.halo_fname_original = self.input_loc + f'halo_base_c{cosmo_id:0>3d}_ph{phase:0>3d}_z{z_str}.h5' 
 
     def read_halos(self, Mmin=1e11, pec_vel=False):
-        # if Mmin < 3e12:
+
+        if Mmin >= 2.99e+12:
+            halo_fname = self.input_loc+f'halos_3e+12.fit'
+        elif Mmin >= 9.99e+10 and Mmin < 2.99e+12:
+            halo_fname = self.input_loc+f'halos_1e+11.fit'
+        else:
+            halo_fname = 'dummy.fit'
+
+        if os.path.exists(halo_fname):  # if I have saved the file.
+            print('halo file', halo_fname)
+            fsize = os.path.getsize(halo_fname)/1024**3
+            print(f'halo file size {fsize:.2g} GB')
+            data = fitsio.read(halo_fname)
+            mass = data['mass']
+            sel = (mass >= Mmin)
+            mass = mass[sel]
+            sort = np.argsort(-mass)
+            self.mass = mass[sort]
+
+            self.hid = data['haloid'][sel][sort]
+            self.xh = data['px'][sel][sort]
+            self.yh = data['py'][sel][sort]
+            self.zh = data['pz'][sel][sort]
+
+            if pec_vel == True:
+                self.vx = data['vx'][sel][sort]
+                self.vy = data['vy'][sel][sort]
+                self.vz = data['vz'][sel][sort]
+
+        else: 
+            print(self.halo_fname_original)
+            f = h5py.File(self.halo_fname_original,'r')
+            halos = f['halos']
+            #print(halos.dtype)
+            mass = halos['mass']
+            x_halo = halos['x']
+            y_halo = halos['y']
+            z_halo = halos['z']
+            vx_halo = halos['vx']
+            vy_halo = halos['vy']
+            vz_halo = halos['vz']
+            hid = halos['gid']
+
+            sel = (mass > Mmin)
+            x_halo_sel = x_halo[sel]
+            y_halo_sel = y_halo[sel]
+            z_halo_sel = z_halo[sel]
+            vx_halo_sel = vx_halo[sel]
+            vy_halo_sel = vy_halo[sel]
+            vz_halo_sel = vz_halo[sel]
+            mass_sel = mass[sel]
+            hid_sel = hid[sel]
+
+            index = np.argsort(-mass_sel)
+            self.xh = x_halo_sel[index]
+            self.yh = y_halo_sel[index]
+            self.zh = z_halo_sel[index]
+            self.vx = vx_halo_sel[index]
+            self.vy = vy_halo_sel[index]
+            self.vz = vz_halo_sel[index]
+            self.mass = mass_sel[index]
+            self.hid = hid_sel[index]
+
+        #### read from the original file # or if Mmin < 3e12:
         #     halo_fname = self.input_loc + 'halo_base_c000_ph000_z0p300.h5'
         #     print(halo_fname)
         #     f = h5py.File(halo_fname,'r')
@@ -52,47 +108,7 @@ class ReadAbacusSummit(object):
         #     xh = halos['x'][sel]
         #     yh = halos['y'][sel]
         #     zh = halos['z'][sel]
-        # else:
-        #halo_fname = self.input_loc+f'halos_{Mmin:.0e}.fit'
-        if Mmin <= 2.99e12:
-            halo_fname = self.input_loc+f'halos_1e+11.fit'
-        else: 
-            halo_fname = self.input_loc+f'halos_3e+12.fit'
 
-        print('halo file', halo_fname)
-        fsize = os.path.getsize(halo_fname)/1024**3
-        print(f'halo file size {fsize:.2g} GB')
-        data = fitsio.read(halo_fname)
-        # mass = data['mass']
-        # sel = (mass > Mmin)
-        # mass = mass[sel]
-        # hid = data['haloid'][sel]
-        # xh = data['px'][sel]
-        # yh = data['py'][sel]
-        # zh = data['pz'][sel]
-
-        # sort = np.argsort(-mass)
-        # self.mass = mass[sort]
-        # self.hid = hid[sort]
-        # self.xh = xh[sort]
-        # self.yh = yh[sort]
-        # self.zh = zh[sort]
-        # #return self.hid, self.mass, self.xh, self.yh, self.zh
-        mass = data['mass']
-        sel = (mass >= Mmin)
-        mass = mass[sel]
-        sort = np.argsort(-mass)
-        self.mass = mass[sort]
-
-        self.hid = data['haloid'][sel][sort]
-        self.xh = data['px'][sel][sort]
-        self.yh = data['py'][sel][sort]
-        self.zh = data['pz'][sel][sort]
-
-        if pec_vel == True:
-            self.vx = data['vx'][sel][sort]
-            self.vy = data['vy'][sel][sort]
-            self.vz = data['vz'][sel][sort]
 
     # def read_particles(self, pec_vel=False): #small enough to read both
     #     self.part_fname = self.input_loc + 'subsample_particles_A_base_c000_ph000_z0p300.h5'
@@ -132,14 +148,13 @@ class ReadAbacusSummit(object):
 if __name__ == '__main__':
     
     nbody_loc = '/projects/hywu/cluster_sims/cluster_finding/data/AbacusSummit_base/'
+    ras = ReadAbacusSummit(nbody_loc, redshift=0.4, cosmo_id=0, phase=0)
+    ras.read_halos(Mmin=3e12)
+    print(len(ras.xh))
+    plt.scatter(ras.xh[ras.zh<10], ras.yh[ras.zh<10], s=0.1)
+    plt.savefig('test.png')
 
-    ras = ReadAbacusSummit(nbody_loc, redshift=0.3)
-    #ras.read_halos(Mmin=3e12)
-    # print(len(ras.xh))
-    # plt.scatter(ras.xh[ras.zh<10], ras.yh[ras.zh<10], s=0.1)
-    # plt.savefig('test.png')
-
-    x, y, z = ras.read_particle_positions()
+    #x, y, z = ras.read_particle_positions()
     # plt.figure(figsize=(10,10))
     # plt.scatter(ras.xp[ras.zp<10], ras.yp[ras.zp<10], s=0.1)
     # plt.savefig('test2.png')
