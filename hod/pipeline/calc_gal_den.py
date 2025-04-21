@@ -78,7 +78,7 @@ class CalcGalDen(object):
             data = np.array([ngal]).transpose()
             np.savetxt(den_fname, data, fmt='%-12g', header='ngal (h^3 Mpc^-3)')
         else:
-            print('done')
+            pass #print('gal density done')
         print('file saved', den_fname)
 
 if __name__ == "__main__":
