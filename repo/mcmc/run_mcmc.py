@@ -5,31 +5,37 @@ plt.style.use('MNRAS')
 import emcee
 import os, sys
 
-run_name = sys.argv[1] #'s8Omns'#'s8Om'
+para_name = 's8Omhod' #'template'#
+data_name = 'flamingo' # 'abacus_summit' #
+run_name = para_name
 
-yml_name = f'yml/emcee_{run_name}.yml'
+#run_name = sys.argv[1] #'s8Omns'#'s8Om'
+
+yml_name = f'yml/emcee_{run_name}_{data_name}.yml'
 
 #### Parse the Yaml file
-from emcee_tools import ParseYaml
-parse = ParseYaml(yml_name)
-nsteps, nwalkers, lsteps, burnin, paramsdict_free, params_free_0, params_range,\
-        paramsdict_fixed, params_fixed = parse.parse_yaml()
+from parse_yml import ParseYml
+parse = ParseYml(yml_name)
+nsteps, nwalkers, lsteps, burnin, params_free_name, params_free_ini, params_range,\
+        params_fixed_name, params_fixed_value = parse.parse_yml()
 
 #### choose which emulator to use based on the parameters
-if 'sigma8' in paramsdict_free and 'alpha' in paramsdict_fixed:
+if 'sigma8' in params_free_name and 'alpha' in params_fixed_name:
     emu_name = 'fixhod'
-elif 'alpha' in paramsdict_free and 'sigma8' in paramsdict_fixed:
+elif 'alpha' in params_free_name and 'sigma8' in params_fixed_name:
     emu_name = 'fixcos'
-else: #  'alpha' in paramsdict_free and 'sigma8' in paramsdict_free:
+else: #  'alpha' in params_free_name and 'sigma8' in params_free_name:
     emu_name = 'all'
 
 print('emu_name', emu_name)
 
 
-out_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_train/{emu_name}/mcmc/'
-plot_loc = f'../../plots/emulator/{emu_name}/'
+out_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_train/{emu_name}/mcmc_{data_name}/'
+plot_loc = f'../../plots/emulator/{emu_name}/{data_name}/'
 if os.path.isdir(out_loc) == False:
     os.makedirs(out_loc)
+if os.path.isdir(plot_loc) == False:
+    os.makedirs(plot_loc)
 
 out_file = f'{out_loc}/mcmc_{run_name}.h5'
 
@@ -43,18 +49,18 @@ from s3_pred_radius import PredDataVector
 pdv = PredDataVector(emu_name)
 
 class GetModel(object): 
-    def __init__(self, paramsdict_free, params_fixed,
-                 paramsdict_fixed, **kwargs):
-        self.paramsdict_fixed = paramsdict_fixed
-        self.paramsdict_free = paramsdict_free
-        self.params_fixed = params_fixed
+    def __init__(self, params_free_name, params_fixed_value,
+                 params_fixed_name, **kwargs):
+        self.params_fixed_name = params_fixed_name
+        self.params_free_name = params_free_name
+        self.params_fixed_value = params_fixed_value
        
     def get_kw(self, params):
         kw = {} # if there's extra keyword
-        for i, pf in enumerate(self.paramsdict_fixed):
-            kw[pf] = self.params_fixed[i]
+        for i, pf in enumerate(self.params_fixed_name):
+            kw[pf] = self.params_fixed_value[i]
 
-        for i, pf in enumerate(self.paramsdict_free):
+        for i, pf in enumerate(self.params_free_name):
             kw[pf] = params[i]
         ###
         self.kw = kw
@@ -85,31 +91,31 @@ class GetModel(object):
 
 
 #### Get the data
-data_vec = np.loadtxt('../emulator/data/data_vector.dat')
-cov_inv = np.loadtxt('../emulator/data/cov_inv.dat')
+data_vec = np.loadtxt(f'../emulator/data_vector_{data_name}/data_vector.dat')
+cov_inv = np.loadtxt(f'../emulator/data_vector_{data_name}/cov_inv.dat')
 data_cov = np.linalg.inv(cov_inv)
 
 #### Define the likelihood
 from emcee_tools import LnLikelihood, runmcmc
-gm = GetModel(paramsdict_free, params_fixed, paramsdict_fixed)
+gm = GetModel(params_free_name, params_fixed_value, params_fixed_name)
 lnlike = LnLikelihood(data_vec, data_cov, gm.model, params_range,
-                             paramsdict_free, params_fixed, paramsdict_fixed)
+                             params_free_name, params_fixed_value, params_fixed_name)
 
 #### Run MCMC
 pool=None
 
-mcmc_chain, posterior = runmcmc(params_free_0, nsteps, nwalkers, lsteps, 
+mcmc_chain, posterior = runmcmc(params_free_ini, nsteps, nwalkers, lsteps, 
                                    lnlike.lnposterior, out_file,
                                    pool, burnin=burnin)
 
 #### Plot posterior
-ndim = params_free_0.size
+ndim = params_free_ini.size
 fig, axes = plt.subplots(ndim, figsize=(10, 7), sharex=True)
 reader = emcee.backends.HDFBackend(out_file, read_only=True)
 samples = reader.get_chain()
 print('np.shape(samples) =', np.shape(samples))
 
-labels = parse.params_label_free
+labels = parse.params_free_label
 for i in range(ndim):
     ax = axes[i]
     ax.plot(samples[:, :, i], "k", alpha=0.3)
@@ -125,15 +131,17 @@ plt.savefig(plot_loc+f'samples_{run_name}.pdf', dpi=72)
 import corner
 flat_samples = reader.get_chain(discard=100, thin=10, flat=True)
 print('after thinning', flat_samples.shape)
-truth = params_free_0
+truth = params_free_ini
 fig = corner.corner(flat_samples, labels=labels)
-# add the truth (there must be a better way)
-axes = np.array(fig.axes).reshape((ndim, ndim))
-for i in range(ndim):
-    ax = axes[i, i]
-    ax.axvline(truth[i])
+
+if data_name == 'abacus_summit':
+    # add the truth (there must be a better way)
+    axes = np.array(fig.axes).reshape((ndim, ndim))
+    for i in range(ndim):
+        ax = axes[i, i]
+        ax.axvline(truth[i])
 
 plt.savefig(plot_loc+f'mcmc_{run_name}.pdf', dpi=72)
-
+print('plots saved at ' + plot_loc)
 
 
