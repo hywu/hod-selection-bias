@@ -5,8 +5,11 @@ plt.style.use('MNRAS')
 import emcee
 import os, sys
 
-para_name = 's8Omhod' #'template'#
-data_name = 'flamingo' # 'abacus_summit' #
+# para_name = 's8Omhod' #'template'#
+# data_name = 'flamingo' # 'abacus_summit' #
+
+para_name = 's8Omhod'
+data_name = 'desy1'
 run_name = para_name
 
 #run_name = sys.argv[1] #'s8Omns'#'s8Om'
