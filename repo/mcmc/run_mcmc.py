@@ -90,58 +90,59 @@ class GetModel(object):
         return model
 
 
-#### Get the data
-data_vec = np.loadtxt(f'../emulator/data_vector_{data_name}/data_vector.dat')
-cov_inv = np.loadtxt(f'../emulator/data_vector_{data_name}/cov_inv.dat')
-data_cov = np.linalg.inv(cov_inv)
+if __name__ == "__main__":
+    #### Get the data
+    data_vec = np.loadtxt(f'../emulator/data_vector_{data_name}/data_vector.dat')
+    cov_inv = np.loadtxt(f'../emulator/data_vector_{data_name}/cov_inv.dat')
+    data_cov = np.linalg.inv(cov_inv)
 
-#### Define the likelihood
-from emcee_tools import LnLikelihood, runmcmc
-gm = GetModel(params_free_name, params_fixed_value, params_fixed_name)
-lnlike = LnLikelihood(data_vec, data_cov, gm.model, params_range,
-                             params_free_name, params_fixed_value, params_fixed_name)
+    #### Define the likelihood
+    from emcee_tools import LnLikelihood, runmcmc
+    gm = GetModel(params_free_name, params_fixed_value, params_fixed_name)
+    lnlike = LnLikelihood(data_vec, data_cov, gm.model, params_range,
+                                 params_free_name, params_fixed_value, params_fixed_name)
 
-#### Run MCMC
-pool=None
+    #### Run MCMC
+    pool=None
 
-mcmc_chain, posterior = runmcmc(params_free_ini, nsteps, nwalkers, lsteps, 
-                                   lnlike.lnposterior, out_file,
-                                   pool, burnin=burnin)
+    mcmc_chain, posterior = runmcmc(params_free_ini, nsteps, nwalkers, lsteps, 
+                                       lnlike.lnposterior, out_file,
+                                       pool, burnin=burnin)
 
-#### Plot posterior
-ndim = params_free_ini.size
-fig, axes = plt.subplots(ndim, figsize=(10, 7), sharex=True)
-reader = emcee.backends.HDFBackend(out_file, read_only=True)
-samples = reader.get_chain()
-print('np.shape(samples) =', np.shape(samples))
+    #### Plot posterior distribution
+    ndim = params_free_ini.size
+    fig, axes = plt.subplots(ndim, figsize=(10, 7), sharex=True)
+    reader = emcee.backends.HDFBackend(out_file, read_only=True)
+    samples = reader.get_chain()
+    print('np.shape(samples) =', np.shape(samples))
 
-labels = parse.params_free_label
-for i in range(ndim):
-    ax = axes[i]
-    ax.plot(samples[:, :, i], "k", alpha=0.3)
-    ax.set_xlim(0, len(samples))
-    ax.set_ylabel(labels[i])
-    ax.yaxis.set_label_coords(-0.1, 0.5)
-    
-axes[-1].set_xlabel("step number");
-
-plt.savefig(plot_loc+f'samples_{run_name}.pdf', dpi=72)
-
-
-import corner
-flat_samples = reader.get_chain(discard=100, thin=10, flat=True)
-print('after thinning', flat_samples.shape)
-truth = params_free_ini
-fig = corner.corner(flat_samples, labels=labels)
-
-if data_name == 'abacus_summit':
-    # add the truth (there must be a better way)
-    axes = np.array(fig.axes).reshape((ndim, ndim))
+    labels = parse.params_free_label
     for i in range(ndim):
-        ax = axes[i, i]
-        ax.axvline(truth[i])
+        ax = axes[i]
+        ax.plot(samples[:, :, i], "k", alpha=0.3)
+        ax.set_xlim(0, len(samples))
+        ax.set_ylabel(labels[i])
+        ax.yaxis.set_label_coords(-0.1, 0.5)
+        
+    axes[-1].set_xlabel("step number");
 
-plt.savefig(plot_loc+f'mcmc_{run_name}.pdf', dpi=72)
-print('plots saved at ' + plot_loc)
+    plt.savefig(plot_loc+f'samples_{run_name}.pdf', dpi=72)
+
+
+    import corner
+    flat_samples = reader.get_chain(discard=100, thin=10, flat=True)
+    print('after thinning', flat_samples.shape)
+    truth = params_free_ini
+    fig = corner.corner(flat_samples, labels=labels)
+
+    if data_name == 'abacus_summit':
+        # add the truth (there must be a better way)
+        axes = np.array(fig.axes).reshape((ndim, ndim))
+        for i in range(ndim):
+            ax = axes[i, i]
+            ax.axvline(truth[i])
+
+    plt.savefig(plot_loc+f'mcmc_{run_name}.pdf', dpi=72)
+    print('plots saved at ' + plot_loc)
 
 
