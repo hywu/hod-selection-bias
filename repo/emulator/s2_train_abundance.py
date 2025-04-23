@@ -15,8 +15,9 @@ loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
 #emu_name = 'fixcos'
 emu_name = 'all'
 
-train_loc = loc + f'emulator_train/{emu_name}/train/'
-plot_loc = f'../../plots/emulator/{emu_name}/'
+zid = sys.argv[1] #3
+train_loc = loc + f'emulator_train/{emu_name}/train/z0p{zid}00/'
+plot_loc = f'../../plots/emulator/{emu_name}/z0p{zid}00/'
 
 if os.path.isdir(plot_loc) == False:
     os.makedirs(plot_loc)
@@ -45,11 +46,11 @@ length_scale_bounds = ([1e-4, 1e+2])
 
 abun_recon = np.zeros((ntrain, nbin)) # reconstruct the training set
 
-for ibin in range(nbin): # train one bin at a time
-    print('training bin', ibin)
-    y_all = abun_all[:,ibin] 
+for ilam in range(nbin): # train one bin at a time
+    print('training bin', ilam)
+    y_all = abun_all[:,ilam] 
 
-    alpha = alpha_list[ibin]
+    alpha = alpha_list[ilam]
     kernel = np.var(y_all) * RBF(length_scale=length_array_ini, length_scale_bounds=length_scale_bounds)
     
     gpr = GaussianProcessRegressor(kernel=kernel, alpha=alpha, n_restarts_optimizer=9)
@@ -61,13 +62,13 @@ for ibin in range(nbin): # train one bin at a time
     f"Log-likelihood: {gpr.log_marginal_likelihood(gpr.kernel_.theta):.3f}")
 
     # save the model using joblib
-    joblib.dump(gpr, f'{train_loc}/abundance_bin_{ibin}_gpr_.pkl')
+    joblib.dump(gpr, f'{train_loc}/abundance_bin_{ilam}_gpr_.pkl')
     # Load the model later
     # loaded_model = joblib.load('gpr_model.pkl')
     # save the kernel parameters myself
-    np.savetxt(f'{train_loc}/abundance_bin_{ibin}_kernel.dat', gpr.kernel_.theta)
+    np.savetxt(f'{train_loc}/abundance_bin_{ilam}_kernel.dat', gpr.kernel_.theta)
 
-    abun_recon[:,ibin], std_prediction = gpr.predict(X_all, return_std=True)
+    abun_recon[:,ilam], std_prediction = gpr.predict(X_all, return_std=True)
  
 if alpha==0:
      print('recon?', np.allclose(abun_recon, abun_all)) # alpha=0 => perfect fit (passing all points)
@@ -81,22 +82,22 @@ abun_recon_looe = np.zeros((ntrain, nbin))
 from sklearn.gaussian_process.kernels import ConstantKernel
 
 for ileave in range(ntrain):
-    for ibin in range(nbin):
+    for ilam in range(nbin):
         X_looe = np.delete(X_all, ileave, axis=0)
-        y_looe = np.delete(abun_all[:,ibin], ileave, axis=0)
+        y_looe = np.delete(abun_all[:,ilam], ileave, axis=0)
         X_pred = np.array([X_all[ileave,:]])
         
-        hyperpara = np.loadtxt(f'{train_loc}/abundance_bin_{ibin}_kernel.dat')#, gpr.kernel_.theta)
+        hyperpara = np.loadtxt(f'{train_loc}/abundance_bin_{ilam}_kernel.dat')#, gpr.kernel_.theta)
         hyperpara = np.exp(hyperpara)
         a = hyperpara[0]
         length_array = hyperpara[1:]
-        alpha = alpha_list[ibin]
+        alpha = alpha_list[ilam]
         kernel = ConstantKernel(a, constant_value_bounds="fixed") * RBF(length_scale=length_array, length_scale_bounds="fixed")
         gpr = GaussianProcessRegressor(kernel=kernel, alpha=alpha)#, n_restarts_optimizer=9)
         gpr.fit(X_looe, y_looe)
         
         y_pred, std = gpr.predict(X_pred, return_std=True)
-        abun_recon_looe[ileave, ibin] = y_pred[0]
+        abun_recon_looe[ileave, ilam] = y_pred[0]
 
 
 diff = (abun_recon_looe - abun_all)
@@ -121,8 +122,8 @@ cov_loc = '/users/hywu/work/cluster-lensing-cov-public/examples/abacus_summit_an
 #cov_NC = np.diag(NC_data)
 z = [20, 30, 45, 60, 1000]
 cov_NC = []
-for ibin in range(4):
-    counts, sv, bias, lnM_mean = np.loadtxt(cov_loc + f'counts_0.2_0.35_{z[ibin]}_{z[ibin+1]}.dat')
+for ilam in range(4):
+    counts, sv, bias, lnM_mean = np.loadtxt(cov_loc + f'counts_0.2_0.35_{z[ilam]}_{z[ilam+1]}.dat')
     cov_NC.append(counts + sv)
 cov_NC = np.diag(cov_NC)
 #cov_NC_inv = linalg.inv(cov_NC)

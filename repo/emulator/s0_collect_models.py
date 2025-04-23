@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import numpy as np
 import matplotlib.pyplot as plt
-import os
+import os, sys
 
 loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
 data_loc = loc + 'emulator_data/'
@@ -24,15 +24,14 @@ hod_id_list_check = np.arange(1000, 1520, dtype=int)
 cosmo_id_list_check = cosmo_id_list_check.astype(int)
 hod_id_list_check = hod_id_list_check.astype(int)
 
-
-train_loc = loc + f'emulator_train/{emu_name}/train/'
+zid = sys.argv[1] #3
+train_loc = loc + f'emulator_train/{emu_name}/train/z0p{zid}00/'
 if os.path.isdir(train_loc) == False:
     os.makedirs(train_loc)
 
 #### data vector specs ####
 abun_or_lam = 'lam' # 'abun' #
 rich_name = 'q180'
-zid = 3
 phase = 0
 
 #### first, check the hod_id that exists
