@@ -24,7 +24,8 @@ hod_id_list_check = np.arange(1000, 1520, dtype=int)
 cosmo_id_list_check = cosmo_id_list_check.astype(int)
 hod_id_list_check = hod_id_list_check.astype(int)
 
-zid = sys.argv[1] #3
+iz = int(sys.argv[1])
+zid = 3+iz
 train_loc = loc + f'emulator_train/{emu_name}/train/z0p{zid}00/'
 if os.path.isdir(train_loc) == False:
     os.makedirs(train_loc)

@@ -15,7 +15,8 @@ loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
 #emu_name = 'fixcos'
 emu_name = 'all'
 
-zid = sys.argv[1] #3
+iz = int(sys.argv[1])
+zid = 3+iz
 train_loc = loc + f'emulator_train/{emu_name}/train/z0p{zid}00/'
 plot_loc = f'../../plots/emulator/{emu_name}/z0p{zid}00/'
 
@@ -116,14 +117,15 @@ plt.title(f'LOSOE, '+ r'$\alpha$=%.e'%alpha)
 #plt.ylim(-0.025, 0.025)
 
 #### add data error bars
-data_loc = '/projects/hywu/cluster_sims/cluster_finding/data/emulator_data/base_c000_ph000/z0p300/model_hod000000/obs_q180_desy1/'
+data_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_data/base_c000_ph000/z0p{zid}00/model_hod000000/obs_q180_desy1/'
 x, x, NC_data = np.loadtxt(data_loc+'abundance.dat',unpack=True)
 cov_loc = '/users/hywu/work/cluster-lensing-cov-public/examples/abacus_summit_analytic/'
 #cov_NC = np.diag(NC_data)
-z = [20, 30, 45, 60, 1000]
+lam = [20, 30, 45, 60, 1000]
+z = [0.2, 0.35, 0.5, 0.65]
 cov_NC = []
 for ilam in range(4):
-    counts, sv, bias, lnM_mean = np.loadtxt(cov_loc + f'counts_0.2_0.35_{z[ilam]}_{z[ilam+1]}.dat')
+    counts, sv, bias, lnM_mean = np.loadtxt(cov_loc + f'counts_{z[iz]}_{z[iz+1]}_{lam[ilam]}_{lam[ilam+1]}.dat')
     cov_NC.append(counts + sv)
 cov_NC = np.diag(cov_NC)
 #cov_NC_inv = linalg.inv(cov_NC)

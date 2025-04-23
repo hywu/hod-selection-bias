@@ -5,11 +5,14 @@ plt.style.use('MNRAS')
 import emcee
 import os, sys
 
-# para_name = 's8Omhod' #'template'#
-# data_name = 'flamingo' # 'abacus_summit' #
+from get_model import GetModel
 
 para_name = 's8Omhod'
-data_name = 'desy1'
+data_name = 'abacus_summit' #'flamingo' #  #
+
+
+iz = int(sys.argv[1])
+zid = 3+iz
 run_name = para_name
 
 #run_name = sys.argv[1] #'s8Omns'#'s8Om'
@@ -27,81 +30,34 @@ if 'sigma8' in params_free_name and 'alpha' in params_fixed_name:
     emu_name = 'fixhod'
 elif 'alpha' in params_free_name and 'sigma8' in params_fixed_name:
     emu_name = 'fixcos'
-else: #  'alpha' in params_free_name and 'sigma8' in params_free_name:
+else:
     emu_name = 'all'
 
 print('emu_name', emu_name)
 
 
-out_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_train/{emu_name}/mcmc_{data_name}/'
+out_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_mcmc/{emu_name}/mcmc_{data_name}/'
 plot_loc = f'../../plots/emulator/{emu_name}/{data_name}/'
 if os.path.isdir(out_loc) == False:
     os.makedirs(out_loc)
 if os.path.isdir(plot_loc) == False:
     os.makedirs(plot_loc)
 
-out_file = f'{out_loc}/mcmc_{run_name}.h5'
+out_file = f'{out_loc}/mcmc_{run_name}_z0p{zid}00.h5'
 
 
 print('output: ', out_file)
 
 
-#### Define the model class
-sys.path.append('../emulator')
-from s3_pred_radius import PredDataVector
-pdv = PredDataVector(emu_name)
-
-class GetModel(object): 
-    def __init__(self, params_free_name, params_fixed_value,
-                 params_fixed_name, **kwargs):
-        self.params_fixed_name = params_fixed_name
-        self.params_free_name = params_free_name
-        self.params_fixed_value = params_fixed_value
-       
-    def get_kw(self, params):
-        kw = {} # if there's extra keyword
-        for i, pf in enumerate(self.params_fixed_name):
-            kw[pf] = self.params_fixed_value[i]
-
-        for i, pf in enumerate(self.params_free_name):
-            kw[pf] = params[i]
-        ###
-        self.kw = kw
-    
-    def model(self, params):
-        self.get_kw(params)
-        params = self.kw
-        #print('params inside model', params)
-        sigma8 = params['sigma8']
-        OmegaM = params['OmegaM']
-        ns = params['ns']
-        OmegaB = params['OmegaB']
-        w0 = params['w0']
-        wa = params['wa']
-        #sigma8, OmegaM, ns, Ob0, w0, wa, Nur, alpha_s
-        cosmo_para = np.array([sigma8, OmegaM, ns, OmegaB, w0, wa, 2.0328, 0])
-        
-        alpha = params['alpha']
-        lgM1 = params['lgM1']
-        lgMcut = params['lgMcut']
-        # alpha,lgM1,lgkappa,lgMcut,sigmalogM
-        hod_para = np.array([alpha, lgM1, 0, lgMcut, 0.1]) #1,12.9,0,11.7,0.1
-
-
-        X_input = np.append(cosmo_para, hod_para)
-        model = np.append(pdv.pred_abundance(X_input), pdv.pred_lensing(X_input))
-        return model
-
 
 if __name__ == "__main__":
     #### Get the data
-    data_vec = np.loadtxt(f'../emulator/data_vector_{data_name}/data_vector.dat')
-    cov_inv = np.loadtxt(f'../emulator/data_vector_{data_name}/cov_inv.dat')
-    data_cov = np.linalg.inv(cov_inv)
+    data_vec = np.loadtxt(f'../emulator/data_vector_{data_name}/data_vector_z0p{zid}00.dat')
+    data_cov = np.loadtxt(f'../emulator/data_vector_{data_name}/cov_z0p{zid}00.dat')
 
     #### Define the likelihood
     from emcee_tools import LnLikelihood, runmcmc
-    gm = GetModel(params_free_name, params_fixed_value, params_fixed_name)
+    gm = GetModel(emu_name, iz, params_free_name, params_fixed_value, params_fixed_name)
     lnlike = LnLikelihood(data_vec, data_cov, gm.model, params_range,
                                  params_free_name, params_fixed_value, params_fixed_name)
 
@@ -118,8 +74,8 @@ if __name__ == "__main__":
     reader = emcee.backends.HDFBackend(out_file, read_only=True)
     samples = reader.get_chain()
     print('np.shape(samples) =', np.shape(samples))
-
     labels = parse.params_free_label
+    '''
     for i in range(ndim):
         ax = axes[i]
         ax.plot(samples[:, :, i], "k", alpha=0.3)
@@ -129,8 +85,8 @@ if __name__ == "__main__":
         
     axes[-1].set_xlabel("step number");
 
-    plt.savefig(plot_loc+f'samples_{run_name}.pdf', dpi=72)
-
+    plt.savefig(plot_loc+f'samples_{run_name}_z0p{zid}00.pdf', dpi=72)
+    '''
 
     import corner
     flat_samples = reader.get_chain(discard=100, thin=10, flat=True)
@@ -145,7 +101,7 @@ if __name__ == "__main__":
             ax = axes[i, i]
             ax.axvline(truth[i])
 
-    plt.savefig(plot_loc+f'mcmc_{run_name}.pdf', dpi=72)
+    plt.savefig(plot_loc+f'mcmc_{run_name}_z0p{zid}00.pdf', dpi=72)
     print('plots saved at ' + plot_loc)
 
 

@@ -10,9 +10,9 @@ loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
 #emu_name = 'fixcos'
 
 class PredDataVector(object):
-    def __init__(self, emu_name):
-
-        train_loc = loc + f'emulator_train/{emu_name}/train/'
+    def __init__(self, emu_name, iz):
+        zid = 3+iz
+        train_loc = loc + f'emulator_train/{emu_name}/train/z0p{zid}00/'
 
         #### emulator for abundance 
         self.gpr_abun_list = []

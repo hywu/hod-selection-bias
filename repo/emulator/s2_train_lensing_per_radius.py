@@ -9,10 +9,7 @@ import joblib
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 
-#./train_gpr_per_radius.py > output.txt 2>&1 &
-
-ilam = int(sys.argv[1])
-abun_or_lam = 'lam' #sys.argv[2] ##'abun'
+abun_or_lam = 'lam'
 
 alpha = 1e-6 #1e-3 #1e-5
 
@@ -21,13 +18,13 @@ loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
 #emu_name = 'fixcos'
 emu_name = 'all'
 
-train_loc = loc + f'emulator_train/{emu_name}/train/'
-plot_loc = f'../../plots/emulator/{emu_name}/'
+iz = int(sys.argv[1])
+zid = 3+iz
+train_loc = loc + f'emulator_train/{emu_name}/train/z0p{zid}00/'
+plot_loc = f'../../plots/emulator/{emu_name}/z0p{zid}00/'
+ilam = int(sys.argv[2]) # 0, 1, 2, 3
 
-# data = np.loadtxt(f'{train_loc}/cosmologies_all.dat')
-# X_all = data[:,1:]
 data = np.loadtxt(f'{train_loc}/parameters_all.dat')
-#X_all = data[:,1:9] # cosmo only
 X_all = data[:,1:]
 
 DS_all = np.loadtxt(f'{train_loc}/DS_{abun_or_lam}_bin_{ilam}_rad.dat')
@@ -88,8 +85,8 @@ from sklearn.gaussian_process.kernels import ConstantKernel
 
 for ileave in range(ntrain):
     for irad in range(nrad):
-        X_looe = np.delete(X_all, ileave, axis=0)  
-        y_looe = np.delete(DS_all[:,irad], ileave, axis=0)    
+        X_looe = np.delete(X_all, ileave, axis=0)
+        y_looe = np.delete(DS_all[:,irad], ileave, axis=0)
         X_pred = np.array([X_all[ileave,:]])
         
         hyperpara = np.loadtxt(f'{train_loc}/DS_{abun_or_lam}_bin_{ilam}_rad_{irad}_kernel.dat')#, gpr.kernel_.theta)
@@ -119,7 +116,7 @@ plt.title(f'LOSOE, bin {ilam}, '+ r'$\alpha$=%.e'%alpha)
 #plt.ylim(-0.025, 0.025)
 
 #### add data error bars
-data_loc = '/projects/hywu/cluster_sims/cluster_finding/data/emulator_data/base_c000_ph000/z0p300/model_hod000000/obs_q180_desy1/'
+data_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_data/base_c000_ph000/z0p{zid}00/model_hod000000/obs_q180_desy1/'
 rp_rad = np.loadtxt(train_loc + f'rp_rad.dat')
 rp_in, DS_in = np.loadtxt(data_loc + f'DS_phys_noh_lam_bin_{ilam}.dat', unpack=True)
 from scipy.interpolate import interp1d
@@ -127,9 +124,10 @@ DS_interp = interp1d(np.log(rp_in), np.log(DS_in))
 DS_data = (np.exp(DS_interp(np.log(rp_rad))))
 rp_in, DS_in = np.loadtxt(data_loc + f'DS_phys_noh_lam_bin_{ilam}.dat', unpack=True)
 cov_loc = '/users/hywu/work/cluster-lensing-cov-public/examples/abacus_summit_analytic/'
-z = [20, 30, 45, 60, 1000]
-rp_cov = np.loadtxt(cov_loc + f'rp_phys_noh_0.2_0.35_{z[ilam]}_{z[ilam+1]}.dat')
-cov = np.loadtxt(cov_loc + f'DeltaSigma_cov_combined_phys_noh_0.2_0.35_{z[ilam]}_{z[ilam+1]}.dat')
+lam = [20, 30, 45, 60, 1000]
+z = [0.2, 0.35, 0.5, 0.65]
+rp_cov = np.loadtxt(cov_loc + f'rp_phys_noh_{z[iz]}_{z[iz+1]}_{lam[ilam]}_{lam[ilam+1]}.dat')
+cov = np.loadtxt(cov_loc + f'DeltaSigma_cov_combined_phys_noh_{z[iz]}_{z[iz+1]}_{lam[ilam]}_{lam[ilam+1]}.dat')
 sig = np.sqrt(np.diag(cov))
 plt.semilogx(rp_rad, sig[4:]/DS_data, c='gray', ls=':', label='data error bar')
 plt.semilogx(rp_rad, -sig[4:]/DS_data, c='gray', ls=':')
