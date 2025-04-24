@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import pandas as pd
 import os
+import glob
 
 #### cosmo_c***_ph***_z0p***.param files seem unreliable. 
 #### read directly from the csv file
@@ -41,6 +42,14 @@ def get_cosmo_para(cosmo_id_wanted):
 def get_hod_para(hod_id_wanted):
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     loc = os.path.join(BASE_DIR, '../../repo/abacus_summit/')
+    ### collect all the csv files
+    fname_list = glob.glob(loc+'hod_*.csv')
+    print(fname_list)
+    df_list = []
+    for fname in fname_list:
+        df_in = pd.read_csv(fname, sep=',')
+        df_list.append(df_in)
+    '''
     df1 = pd.read_csv(loc+'/hod_params.csv', sep=',')
     df2 = pd.read_csv(loc+'hod_plusminus.csv', sep=',')
     df3 = pd.read_csv(loc+'hod_latin1.csv', sep=',')
@@ -48,9 +57,9 @@ def get_hod_para(hod_id_wanted):
     df5 = pd.read_csv(loc+'hod_latin3.csv', sep=',')
     df6 = pd.read_csv(loc+'hod_latin4.csv', sep=',')
     dfs = [df1, df2, df3, df4, df5, df6]
-    df = pd.concat(dfs, axis=0)  # Vertical stacking (rows)
-    #print(df)
-
+    '''
+    df = pd.concat(df_list, axis=0)  # Vertical stacking (rows)
+    
     nrows = df.shape[0]
     for irow in range(nrows):
         row = df.iloc[irow]
@@ -59,7 +68,8 @@ def get_hod_para(hod_id_wanted):
             row_output = row
             break
     return row_output.to_dict() # converting a data frame to a dictionary
-
+    
 if __name__ == "__main__":
     print(get_cosmo_para(0))
     print(get_hod_para(201))
+    print(get_hod_para(2051))
