@@ -4,6 +4,8 @@ import h5py, fitsio
 import os, sys
 sys.path.append('../utils')
 import yaml
+from hod.utils.get_flamingo_info import get_flamingo_cosmo, get_snap_name
+
 
 class ReadFlamingo(object):
     def __init__(self, nbody_loc, redshift, subsample_loc=None):
@@ -21,7 +23,9 @@ class ReadFlamingo(object):
             except yaml.YAMLError as exc:
                 print(exc)
 
-        cosmo = parsed_yaml['Cosmology']
+        sim_name = 'L1000N3600/HYDRO_FIDUCIAL'
+        cosmo = get_flamingo_cosmo(sim_name)
+        #cosmo = parsed_yaml['Cosmology']
         self.hubble = cosmo['h'] 
         self.OmegaM = 1. - cosmo['Omega_lambda']
         self.boxsize = 1000. * self.hubble # Todo: how to read boxsize from the header?
@@ -29,11 +33,12 @@ class ReadFlamingo(object):
         self.redshift = redshift
 
         # get the snapshot name
-        z_output = np.loadtxt(self.input_loc + 'output_list.txt')
-        snap_id_list = np.arange(len(z_output))
-        idx = np.argmin(abs(z_output-redshift))
-        snap_id = snap_id_list[idx]
-        self.snap_name = f'{snap_id:0>4d}'
+        # z_output = np.loadtxt(self.input_loc + 'output_list.txt')
+        # snap_id_list = np.arange(len(z_output))
+        # idx = np.argmin(abs(z_output-redshift))
+        # snap_id = snap_id_list[idx]
+        # self.snap_name = f'{snap_id:0>4d}'
+        self.snap_name = get_snap_name(sim_name, redshift)
 
         # calculate mpart ignoring gas. assuming all have the same mass
         #self.boxsize = max(self.xp) # Mpc/h
@@ -51,12 +56,13 @@ class ReadFlamingo(object):
             f = h5py.File(self.fname_part_2,'r')
             coord = f['part']
             npart = np.shape(coord)[0]
+            rhocrit = 2.77536627e11 # h^2 Msun Mpc^-3
+            total_mass_in_box_hiMsun = self.boxsize**3 * self.OmegaM * rhocrit
+            self.mpart = total_mass_in_box_hiMsun / npart # Msun/h
+
         else:
             print('cannot find particle file')
 
-        rhocrit = 2.77536627e11 # h^2 Msun Mpc^-3
-        total_mass_in_box_hiMsun = self.boxsize**3 * self.OmegaM * rhocrit
-        self.mpart = total_mass_in_box_hiMsun / npart # Msun/h
         #print('npart = ', npart, 'mpart = %e'%self.mpart)
 
 
@@ -145,8 +151,8 @@ class ReadFlamingo(object):
 
 if __name__ == '__main__':
     nbody_loc = f'/cosma8/data/dp004/flamingo/Runs/L1000N3600/HYDRO_FIDUCIAL/'
-    subsample_loc = f'/cosma8/data/do012/dc-wu5/cylinder/output_L1000N3600/HYDRO_FIDUCIAL/'
-    rfl = ReadFlamingo(nbody_loc=nbody_loc, redshift=0.3, subsample_loc=subsample_loc)
+    subsample_loc = f'/cosma8/data/do012/dc-wu5/cylinder/output_L1000N3600/HYDRO_FIDUCIAL/z0.4/'
+    rfl = ReadFlamingo(nbody_loc=nbody_loc, redshift=0.4, subsample_loc=subsample_loc)
     rfl.read_halos(Mmin=1e14, pec_vel=False)
 
     rfl.read_particle_positions()
