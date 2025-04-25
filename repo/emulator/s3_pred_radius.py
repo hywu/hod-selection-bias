@@ -13,7 +13,7 @@ class PredDataVector(object):
     def __init__(self, emu_name, iz):
         zid = 3+iz
         train_loc = loc + f'emulator_train/{emu_name}/train/z0p{zid}00/'
-
+        print(train_loc)
         #### emulator for abundance 
         self.gpr_abun_list = []
         for ilam in range(4):
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     #emu_name='fixcos'
     emu_name='all'
     
-    train_loc = loc + f'emulator_train/{emu_name}/train/'
+    train_loc = loc + f'emulator_train/{emu_name}/train/z0p300/'
 
     data = np.loadtxt(f'{train_loc}/parameters_all.dat')
     X_all = data[:,1:]
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     X_test = np.atleast_2d(X_all[itest]) # just one set of parameters
 
     ####
-    pdv = PredDataVector(emu_name)
+    pdv = PredDataVector(emu_name, 0)
     #### lensing
     DS_pred = pdv.pred_lensing(X_test)
     DS_test = []

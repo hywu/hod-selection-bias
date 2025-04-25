@@ -12,7 +12,8 @@ data_name = 'flamingo' #  #'abacus_summit' #
 
 
 iz = int(sys.argv[1])
-zid = 3+iz
+z_list = [0.3, 0.4, 0.5]
+redshift = z_list[iz]
 run_name = para_name
 
 #run_name = sys.argv[1] #'s8Omns'#'s8Om'
@@ -31,7 +32,8 @@ nsteps, nwalkers, lsteps, burnin, params_free_name, params_free_ini, params_rang
 # elif 'alpha' in params_free_name and 'sigma8' in params_fixed_name:
 #     emu_name = 'fixcos'
 # else:
-emu_name = 'wide'
+emu_name = 'all'
+#emu_name = 'wide'
 
 print('emu_name', emu_name)
 
@@ -43,7 +45,7 @@ if os.path.isdir(out_loc) == False:
 if os.path.isdir(plot_loc) == False:
     os.makedirs(plot_loc)
 
-out_file = f'{out_loc}/mcmc_{run_name}_z0p{zid}00.h5'
+out_file = f'{out_loc}/mcmc_{run_name}_z{redshift}.h5'
 
 
 print('output: ', out_file)
@@ -52,8 +54,8 @@ print('output: ', out_file)
 
 if __name__ == "__main__":
     #### Get the data
-    data_vec = np.loadtxt(f'../emulator/data_vector_{data_name}/data_vector_z0p{zid}00.dat')
-    data_cov = np.loadtxt(f'../emulator/data_vector_{data_name}/cov_z0p{zid}00.dat')
+    data_vec = np.loadtxt(f'../emulator/data_vector_{data_name}/data_vector_z{redshift}.dat')
+    data_cov = np.loadtxt(f'../emulator/data_vector_abacus_summit/cov_z{redshift}.dat')
 
     #### Define the likelihood
     from emcee_tools import LnLikelihood, runmcmc
@@ -101,7 +103,7 @@ if __name__ == "__main__":
             ax = axes[i, i]
             ax.axvline(truth[i])
 
-    plt.savefig(plot_loc+f'mcmc_{run_name}_z0p{zid}00.pdf', dpi=72)
+    plt.savefig(plot_loc+f'mcmc_{run_name}_z{redshift}.pdf', dpi=72)
     print('plots saved at ' + plot_loc)
 
 
