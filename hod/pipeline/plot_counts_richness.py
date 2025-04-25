@@ -89,7 +89,7 @@ class PlotCountsRichness(object):
         
 
 
-    def calc_counts_richness(self, rich_fname=None, lam_min=20, lam_max=200): # allow intput fits file name directly
+    def calc_counts_richness(self, rich_fname=None, lam_min=20, lam_max=200): # allow input fits file name directly
 
         if rich_fname == None:
             rich_fname = f'{self.out_path}/richness_{self.rich_name}.fit'

@@ -6,9 +6,10 @@ import os
 
 lam_min_list = np.array([20, 30, 45, 60])
 lam_max_list = np.array([30, 45, 60, 1000])
+z_list = [0.2, 0.35, 0.5, 0.65]
 nbins = len(lam_min_list)
 
-def plot_lensing_y1(thresholded, axes=None):
+def plot_lensing_y1(iz, thresholded, axes=None):
     if axes is None:
         fig, axes = plt.subplots(1, nbins, figsize=(20, 5))
 
@@ -23,7 +24,9 @@ def plot_lensing_y1(thresholded, axes=None):
         BASE_DIR = os.path.dirname(os.path.abspath(__file__))
         out_loc = os.path.join(BASE_DIR, 'data')
         #out_loc = 'data' #'/bsuhome/hwu/work/hod/output/plots_for_paper/y1/'
-        rp, DS, dDS = np.loadtxt(f'{out_loc}/y1_DS_{bin_or_threshold}_z_0.2_0.35_lam_{ibin}.dat', unpack=True)
+        zmin = z_list[iz]
+        zmax = z_list[iz+1]
+        rp, DS, dDS = np.loadtxt(f'{out_loc}/y1_DS_{bin_or_threshold}_z_{zmin}_{zmax}_lam_{ibin}.dat', unpack=True)
         sel = (DS > 0)&(rp >= 0.25)
         ax = axes[ibin]
         ax.errorbar(rp[sel], rp[sel]*DS[sel], rp[sel]*dDS[sel], capsize=8, c='k', ls='', elinewidth=2, markersize=12, marker=marker, mec='k')
@@ -32,7 +35,7 @@ def plot_lensing_y1(thresholded, axes=None):
         ax.set_xlabel(r'$\rm r_p [pMpc]$')
         ax.set_ylabel(r'$\rm r_p \Delta\Sigma [pMpc M_\odot/ppc^2]$')
 
-    '''
+    r'''
     if thresholded == True:
         for ibin in range(nbins):
             out_loc = '/bsuhome/hwu/work/hod/output/plots_for_paper/y1/'
