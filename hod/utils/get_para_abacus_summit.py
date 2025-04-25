@@ -44,7 +44,7 @@ def get_hod_para(hod_id_wanted):
     loc = os.path.join(BASE_DIR, '../../repo/abacus_summit/')
     ### collect all the csv files
     fname_list = glob.glob(loc+'hod_*.csv')
-    print(fname_list)
+    #print(fname_list)
     df_list = []
     for fname in fname_list:
         df_in = pd.read_csv(fname, sep=',')

@@ -11,7 +11,8 @@ data_loc = loc + 'emulator_data/'
 
 #emu_name = 'fixhod'
 #emu_name = 'fixcos'
-emu_name = 'all'
+#emu_name = 'all'
+emu_name = 'wide'
 
 iz = int(sys.argv[1])
 zid = 3+iz
@@ -64,7 +65,7 @@ for imodel in range(n_models):
 ### training set for bin: DES radial bins
 
 rp_master_pca = np.logspace(-2,2,100)
-rp_master_rad, DS, DS_err = np.loadtxt(f'../../hod/y1/data/y1_DS_bin_z_0.2_0.35_lam_0.dat', unpack=True)
+rp_master_rad, DS, DS_err = np.loadtxt(f'../../hod/y1/data/y1_DS_bin_z_0.2_0.35_lam_20_30.dat', unpack=True)
 
 for ilam in range(4):
     outfile_pca = open(f'{train_loc}/DS_{abun_or_lam}_bin_{ilam}_pca.dat', 'w')

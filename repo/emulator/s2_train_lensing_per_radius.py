@@ -16,7 +16,8 @@ alpha = 1e-6 #1e-3 #1e-5
 loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
 #emu_name = 'fixhod'
 #emu_name = 'fixcos'
-emu_name = 'all'
+#emu_name = 'all'
+emu_name = 'wide'
 
 iz = int(sys.argv[1])
 zid = 3+iz
