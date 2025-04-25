@@ -18,6 +18,7 @@ __pycache__/
 .DS_Store
 ._.DS_Store
 Thumbs.db
+.virtual_documents
 
 # Ignore build artifacts
 dist/

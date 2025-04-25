@@ -8,7 +8,7 @@ import os, sys
 from get_model import GetModel
 
 para_name = 's8Omhod'
-data_name = 'abacus_summit' #'flamingo' #  #
+data_name = 'flamingo' #  #'abacus_summit' #
 
 
 iz = int(sys.argv[1])
@@ -25,13 +25,13 @@ parse = ParseYml(yml_name)
 nsteps, nwalkers, lsteps, burnin, params_free_name, params_free_ini, params_range,\
         params_fixed_name, params_fixed_value = parse.parse_yml()
 
-#### choose which emulator to use based on the parameters
-if 'sigma8' in params_free_name and 'alpha' in params_fixed_name:
-    emu_name = 'fixhod'
-elif 'alpha' in params_free_name and 'sigma8' in params_fixed_name:
-    emu_name = 'fixcos'
-else:
-    emu_name = 'all'
+#  #### choose which emulator to use based on the parameters
+# if 'sigma8' in params_free_name and 'alpha' in params_fixed_name:
+#    emu_name = 'fixhod'
+# elif 'alpha' in params_free_name and 'sigma8' in params_fixed_name:
+#     emu_name = 'fixcos'
+# else:
+emu_name = 'wide'
 
 print('emu_name', emu_name)
 
