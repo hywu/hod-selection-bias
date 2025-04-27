@@ -9,6 +9,7 @@ from get_model import GetModel
 
 para_name = 's8Omhod'
 data_name = 'flamingo' #  #'abacus_summit' #
+emu_name = 'wide' #'all' #
 
 
 iz = int(sys.argv[1])
@@ -26,16 +27,8 @@ parse = ParseYml(yml_name)
 nsteps, nwalkers, lsteps, burnin, params_free_name, params_free_ini, params_range,\
         params_fixed_name, params_fixed_value = parse.parse_yml()
 
-#  #### choose which emulator to use based on the parameters
-# if 'sigma8' in params_free_name and 'alpha' in params_fixed_name:
-#    emu_name = 'fixhod'
-# elif 'alpha' in params_free_name and 'sigma8' in params_fixed_name:
-#     emu_name = 'fixcos'
-# else:
-emu_name = 'all'
-#emu_name = 'wide'
 
-print('emu_name', emu_name)
+
 
 
 out_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_mcmc/{emu_name}/mcmc_{data_name}/'

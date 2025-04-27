@@ -57,7 +57,7 @@ for imodel in range(n_models):
 
     outfile_all.write('%12g %12g %12g %12g %12g\n'%(para['alpha'], para['lgM1'], para['lgkappa'], para['lgMcut'], para['sigmalogM'])) #, para['sigmaintr']
 
-#### create Training Set (pre-PCA) ####
+#### create the raining set (pre-PCA) ####
 #### no train-test split.  Use LOOE later
 #### all units are phys, no-h.  
 
@@ -65,7 +65,11 @@ for imodel in range(n_models):
 ### training set for bin: DES radial bins
 
 rp_master_pca = np.logspace(-2,2,100)
-rp_master_rad, DS, DS_err = np.loadtxt(f'../../hod/y1/data/y1_DS_bin_z_0.2_0.35_lam_20_30.dat', unpack=True)
+#rp_master_rad, DS, DS_err = np.loadtxt(f'../../hod/y1/data/y1_DS_bin_z_0.2_0.35_lam_20_30.dat', unpack=True)
+
+rp_master_rad = np.logspace(np.log10(0.03), np.log10(30), 15)
+rp_master_rad = rp_master_rad[rp_master_rad>0.2]
+
 
 for ilam in range(4):
     outfile_pca = open(f'{train_loc}/DS_{abun_or_lam}_bin_{ilam}_pca.dat', 'w')
