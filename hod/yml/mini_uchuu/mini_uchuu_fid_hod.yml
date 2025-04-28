@@ -22,7 +22,11 @@ use_pmem: True
 which_pmem: quad
 depth: 180
 subtract_background: False
+
+# miscen
 miscen: True
+f_miscen: 0.165
+tau_miscen: 0.166
 
 # Cosmology
 # http://skiesanduniverses.org/Simulations/Uchuu/

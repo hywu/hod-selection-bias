@@ -8,11 +8,11 @@ from scipy.interpolate import interp1d
 rng = default_rng(42)
 
 class Miscentering(object):
-    def __init__(self, f_miscen, tau):
+    def __init__(self, f_miscen, tau_miscen):
         self.f_miscen = f_miscen
         x = np.linspace(0,2,200)
         #tau = 0.165
-        a = 1/tau
+        a = 1/tau_miscen
         b = 2
         cdf = gdtr(a,b,x)
         self.cdf_interp = interp1d(cdf, x)
@@ -39,7 +39,7 @@ class Miscentering(object):
         return x_output, y_output
 
 if __name__ == "__main__":
-    miscen = Miscentering(f_miscen=0.165, tau=0.165)
+    miscen = Miscentering(f_miscen=0.165, tau_miscen=0.166) # Zhang19 Table 1 last row
     # fake data 
     x_true, y_true = np.meshgrid(np.arange(0, 10, 1), np.arange(0, 10, 1))
     x_true = np.concatenate(x_true)
