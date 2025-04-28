@@ -17,13 +17,14 @@ loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
 #emu_name = 'fixhod'
 #emu_name = 'fixcos'
 #emu_name = 'all'
-emu_name = 'wide'
 
-iz = int(sys.argv[1])
+emu_name = sys.argv[1]
+iz = int(sys.argv[2])
+ilam = int(sys.argv[3]) # 0, 1, 2, 3
+
 zid = 3+iz
 train_loc = loc + f'emulator_train/{emu_name}/train/z0p{zid}00/'
 plot_loc = f'../../plots/emulator/{emu_name}/z0p{zid}00/'
-ilam = int(sys.argv[2]) # 0, 1, 2, 3
 
 data = np.loadtxt(f'{train_loc}/parameters_all.dat')
 X_all = data[:,1:]

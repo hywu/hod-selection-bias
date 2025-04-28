@@ -32,8 +32,6 @@ class PlotLensing(object):
         self.Rmax = para.get('Rmax', 100)
         self.pimax = para.get('pimax', 100)
         self.nrp_per_decade = para.get('nrp_per_decade', 5)
-        self.miscentering = para.get('miscentering', False)
-
 
         if abundance_matching == None:
             self.abundance_matching = para.get('abundance_matching', False)
@@ -119,9 +117,6 @@ class PlotLensing(object):
         else:
             self.outname += '_bin'
 
-        if self.miscentering == True:
-            self.outname += '_miscen'
-
         self.obs_path = f'{self.out_path}/obs_{self.rich_name}_{self.survey}/'
         if os.path.isdir(self.obs_path)==False: 
             os.makedirs(self.obs_path)
@@ -170,15 +165,6 @@ class PlotLensing(object):
         zh_all = data['pz']
         lnM_all = np.log(mass_all)
         lam_all = data['lambda']
-
-        if self.miscentering == True:
-            print('including miscentering')
-            from hod.utils.miscentering import Miscentering
-            Rlam_all = data['rlambda']
-            miscen = Miscentering(f_miscen=0.165, tau=0.165)
-            x_mis, y_mis = miscen.draw_miscen_pos(xh_all, yh_all, Rlam_all)
-            xh_all = x_mis * 1.
-            yh_all = y_mis * 1.
 
         # shuffle the sample to remove mass sorting
         shuff = self.rng.permutation(len(xh_all))

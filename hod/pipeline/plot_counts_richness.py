@@ -155,7 +155,7 @@ class PlotCountsRichness(object):
     def plot_y1_counts_richness(self):
         plot_y1_counts_richnes()
 
-def plot_y1_counts_richness(**kwargs):
+def plot_y1_counts_richness(**kwargs): ## deprecated!  see ../y1/plot_counts_richness_y1.py
     lam_min_list, den_list, den_low, den_high = np.loadtxt('../y1/data/des_y1_space_density_lambda_z_0.2_0.35.dat', unpack=True)
     plt.plot(lam_min_list, den_list, label='DES Y1', c='k', **kwargs)
     plt.fill_between(lam_min_list, den_low, den_high, facecolor='gray', alpha=0.2)

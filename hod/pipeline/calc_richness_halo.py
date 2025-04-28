@@ -41,6 +41,11 @@ else:
 
 model_name = para['model_name']
 rich_name = para['rich_name']
+miscen = para.get('miscen', False)
+
+
+
+
 out_path = f'{output_loc}/model_{model_name}/'
 
 if os.path.isdir(out_path)==False:
@@ -135,6 +140,45 @@ if los == 'y':
     if pec_vel == True:
         z_halo_in += readcat.vy / Ez / 100.
 
+# add miscentering
+if miscen == True:
+    print('including miscen')
+    from hod.utils.miscentering import Miscentering
+    
+    out_fname=f'{out_path}/richness_{rich_name}.fit'
+    if os.path.exists(out_fname):
+        print('richness from the previous iteration')
+        data = fitsio.read(out_fname)
+        haloid_unmatched = data['haloid']
+        Rlam_unmatched = data['rlambda']
+        #### match rlambda 
+        from astropy.table import QTable
+        data1 = QTable([haloid_unmatched, Rlam_unmatched], names=('hid', 'Rlam')) # shorter
+        data2 = QTable([hid_in, x_halo_in], names=('hid', 'x')) # longer
+        #print('length', len(haloid_unmatched), len(hid_in))
+        from astropy.table import join
+        data_joined = join(data1, data2, keys=['hid'], join_type='right') # Astropy assign '--' if there's no match
+        #print(data_joined.keys())
+        Rlam_all = np.array(data_joined['Rlam'])
+        print(data_joined['Rlam'][-100:])
+        print('has no match', len(Rlam_all[Rlam_all=='--']))
+        print('has no match', len(Rlam_all[isinstance(Rlam_all, str)]))
+        Rlam_all[isinstance(Rlam_all, str)] = -1
+        print(Rlam_all[-100:])
+
+        #print(Rlam_all)
+        #Rlam_all = [print(x) if isinstance(x, str) else x for x in Rlam_all]
+
+        print('length', len(haloid_unmatched), len(hid_in), len(Rlam_all))
+
+    else:
+        Rlam_all = 1 + np.zeros(len(x_halo_in)) # # TODO! 
+    mc = Miscentering(f_miscen=0.165, tau=0.165)
+    x_mis, y_mis = mc.draw_miscen_pos(x_halo_in, y_halo_in, Rlam_all)
+    x_halo_in = x_mis * 1.
+    y_halo_in = y_mis * 1.
+
+exit()
 # if use_pmem == True:
 #     use_cylinder = False
 which_pmem = para.get('which_pmem')

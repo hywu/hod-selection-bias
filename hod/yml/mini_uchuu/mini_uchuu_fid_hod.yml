@@ -1,5 +1,5 @@
 model_name: fid_hod_z0.1
-rich_name: q180
+rich_name: q180_miscen
 
 nbody: mini_uchuu
 nbody_loc: /projects/hywu/cluster_sims/cluster_finding/data/MiniUchuu/
@@ -22,9 +22,7 @@ use_pmem: True
 which_pmem: quad
 depth: 180
 subtract_background: False
-
-# lensing
-miscentering: True
+miscen: True
 
 # Cosmology
 # http://skiesanduniverses.org/Simulations/Uchuu/

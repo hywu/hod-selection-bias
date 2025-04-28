@@ -13,7 +13,7 @@ class PredDataVector(object):
     def __init__(self, emu_name, iz):
         zid = 3+iz
         train_loc = loc + f'emulator_train/{emu_name}/train/z0p{zid}00/'
-        print(train_loc)
+        #print(train_loc)
         #### emulator for abundance 
         self.gpr_abun_list = []
         for ilam in range(4):
