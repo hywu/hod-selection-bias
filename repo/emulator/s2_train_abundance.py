@@ -11,22 +11,21 @@ from sklearn.gaussian_process.kernels import RBF
 
 loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
 
-#emu_name = 'fixhod'
-#emu_name = 'fixcos'
-#emu_name = 'all'
-# emu_name = 'wide'
-
 emu_name = sys.argv[1]
 iz = int(sys.argv[2])
 zid = 3+iz
-train_loc = loc + f'emulator_train/{emu_name}/train/z0p{zid}00/'
+train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/'
 plot_loc = f'../../plots/emulator/{emu_name}/z0p{zid}00/'
 
 if os.path.isdir(plot_loc) == False:
     os.makedirs(plot_loc)
 
+if emu_name == 'narrow':
+    alpha = 1e-5 
+if emu_name == 'wide':
+    alpha = 1e-5
 
-alpha = 1e-5
+
 # 1e-3 => too noisy
 # 1e-4 => okay
 # 1e-5 => best

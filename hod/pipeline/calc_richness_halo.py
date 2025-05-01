@@ -30,7 +30,7 @@ redshift = para['redshift']
 #### For AbacusSummit ####
 if para['nbody'] == 'abacus_summit':
     cosmo_id = para.get('cosmo_id', None)
-    hod_id = para.get('hod_id', None)
+    #hod_id = para.get('hod_id', None)
     phase = para.get('phase', None)
     if redshift == 0.3: z_str = '0p300'
     if redshift == 0.4: z_str = '0p400'
@@ -142,8 +142,11 @@ if los == 'y':
 
 # add miscentering
 if miscen == True:
-    f_miscen = para['f_miscen']
-    tau_miscen = para['tau_miscen']
+    from hod.utils.get_para_abacus_summit import get_hod_para
+    hod_id = para['hod_id']
+    hod_para = get_hod_para(hod_id)
+    f_miscen = hod_para['f_miscen']
+    tau_miscen = hod_para['tau_miscen']
     print('including miscen')
     from hod.utils.miscentering import Miscentering
     # get R_lambda if it exists
@@ -174,11 +177,11 @@ if miscen == True:
 #     use_cylinder = False
 which_pmem = para.get('which_pmem')
 if which_pmem == 'quad':
-    from pmem_weights_quad import pmem_weights_dchi, volume_dchi
+    from hod.utils.pmem_weights_quad import pmem_weights_dchi, volume_dchi
 if which_pmem == 'gauss':
-    from pmem_weights_gauss import pmem_weights_dchi, volume_dchi
+    from hod.utils.pmem_weights_gauss import pmem_weights_dchi, volume_dchi
 if which_pmem == 'uniform':
-    from pmem_weights_uniform import pmem_weights_dchi, volume_dchi
+    from hod.utils.pmem_weights_uniform import pmem_weights_dchi, volume_dchi
 
 #depth = -1
 dchi_max = 0.5 * boxsize

@@ -183,69 +183,72 @@ class PlotLensing(object):
             lam_all = lam_all[sort]
 
         for ibin in range(self.nbins):
-            print_memory(f'doing bin{ibin}')
-            if self.abundance_matching == False:
-                lam_min = self.lam_min_list[ibin]
-                lam_max = self.lam_max_list[ibin]
-                if self.thresholded == True:
-                    sel = (lam_all >= lam_min)
-                else:
-                    sel = (lam_all >= lam_min)&(lam_all < lam_max)
+            if os.path.exists(f'{self.fname5}_{ibin}.dat'):
+                print('done', f'{self.fname5}_{ibin}.dat')
+            else:
+                print_memory(f'doing bin{ibin}')
+                if self.abundance_matching == False:
+                    lam_min = self.lam_min_list[ibin]
+                    lam_max = self.lam_max_list[ibin]
+                    if self.thresholded == True:
+                        sel = (lam_all >= lam_min)
+                    else:
+                        sel = (lam_all >= lam_min)&(lam_all < lam_max)
 
-                xh_sel = xh_all[sel]
-                yh_sel = yh_all[sel]
-                zh_sel = zh_all[sel]
-                lnM_sel = lnM_all[sel]
-                lam_sel = lam_all[sel]
+                    xh_sel = xh_all[sel]
+                    yh_sel = yh_all[sel]
+                    zh_sel = zh_all[sel]
+                    lnM_sel = lnM_all[sel]
+                    lam_sel = lam_all[sel]
 
-            else: #if self.abundance_matching == True:
-                if self.thresholded == True:
-                    counts_min = self.counts_min_list[ibin]
-                    counts_max = 0
-                else:
-                    counts_min = self.counts_min_list[ibin]
-                    counts_max = self.counts_max_list[ibin]
+                else: #if self.abundance_matching == True:
+                    if self.thresholded == True:
+                        counts_min = self.counts_min_list[ibin]
+                        counts_max = 0
+                    else:
+                        counts_min = self.counts_min_list[ibin]
+                        counts_max = self.counts_max_list[ibin]
 
-                xh_sel = xh_all[counts_max:counts_min]
-                yh_sel = yh_all[counts_max:counts_min]
-                zh_sel = zh_all[counts_max:counts_min]
-                lnM_sel = lnM_all[counts_max:counts_min]
-                lam_sel = lam_all[counts_max:counts_min]
+                    xh_sel = xh_all[counts_max:counts_min]
+                    yh_sel = yh_all[counts_max:counts_min]
+                    zh_sel = zh_all[counts_max:counts_min]
+                    lnM_sel = lnM_all[counts_max:counts_min]
+                    lam_sel = lam_all[counts_max:counts_min]
 
 
-            #out_loc = f'{self.out_path}/obs_{self.rich_name}/'
+                #out_loc = f'{self.out_path}/obs_{self.rich_name}/'
 
-            ml = MeasureLensing(self.obs_path, self.Rmin, self.Rmax, self.pimax, self.nrp_per_decade)
-            ml.write_bin_file()
-            xh_mat, yh_mat, zh_mat, lnM_matched = sample_matching_mass(lnM_sel, lnM_all, xh_all, yh_all, zh_all)
-            rp, Sigma_sel, DS_sel = ml.measure_lensing(xh_sel, yh_sel, zh_sel, self.xp, self.yp, self.zp, self.boxsize, self.mpart)
-            rp, Sigma_mat, DS_mat = ml.measure_lensing(xh_mat, yh_mat, zh_mat, self.xp, self.yp, self.zp, self.boxsize, self.mpart)
-            sel = (rp > 0.05)
-            print('saving', self.fname1)
-            x = rp[sel]
-            y = Sigma_sel[sel]
-            z = Sigma_mat[sel]
-            data1 = np.array([x,y,z]).transpose()
-            np.savetxt(f'{self.fname1}_{ibin}.dat', data1, fmt='%-12g', header='rp [cMpc/h], Sigma_sel [h Msun/pc^2], Sigma_matched')
+                ml = MeasureLensing(self.obs_path, self.Rmin, self.Rmax, self.pimax, self.nrp_per_decade)
+                ml.write_bin_file()
+                xh_mat, yh_mat, zh_mat, lnM_matched = sample_matching_mass(lnM_sel, lnM_all, xh_all, yh_all, zh_all)
+                rp, Sigma_sel, DS_sel = ml.measure_lensing(xh_sel, yh_sel, zh_sel, self.xp, self.yp, self.zp, self.boxsize, self.mpart)
+                rp, Sigma_mat, DS_mat = ml.measure_lensing(xh_mat, yh_mat, zh_mat, self.xp, self.yp, self.zp, self.boxsize, self.mpart)
+                sel = (rp > 0.05)
+                print('saving', self.fname1)
+                x = rp[sel]
+                y = Sigma_sel[sel]
+                z = Sigma_mat[sel]
+                data1 = np.array([x,y,z]).transpose()
+                np.savetxt(f'{self.fname1}_{ibin}.dat', data1, fmt='%-12g', header='rp [cMpc/h], Sigma_sel [h Msun/pc^2], Sigma_matched')
 
-            x = rp[sel]
-            y = DS_sel[sel]
-            z = DS_mat[sel]
-            data2 = np.array([x,y,z]).transpose()
-            np.savetxt(f'{self.fname2}_{ibin}.dat', data2, fmt='%-12g', header='rp [cMpc/h], DS_sel [h Msun/pc^2], DS_matched')
+                x = rp[sel]
+                y = DS_sel[sel]
+                z = DS_mat[sel]
+                data2 = np.array([x,y,z]).transpose()
+                np.savetxt(f'{self.fname2}_{ibin}.dat', data2, fmt='%-12g', header='rp [cMpc/h], DS_sel [h Msun/pc^2], DS_matched')
 
-            # extra: save physical no-h units, used for emulator
-            x = rp[sel] / self.hubble * self.scale_factor
-            y = DS_sel[sel] * self.hubble / self.scale_factor**2
-            data5 = np.array([x,y]).transpose()
-            np.savetxt(f'{self.fname5}_{ibin}.dat', data5, fmt='%-12g', header='rp [pMpc], DS [Msun/pc^2]')
+                # extra: save physical no-h units, used for emulator
+                x = rp[sel] / self.hubble * self.scale_factor
+                y = DS_sel[sel] * self.hubble / self.scale_factor**2
+                data5 = np.array([x,y]).transpose()
+                np.savetxt(f'{self.fname5}_{ibin}.dat', data5, fmt='%-12g', header='rp [pMpc], DS [Msun/pc^2]')
 
-            # these two files are for sanity checks
-            data3 = np.array([lnM_sel]).transpose()
-            np.savetxt(f'{self.fname3}_{ibin}.dat', data3, fmt='%-12g', header='lnMass [Msun/h]')
+                # these two files are for sanity checks
+                data3 = np.array([lnM_sel]).transpose()
+                np.savetxt(f'{self.fname3}_{ibin}.dat', data3, fmt='%-12g', header='lnMass [Msun/h]')
 
-            data4 = np.array([lam_sel]).transpose()
-            np.savetxt(f'{self.fname4}_{ibin}.dat', data4, fmt='%-12g', header='lambda')
+                data4 = np.array([lam_sel]).transpose()
+                np.savetxt(f'{self.fname4}_{ibin}.dat', data4, fmt='%-12g', header='lambda')
 
     def plot_mass_pdf(self, axes=None, label=None, plot_bias=False, color=None, lw=None):
         if axes is None and plot_bias==False:

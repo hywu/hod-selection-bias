@@ -9,22 +9,16 @@ from hod.utils.get_para_abacus_summit import get_cosmo_para, get_hod_para
 loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
 data_loc = loc + 'emulator_data/'
 
-#emu_name = 'fixhod'
-#emu_name = 'fixcos'
-#emu_name = 'all'
-# emu_name = 'wide'
-
 emu_name = sys.argv[1]
 iz = int(sys.argv[2])
 
 zid = 3+iz
-train_loc = loc + f'emulator_train/{emu_name}/train/z0p{zid}00/'
+train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/'
 
 #### data vector specs ####
-#abun_or_lam = 'lam' # 'abun' #
-abun_or_lam = 'lam' # #'lam'#'abun'
+abun_or_lam = 'lam' #'abun'
 emu_name = 'rad'
-rich_name = 'q180'
+rich_name = 'q180' #'q180_miscen'
 phase = 0
 
 cosmo_id_list, hod_id_list = np.loadtxt(train_loc+'models_done.dat', unpack=True, dtype=int)

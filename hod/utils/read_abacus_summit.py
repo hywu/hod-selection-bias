@@ -6,8 +6,8 @@ import fitsio
 import os
 import sys
 import pandas as pd
-sys.path.append('../utils')
-from get_para_abacus_summit import get_cosmo_para
+#sys.path.append('../utils')
+from hod.utils.get_para_abacus_summit import get_cosmo_para
 
 class ReadAbacusSummit(object):
     def __init__(self, nbody_loc, redshift, cosmo_id, phase):

@@ -11,7 +11,7 @@ from sklearn.gaussian_process.kernels import RBF
 
 abun_or_lam = 'lam'
 
-alpha = 1e-6 #1e-3 #1e-5
+
 
 loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
 #emu_name = 'fixhod'
@@ -22,8 +22,15 @@ emu_name = sys.argv[1]
 iz = int(sys.argv[2])
 ilam = int(sys.argv[3]) # 0, 1, 2, 3
 
+if emu_name == 'narrow':
+    alpha = 1e-6 
+if emu_name == 'wide':
+    alpha = 1e-6
+
+#alpha = 1e-3 # for miscen
+
 zid = 3+iz
-train_loc = loc + f'emulator_train/{emu_name}/train/z0p{zid}00/'
+train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/'
 plot_loc = f'../../plots/emulator/{emu_name}/z0p{zid}00/'
 
 data = np.loadtxt(f'{train_loc}/parameters_all.dat')
