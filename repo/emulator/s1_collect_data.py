@@ -63,9 +63,14 @@ for imodel in range(n_models):
 rp_master_pca = np.logspace(-2,2,100)
 #rp_master_rad, DS, DS_err = np.loadtxt(f'../../hod/y1/data/y1_DS_bin_z_0.2_0.35_lam_20_30.dat', unpack=True)
 
-rp_master_rad = np.logspace(np.log10(0.03), np.log10(30), 15)
-rp_master_rad = rp_master_rad[rp_master_rad>0.2]
-
+# rp_master_rad = np.logspace(np.log10(0.03), np.log10(30), 15)
+# rp_master_rad = rp_master_rad[rp_master_rad>0.2]
+rp_list = np.logspace(np.log10(0.03), np.log10(30), 15+1)
+rpmin_list = rp_list[:-1]
+rpmax_list = rp_list[1:]
+rpmid_list = np.sqrt(rpmin_list*rpmax_list)
+rp_master_rad = rpmid_list[rpmid_list>0.2]
+print('len(rp_rad) = ', len(rp_master_rad))
 
 for ilam in range(4):
     outfile_pca = open(f'{train_loc}/DS_{abun_or_lam}_bin_{ilam}_pca.dat', 'w')

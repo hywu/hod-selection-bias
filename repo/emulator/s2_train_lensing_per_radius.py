@@ -22,10 +22,13 @@ emu_name = sys.argv[1]
 iz = int(sys.argv[2])
 ilam = int(sys.argv[3]) # 0, 1, 2, 3
 
-if emu_name == 'narrow':
-    alpha = 1e-6 
-if emu_name == 'wide':
-    alpha = 1e-6
+alpha = 1e-6
+if emu_name == 'iter1':
+    alpha = 1e-3
+# if emu_name == 'narrow':
+#     alpha = 1e-6 
+# if emu_name == 'wide':
+#     alpha = 1e-6
 
 #alpha = 1e-3 # for miscen
 

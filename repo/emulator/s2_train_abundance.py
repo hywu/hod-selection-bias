@@ -20,10 +20,13 @@ plot_loc = f'../../plots/emulator/{emu_name}/z0p{zid}00/'
 if os.path.isdir(plot_loc) == False:
     os.makedirs(plot_loc)
 
-if emu_name == 'narrow':
-    alpha = 1e-5 
-if emu_name == 'wide':
-    alpha = 1e-5
+alpha = 1e-5 
+if emu_name == 'iter1':
+    alpha = 1e-3
+# if emu_name == 'narrow':
+#     alpha = 1e-5 
+# if emu_name == 'wide':
+#     alpha = 1e-5
 
 
 # 1e-3 => too noisy
