@@ -34,6 +34,11 @@ if emu_name == 'iter1':
     cosmo_id_list_check = np.arange(130, 182, dtype=int)
     hod_id_list_check = np.arange(3000, 3100, dtype=int)
 
+if emu_name == 'all':
+    cosmo_id_list_check = np.arange(130, 182, dtype=int)
+    hod_id_list_check = np.arange(1000, 3100, dtype=int)
+
+
 cosmo_id_list_check = cosmo_id_list_check.astype(int)
 hod_id_list_check = hod_id_list_check.astype(int)
 

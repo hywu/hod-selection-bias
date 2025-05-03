@@ -58,11 +58,14 @@ if __name__ == "__main__":
                                  params_free_name, params_fixed_value, params_fixed_name)
 
     #### Run MCMC
-    pool=None
+    pool = None
 
     mcmc_chain, posterior = runmcmc(params_free_ini, nsteps, nwalkers, lsteps, 
                                        lnlike.lnposterior, out_file,
                                        pool, burnin=burnin)
+
+    #### Plot MCMC! 
+    os.system(f'./plot_mcmc.py {para_name} {emu_name} {data_name} {iz} {run_id} 2>&1 | tee sbatch_output/{emu_name}.out')
 
     '''
     # moved to plot_mcmc.py

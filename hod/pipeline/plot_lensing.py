@@ -391,7 +391,7 @@ if __name__ == "__main__":
     #./plot_lensing.py ../yml/mini_uchuu/mini_uchuu_fid_hod.yml
 
     yml_fname = sys.argv[1]
-    plmu = PlotLensing(yml_fname, abundance_matching=False, thresholded=False)
+    plmu = PlotLensing(yml_fname)#, abundance_matching=None, thresholded=False)
     plmu.read_particles()
     plmu.calc_lensing()
 

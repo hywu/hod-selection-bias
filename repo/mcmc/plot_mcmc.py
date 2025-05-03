@@ -8,7 +8,7 @@ import emcee
 from chainconsumer import Chain, ChainConsumer, ChainConfig
 from get_model import GetModel
 
-# ./plot_mcmc_results.ph s8Omhod wide abacus_summit 0 0 
+# ./plot_mcmc.py s8Omhod wide abacus_summit 0 0 
 para_name = sys.argv[1] #'s8Omhod'
 emu_name = sys.argv[2] #'wide' # 'narrow'
 data_name = sys.argv[3] #'abacus_summit' #'flamingo'
@@ -145,3 +145,4 @@ plt.xscale('log')
 plt.xlabel(r'$r_{\rm p}~[{\rm pMpc}]$')
 plt.ylabel(r'$r_{\rm p} \Delta\Sigma~[{\rm pMpc ~M_\odot/pc^2} ]$')
 plt.savefig(plot_loc+f'pred_{para_name}_z{redshift}_run{run_id}.pdf', dpi=72)
+print(f'plot saved at {plot_loc}')
