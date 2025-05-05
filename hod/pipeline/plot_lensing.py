@@ -97,7 +97,8 @@ class PlotLensing(object):
             if self.survey == 'desy1':
                 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
                 out_loc = os.path.join(BASE_DIR, '../y1/data/')
-                cum_den = np.loadtxt(out_loc+'cluster_cumulative_density_z_0.2_0.35.dat')
+                if redshift == 0.3: 
+                    cum_den = np.loadtxt(out_loc+'cluster_cumulative_density_z_0.2_0.35.dat')
             if self.survey == 'sdss':
                 cum_den = np.array([1.400836e-04])
 
@@ -262,7 +263,8 @@ class PlotLensing(object):
             ax = axes[ibin]
             ax.hist(lnM/np.log(10.), density=True, fc='none', 
                 histtype='step', label=len(lnM), lw=lw)
-            ax.legend()
+            if label != None:
+                ax.legend()
             if ibin == 0: # self.nbins - 1: 
                 plt.title(label)
             ax.set_xlabel(r'$\rm  \log_{10} M$')
@@ -304,7 +306,7 @@ class PlotLensing(object):
                     ax.plot(rp, rp*DS_sel, label=label, color=color, lw=lw)
                     ax.set_xscale('log')
                     ax.set_title(title)
-                    if ibin == 0: # self.nbins - 1: 
+                    if ibin == 0 and label!=None: # self.nbins - 1: 
                         ax.legend()
                     ax.set_xlabel(r'$\rm r_p \ [pMpc]$')
                     ax.set_ylabel(r'$\rm r_p \Delta\Sigma [pMpc M_\odot/ppc^2]$')
@@ -328,7 +330,8 @@ class PlotLensing(object):
                 ax = axes[ibin]
                 ax.semilogx(rp, DS_bias, label=label, color=color, lw=lw)
                 ax.set_title(title)
-                ax.legend()
+                if label != None:
+                    ax.legend()
                 ax.set_xlabel(r'$\rm r_p$')
                 ax.set_ylabel(r'$\Delta\Sigma$ bias')
                 ax.axhline(1, c='gray', ls='--')

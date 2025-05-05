@@ -53,7 +53,7 @@ if os.path.isdir(out_path)==False:
 if os.path.isdir(out_path+'/temp/')==False:
     os.makedirs(out_path+'/temp/')
 
-depth = para['depth']
+#depth = para['depth'] # moved to HOD para!
 perc = para['perc']
 use_rlambda = para['use_rlambda']
 use_pmem = para.get('use_pmem', False)
@@ -140,11 +140,15 @@ if los == 'y':
     if pec_vel == True:
         z_halo_in += readcat.vy / Ez / 100.
 
+
+
+from hod.utils.get_para_abacus_summit import get_hod_para
+hod_id = para['hod_id']
+hod_para = get_hod_para(hod_id)
+depth = hod_para['depth']
+
 # add miscentering
 if miscen == True:
-    from hod.utils.get_para_abacus_summit import get_hod_para
-    hod_id = para['hod_id']
-    hod_para = get_hod_para(hod_id)
     f_miscen = hod_para['f_miscen']
     tau_miscen = hod_para['tau_miscen']
     print('including miscen')
@@ -183,7 +187,6 @@ if which_pmem == 'gauss':
 if which_pmem == 'uniform':
     from hod.utils.pmem_weights_uniform import pmem_weights_dchi, volume_dchi
 
-#depth = -1
 dchi_max = 0.5 * boxsize
 #dz_max = 0.5 * boxsize * Ez / 3000. # need to be smaller than half box size, otherwise the same galaxies will be counted twice
 #print('dz_max', dz_max)
@@ -319,7 +322,7 @@ class CalcRichness(object): # one pz slice at a time
         #     dz1 = dz1[sel_z]
         #     dz2 = dz2[sel_z]
 
-        # elif use_pmem == True and depth == -1:
+        # elif use_pmem == True and g == -1:
         #     sel_z0 = (np.abs(dz0) < dz_max)
         #     sel_z1 = (np.abs(dz1) < dz_max)
         #     sel_z2 = (np.abs(dz2) < dz_max)

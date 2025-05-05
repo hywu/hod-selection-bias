@@ -149,7 +149,8 @@ class PlotCountsRichness(object):
         plt.loglog(lam_min_list, den_list, **kwargs) #, label=label
         plt.xlabel(r'$\lambda$')
         plt.ylabel(r'$n(>\lambda)$')
-        plt.legend()
+        #if label != None:
+        #    plt.legend()
         plt.xlim(10, None)
 
     def plot_y1_counts_richness(self):

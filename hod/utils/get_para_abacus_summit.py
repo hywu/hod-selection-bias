@@ -39,15 +39,16 @@ def get_cosmo_para(cosmo_id_wanted):
     return cosmo_dict
 
 
-def get_hod_para(hod_id_wanted, miscen=False):
+def get_hod_para(hod_id_wanted):#, miscen=False):
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     loc = os.path.join(BASE_DIR, '../../repo/latin_hypercube/')
 
     # collect all the csv files
-    if miscen == True:
-        fname_list = glob.glob(loc+'parameters_miscen/*.csv')
-    else:
-        fname_list = glob.glob(loc+'parameters/*.csv')
+    # if miscen == True:
+    #     fname_list = glob.glob(loc+'parameters_miscen/*.csv')
+    # else:
+    #     fname_list = glob.glob(loc+'parameters/*.csv')
+    fname_list = glob.glob(loc+'parameters/hod_rich*.csv')
     # put all of them in a big data frame
     df_list = []
     for fname in fname_list:
@@ -68,6 +69,10 @@ def get_hod_para(hod_id_wanted, miscen=False):
     
 if __name__ == "__main__":
     #print(get_cosmo_para(0))
-    #print(get_hod_para(14))
+
+
+    print(get_hod_para(0))
+    print(get_hod_para(14))
+    print(get_hod_para(18))
     #print(get_hod_para(201))
-    print(get_hod_para(2051))
+    #print(get_hod_para(2051))
