@@ -18,7 +18,7 @@ train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/'
 #### data vector specs ####
 abun_or_lam = 'lam' #'abun'
 emu_name = 'rad'
-rich_name = 'q180' #'q180_miscen'
+rich_name = 'q180_bg_miscen' #'q180_miscen'
 phase = 0
 
 cosmo_id_list, hod_id_list = np.loadtxt(train_loc+'models_done.dat', unpack=True, dtype=int)

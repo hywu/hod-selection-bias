@@ -23,9 +23,6 @@ class PlotAbundance(object):
                 self.para = yaml.safe_load(stream)
             except yaml.YAMLError as exc:
                 print(exc)
-
-        self.depth = self.para['depth']
-        perc = self.para['perc']
         
         #### For AbacusSummit ####
         if self.para['nbody'] == 'abacus_summit':

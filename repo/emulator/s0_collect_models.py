@@ -49,7 +49,7 @@ if os.path.isdir(train_loc) == False:
 
 #### data vector specs ####
 abun_or_lam = 'lam' # 'abun' #
-rich_name = 'q180' #'q180_miscen'
+rich_name = 'q180_bg_miscen' #'q180_miscen'
 phase = 0
 
 #### first, check the hod_id that exists

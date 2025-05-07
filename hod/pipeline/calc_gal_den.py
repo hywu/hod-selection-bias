@@ -18,7 +18,7 @@ class CalcGalDen(object):
             except yaml.YAMLError as exc:
                 print(exc)
 
-        self.depth = self.para['depth']
+        #self.depth = self.para['depth']
         perc = self.para['perc']
         
         #### For AbacusSummit ####

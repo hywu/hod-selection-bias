@@ -28,7 +28,7 @@ nsteps, nwalkers, lsteps, burnin, params_free_name, params_free_ini, params_rang
 
 
 out_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_mcmc/{emu_name}/mcmc_{data_name}/'
-plot_loc = f'../../plots/emulator/{emu_name}/{data_name}/'
+plot_loc = f'../../plots/mcmc/{emu_name}/{data_name}/'
 
 out_file = f'{out_loc}/mcmc_{para_name}_z{redshift}_run{run_id}.h5'
 print('output: ', out_file)

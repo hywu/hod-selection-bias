@@ -6,13 +6,16 @@ import os, sys
 import emcee
 from get_model import GetModel
 
-#./run_mcmc.py s8Omhod wide abacus_summit 0 0
+#./run_mcmc.py s8Omhod narrow abacus_summit 0 0
 
 para_name = sys.argv[1] #'s8Omhod'
 emu_name = sys.argv[2] #'wide' # 'narrow'
 data_name = sys.argv[3] #'abacus_summit' #'flamingo'
 iz = int(sys.argv[4])
 run_id = int(sys.argv[5])
+
+rich_name = 'q180_bg_miscen'
+
 
 z_list = [0.3, 0.4, 0.5]
 redshift = z_list[iz]
@@ -25,13 +28,13 @@ nsteps, nwalkers, lsteps, burnin, params_free_name, params_free_ini, params_rang
         params_fixed_name, params_fixed_value = parse.parse_yml()
 
 out_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_mcmc/{emu_name}/mcmc_{data_name}/'
-plot_loc = f'../../plots/emulator/{emu_name}/{data_name}/'
+plot_loc = f'../../plots/mcmc/{emu_name}/{data_name}/'
 if os.path.isdir(out_loc) == False:
     os.makedirs(out_loc)
 if os.path.isdir(plot_loc) == False:
     os.makedirs(plot_loc)
 
-out_file = f'{out_loc}/mcmc_{para_name}_z{redshift}_run{run_id}.h5'
+out_file = f'{out_loc}/mcmc_{para_name}_{rich_name}_z{redshift}_run{run_id}.h5'
 print('output: ', out_file)
 
 # save a back-up parameter file
@@ -42,14 +45,14 @@ with open(yml_name, 'r') as stream:
     except yaml.YAMLError as exc:
         print(exc)
 
-with open(f'{out_loc}/para_{para_name}_z{redshift}_run{run_id}.yml', 'w') as outfile:
+with open(f'{out_loc}/para_{para_name}_{rich_name}_z{redshift}_run{run_id}.yml', 'w') as outfile:
     yaml.dump(para, outfile)
 
 
 if __name__ == "__main__":
     #### Get the data
-    data_vec = np.loadtxt(f'../emulator/data_vector_{data_name}/data_vector_z{redshift}.dat')
-    data_cov = np.loadtxt(f'../emulator/data_vector_abacus_summit/cov_z{redshift}.dat')
+    data_vec = np.loadtxt(f'../data_vector/data_vector_{data_name}/data_vector_{rich_name}_z{redshift}.dat')
+    data_cov = np.loadtxt(f'../data_vector/data_vector_abacus_summit/cov_z{redshift}.dat')
 
     #### Define the likelihood
     from emcee_tools import LnLikelihood, runmcmc

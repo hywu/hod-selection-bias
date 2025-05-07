@@ -34,7 +34,7 @@ else:
 
 
 
-depth = para['depth']
+#depth = para['depth']
 model_name = para['model_name']
 rich_name = para['rich_name']
 out_path = f'{output_loc}/model_{model_name}/'
