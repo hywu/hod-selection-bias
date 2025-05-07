@@ -8,12 +8,14 @@ import emcee
 from chainconsumer import Chain, ChainConsumer, ChainConfig
 from get_model import GetModel
 
-# ./plot_mcmc.py s8Omhod wide abacus_summit 0 0 
+# ./plot_mcmc.py s8Omhod narrow abacus_summit q180_bg_miscen 0 0 
 para_name = sys.argv[1] #'s8Omhod'
 emu_name = sys.argv[2] #'wide' # 'narrow'
 data_name = sys.argv[3] #'abacus_summit' #'flamingo'
-iz = int(sys.argv[4])
-run_id = int(sys.argv[5])
+rich_name = sys.argv[4] #'q180_bg_miscen'
+iz = int(sys.argv[5])
+run_id = int(sys.argv[6])
+
 
 z_list = [0.3, 0.4, 0.5]
 redshift = z_list[iz]
@@ -30,7 +32,7 @@ nsteps, nwalkers, lsteps, burnin, params_free_name, params_free_ini, params_rang
 out_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_mcmc/{emu_name}/mcmc_{data_name}/'
 plot_loc = f'../../plots/mcmc/{emu_name}/{data_name}/'
 
-out_file = f'{out_loc}/mcmc_{para_name}_z{redshift}_run{run_id}.h5'
+out_file = f'{out_loc}/mcmc_{para_name}_{rich_name}_z{redshift}_run{run_id}.h5'
 print('output: ', out_file)
 
 reader = emcee.backends.HDFBackend(out_file, read_only=True)
@@ -90,9 +92,9 @@ for i in range(0, ndim):
                 #if line.get_linestyle() == "--":
                 line.set_linewidth(2)
                 
-plt.suptitle(f'{emu_name} {data_name}')
+plt.suptitle(f'{emu_name} {data_name} {rich_name}')
 
-plt.savefig(plot_loc+f'mcmc_{para_name}_z{redshift}_run{run_id}.pdf', dpi=72)
+plt.savefig(plot_loc+f'mcmc_{para_name}_{rich_name}_z{redshift}_run{run_id}.pdf', dpi=72)
 
 ###################################################################
 #### Plot posterior prediction
@@ -107,8 +109,8 @@ subsample = flat_samples[idx]
 
 gm = GetModel(emu_name, iz, params_free_name, params_fixed_value, params_fixed_name)
 
-data_vec = np.loadtxt(f'../emulator/data_vector_{data_name}/data_vector_z{redshift}.dat')
-cov = np.loadtxt(f'../emulator/data_vector_abacus_summit/cov_z{redshift}.dat')
+data_vec = np.loadtxt(f'../data_vector/data_vector_{data_name}/data_vector_{rich_name}_z{redshift}.dat')
+cov = np.loadtxt(f'../data_vector/data_vector_abacus_summit/cov_z{redshift}.dat')
 
 plt.figure(figsize=(14,7))
 #### counts

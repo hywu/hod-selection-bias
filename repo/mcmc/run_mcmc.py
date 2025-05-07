@@ -6,16 +6,14 @@ import os, sys
 import emcee
 from get_model import GetModel
 
-#./run_mcmc.py s8Omhod narrow abacus_summit 0 0
 
+# ./run_mcmc.py s8Omhod narrow abacus_summit q180_bg_miscen 0 0 
 para_name = sys.argv[1] #'s8Omhod'
-emu_name = sys.argv[2] #'wide' # 'narrow'
+emu_name = sys.argv[2]  #'wide' # 'narrow' # 'iter'
 data_name = sys.argv[3] #'abacus_summit' #'flamingo'
-iz = int(sys.argv[4])
-run_id = int(sys.argv[5])
-
-rich_name = 'q180_bg_miscen'
-
+rich_name = sys.argv[4] #'q180_bg_miscen'
+iz = int(sys.argv[5])
+run_id = int(sys.argv[6])
 
 z_list = [0.3, 0.4, 0.5]
 redshift = z_list[iz]
@@ -52,12 +50,12 @@ with open(f'{out_loc}/para_{para_name}_{rich_name}_z{redshift}_run{run_id}.yml',
 if __name__ == "__main__":
     #### Get the data
     data_vec = np.loadtxt(f'../data_vector/data_vector_{data_name}/data_vector_{rich_name}_z{redshift}.dat')
-    data_cov = np.loadtxt(f'../data_vector/data_vector_abacus_summit/cov_z{redshift}.dat')
+    cov = np.loadtxt(f'../data_vector/data_vector_abacus_summit/cov_z{redshift}.dat')
 
     #### Define the likelihood
     from emcee_tools import LnLikelihood, runmcmc
     gm = GetModel(emu_name, iz, params_free_name, params_fixed_value, params_fixed_name)
-    lnlike = LnLikelihood(data_vec, data_cov, gm.model, params_range,
+    lnlike = LnLikelihood(data_vec, cov, gm.model, params_range,
                                  params_free_name, params_fixed_value, params_fixed_name)
 
     #### Run MCMC
@@ -68,7 +66,7 @@ if __name__ == "__main__":
                                        pool, burnin=burnin)
 
     #### Plot MCMC! 
-    os.system(f'./plot_mcmc.py {para_name} {emu_name} {data_name} {iz} {run_id} 2>&1 | tee sbatch_output/{emu_name}.out')
+    os.system(f'./plot_mcmc.py {para_name} {emu_name} {data_name} {rich_name} {iz} {run_id} 2>&1 | tee sbatch_output/{emu_name}.out')
 
     '''
     # moved to plot_mcmc.py
