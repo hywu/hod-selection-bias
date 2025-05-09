@@ -8,6 +8,7 @@ from get_model import GetModel
 
 
 # ./run_mcmc.py s8Omhod narrow abacus_summit q180_bg_miscen 0 0 
+# ./run_mcmc.py s8Omhod all cardinal d90 0 0 
 para_name = sys.argv[1] #'s8Omhod'
 emu_name = sys.argv[2]  #'wide' # 'narrow' # 'iter'
 data_name = sys.argv[3] #'abacus_summit' #'flamingo'

@@ -86,3 +86,4 @@ for cosmo_id in cosmo_id_list_check:
 
 data = np.array([cosmo_id_list, hod_id_list]).transpose()
 np.savetxt(train_loc+'models_done.dat', data, fmt='%-12i', header='cosmo_id, hod_id')
+print('file saved', train_loc+'models_done.dat')
