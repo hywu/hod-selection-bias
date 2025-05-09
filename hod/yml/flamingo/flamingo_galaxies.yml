@@ -1,0 +1,40 @@
+model_name: redmagic_chi6_1e-02_HBT #redmagic_6e-3 #  mstar2e+10 #
+rich_name: q180_bg_miscen #  _R1_eps10 #lum #d90_env #d90_mass
+
+nbody: flamingo
+nbody_loc: /cosma8/data/dp004/flamingo/Runs/L1000N3600/HYDRO_FIDUCIAL/
+output_loc: /cosma8/data/do012/dc-wu5/cylinder/output_L1000N3600/HYDRO_FIDUCIAL/z0.3/
+redshift: 0.3
+
+# richness
+perc: True
+use_rlambda: True
+save_members: False
+use_pmem: True
+which_pmem: quad
+depth: 180
+# which_pmem: uniform
+# depth: 90
+subtract_background: True
+miscen: True
+f_miscen: 0.165
+tau_miscen: 0.166
+
+rank_proxy: mass #_R1_eps10 #lum #d90_env #lum #mass #
+rank_cut: 0 #1.e+9 #3.162277e12 #
+
+
+# # Cosmology
+# # http://skiesanduniverses.org/Simulations/Uchuu/
+OmegaM: 0.3089 ##needed by HOD..
+# OmegaL: 0.6911
+# hubble: 0.6774
+# sigma8: 0.8159
+# OmegaB: 0.0486
+# ns: 0.9667
+
+mdef: 200m #vir
+
+pec_vel: False #True
+
+#sat_from_part: True
