@@ -53,7 +53,7 @@ if __name__ == "__main__":
     #emu_name='fixcos'
     emu_name='wide'
     
-    train_loc = loc + f'emulator_train/{emu_name}/train/z0p300/'
+    train_loc = loc + f'emulator_train/{emu_name}/z0p300/'
 
     data = np.loadtxt(f'{train_loc}/parameters_all.dat')
     X_all = data[:,1:]

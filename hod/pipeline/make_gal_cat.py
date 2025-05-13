@@ -66,7 +66,7 @@ if alpha != None:
     lgkappa = para['lgkappa']
     lgMcut = para['lgMcut']
     sigmalogM = para['sigmalogM']
-    sigma_intr = para['sigmaintr']
+    sigmaintr = para['sigmaintr']
     lgM1 = para['lgM1']
 else:
     hod_id = para['hod_id']
@@ -75,7 +75,7 @@ else:
     lgkappa = hod_para['lgkappa']
     lgMcut = hod_para['lgMcut']
     sigmalogM = hod_para['sigmalogM']
-    sigma_intr = hod_para['sigmaintr']
+    sigmaintr = hod_para['sigmaintr']
     lgM1 = hod_para['lgM1']
 
 kappa = 10**lgkappa
@@ -174,7 +174,7 @@ def calc_one_layer(pz_min, pz_max):
     from_part_out = []
 
     for ih in range(nhalo):
-        Ncen, Nsat = Ngal_S20_poisson(mass_sub[ih], alpha=alpha, lgM1=lgM1, kappa=kappa, lgMcut=lgMcut, sigmalogM=sigmalogM)
+        Ncen, Nsat = Ngal_S20_poisson(mass_sub[ih], alpha=alpha, lgM1=lgM1, kappa=kappa, lgMcut=lgMcut, sigmalogM=sigmalogM, sigmaintr=sigmaintr)
         # first, take care of the central
         if Ncen > 0.5:
             hid_out.append(hid_sub[ih])

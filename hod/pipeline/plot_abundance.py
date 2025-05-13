@@ -34,21 +34,29 @@ class PlotAbundance(object):
             if redshift == 0.4: z_str = '0p400'
             if redshift == 0.5: z_str = '0p500'
             output_loc = self.para['output_loc']+f'/base_c{cosmo_id:0>3d}_ph{phase:0>3d}/z{z_str}/'
-            from hod.utils.get_para_abacus_summit import get_cosmo_para
+            from hod.utils.get_para_abacus_summit import get_cosmo_para, get_hod_para
             cosmo_abacus = get_cosmo_para(cosmo_id)
             #h = cosmo_abacus['hubble']
-            Om0=cosmo_abacus['OmegaM']
+            Om0 = cosmo_abacus['OmegaM']
+
+            self.binning = self.para.get('binning', 'Ncyl')
+            if self.binning == 'AB_scaling':
+                hod_para = get_hod_para(hod_id)
+                self.A = hod_para['A']
+                self.B = hod_para['B']
+
         else:
            output_loc = self.para['output_loc']
 
-        #output_loc = self.para['output_loc']
         model_name = self.para['model_name']
 
-        self.rich_name = self.para['rich_name'] #+ f'{self.depth}'
+        self.rich_name = self.para['rich_name']
         self.out_path = f'{output_loc}/model_{model_name}'
         redshift = self.para['redshift']
         self.survey = self.para.get('survey', 'desy1')
+
         self.obs_path = f'{self.out_path}/obs_{self.rich_name}_{self.survey}/'
+
         if os.path.isdir(self.obs_path)==False: 
             os.makedirs(self.obs_path)
 
@@ -61,7 +69,10 @@ class PlotAbundance(object):
         #print('sim_vol', self.sim_vol)
 
         self.ofname = f'{self.obs_path}/abundance.dat'
-        
+        if self.binning == 'AB_scaling':
+            self.ofname = f'{self.obs_path}/abundance_AB.dat'
+        print('abundance saved at:', self.ofname)
+
         fsky = survey_area_sq_deg/41253.
         cosmo = FlatLambdaCDM(H0=100, Om0=Om0)
         
@@ -79,6 +90,11 @@ class PlotAbundance(object):
 
         data = fitsio.read(rich_fname)
         lam = data['lambda']
+
+        if self.binning == 'AB_scaling':
+            print('AB_scaling', self.A, self.B)
+            lnlam_new = self.A * np.log(lam) + self.B
+            lam = np.exp(lnlam_new)
 
         counts_list = []
         for ilam in range(len(lambda_min_list)):

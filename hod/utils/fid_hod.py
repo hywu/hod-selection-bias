@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from scipy import special
 from scipy.stats import poisson
 from scipy.stats import bernoulli
+from scipy.stats import norm
 
 def Ngal_S20_noscatt(M, alpha=1., lgM1=12.9, kappa=1., lgMcut=11.7, sigmalogM=0.1):
     M = np.atleast_1d(M)
@@ -30,7 +31,7 @@ def Ngal_S20_noscatt(M, alpha=1., lgM1=12.9, kappa=1., lgMcut=11.7, sigmalogM=0.
 #     return Ncen, Nsat
 
 
-def Ngal_S20_poisson(M, alpha=1., lgM1=12.9, kappa=1., lgMcut=11.7, sigmalogM=0.1):
+def Ngal_S20_poisson(M, alpha=1., lgM1=12.9, kappa=1., lgMcut=11.7, sigmalogM=0.1, sigmaintr=0):
     Mcut = 10**lgMcut
     M1 = 10**lgM1
     x = (np.log10(M)-np.log10(Mcut))/sigmalogM
@@ -41,10 +42,13 @@ def Ngal_S20_poisson(M, alpha=1., lgM1=12.9, kappa=1., lgMcut=11.7, sigmalogM=0.
     Nsat_mean = Ncen * (y ** alpha)
     #Nsat_mean = max(0, Nsat_mean)
     Nsat = poisson.rvs(Nsat_mean)
+    if sigmaintr > 1e-8 and Nsat > 0:
+        lnNsat = norm.rvs(np.log(Nsat), sigmaintr)
+        Nsat = int(np.round(np.exp(lnNsat))) # TODO: is this correct?
     #print('Ncen, Nsat', Ncen, Nsat)
     return Ncen, Nsat
 
 
 if __name__ == "__main__":
     for M in 10**np.linspace(11,12):
-        print(Ngal_S20_poisson(M))
+        print(Ngal_S20_poisson(M, sigmaintr=0.2))

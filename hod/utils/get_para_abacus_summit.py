@@ -48,7 +48,7 @@ def get_hod_para(hod_id_wanted):#, miscen=False):
     #     fname_list = glob.glob(loc+'parameters_miscen/*.csv')
     # else:
     #     fname_list = glob.glob(loc+'parameters/*.csv')
-    fname_list = glob.glob(loc+'parameters/hod_rich*.csv')
+    fname_list = glob.glob(loc+'parameters/hod_rich_AB*.csv')
     # put all of them in a big data frame
     df_list = []
     for fname in fname_list:

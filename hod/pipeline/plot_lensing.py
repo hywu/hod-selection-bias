@@ -20,7 +20,12 @@ from hod.utils.sample_matching_mass import sample_matching_mass
 from hod.utils.print_memory import print_memory
 
 class PlotLensing(object):
-    def __init__(self, yml_fname, abundance_matching=None, thresholded=False):
+    def __init__(self, yml_fname, binning,thresholded=False):
+        #, abundance_matching=None, thresholded=False
+        # binning: 'Ncyl', 'AB_scaling', 'abundance_matching'
+
+        self.binning = binning
+        self.thresholded = thresholded
 
         with open(yml_fname, 'r') as stream:
             try:
@@ -33,13 +38,17 @@ class PlotLensing(object):
         self.pimax = para.get('pimax', 100)
         self.nrp_per_decade = para.get('nrp_per_decade', 5)
 
-        if abundance_matching == None:
-            self.abundance_matching = para.get('abundance_matching', False)
-        else:
-            self.abundance_matching = abundance_matching
+        # if abundance_matching == None:
+        #     self.abundance_matching = para.get('abundance_matching', False)
+        # else:
+        #     self.abundance_matching = abundance_matching
 
-        self.thresholded = thresholded
+        # self.thresholded = thresholded
         
+        if binning == None:
+            self.binning = para.get('binning', 'lambda_binning')
+
+
         seed = para.get('seed', 42)
         self.rng = default_rng(seed)
 
@@ -74,6 +83,12 @@ class PlotLensing(object):
             if redshift == 0.4: z_str = '0p400'
             if redshift == 0.5: z_str = '0p500'
             output_loc = para['output_loc']+f'/base_c{cosmo_id:0>3d}_ph{phase:0>3d}/z{z_str}/'
+
+            if binning == 'AB_scaling':
+                from hod.utils.get_para_abacus_summit import get_hod_para
+                hod_para = get_hod_para(hod_id)
+                self.A = hod_para['A']
+                self.B = hod_para['B']
         else:
             output_loc = para['output_loc']
 
@@ -93,7 +108,7 @@ class PlotLensing(object):
         self.hubble = self.readcat.hubble
         self.vol = self.boxsize**3
 
-        if self.abundance_matching == True:
+        if self.binning == 'abundance_matching':
             if self.survey == 'desy1':
                 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
                 out_loc = os.path.join(BASE_DIR, '../y1/data/')
@@ -107,11 +122,12 @@ class PlotLensing(object):
             self.counts_min_list = counts_list[0:-1]
             self.counts_max_list = counts_list[1:]
 
-
-        if self.abundance_matching == True:
+        if self.binning == 'abundance_matching':
             self.outname = 'abun'
-        else:
+        if self.binning == 'Ncyl':
             self.outname = 'lam'
+        if self.binning == 'AB_scaling':
+            self.outname = 'AB'
 
         if thresholded == True:
             self.outname += '_thre'
@@ -127,6 +143,7 @@ class PlotLensing(object):
         self.fname3 = f'{self.obs_path}/mass_{self.outname}'
         self.fname4 = f'{self.obs_path}/lam_{self.outname}'
         self.fname5 = f'{self.obs_path}/DS_phys_noh_{self.outname}' ## NEW!
+        print('lens saved at', self.fname5)
 
     def read_particles(self):
         print_memory('before reading particles')
@@ -175,7 +192,11 @@ class PlotLensing(object):
         lnM_all = lnM_all[shuff]
         lam_all = lam_all[shuff]
 
-        if self.abundance_matching == True:
+        if self.binning == 'AB_scaling':
+            lnlam_new = self.A * np.log(lam_all) + self.B
+            lam_all = np.exp(lnlam_new)
+
+        if self.binning == 'abundance_matching': #only sort mass if abun match
             sort = np.argsort(-lam_all)
             xh_all = xh_all[sort]
             yh_all = yh_all[sort]
@@ -188,7 +209,7 @@ class PlotLensing(object):
                 print('done', f'{self.fname5}_{ibin}.dat')
             else:
                 print_memory(f'doing bin{ibin}')
-                if self.abundance_matching == False:
+                if self.binning == 'Ncyl' or self.binning == 'AB_scaling':
                     lam_min = self.lam_min_list[ibin]
                     lam_max = self.lam_max_list[ibin]
                     if self.thresholded == True:
@@ -202,7 +223,7 @@ class PlotLensing(object):
                     lnM_sel = lnM_all[sel]
                     lam_sel = lam_all[sel]
 
-                else: #if self.abundance_matching == True:
+                if self.binning == 'abundance_matching':
                     if self.thresholded == True:
                         counts_min = self.counts_min_list[ibin]
                         counts_max = 0
@@ -278,7 +299,7 @@ class PlotLensing(object):
             fig, axes = plt.subplots(1, self.nbins, figsize=(20, 5))
 
         for ibin in range(self.nbins):
-            if self.abundance_matching == False:
+            if self.binning == 'Ncyl' or self.binning == 'AB_scaling':
                 lam_min = self.lam_min_list[ibin]
                 if self.thresholded == True:
                     title = r'$\lambda>%g$'%lam_min
@@ -286,7 +307,7 @@ class PlotLensing(object):
                     lam_max = self.lam_max_list[ibin]
                     title = r'$%g < \lambda < %g$'%(lam_min, lam_max)
 
-            if self.abundance_matching == True:
+            if self.binning == 'abundance_matching':
                 counts_min = self.counts_min_list[ibin]
                 if self.thresholded == True:
                     space_density = counts_min / self.vol
@@ -345,14 +366,14 @@ class PlotLensing(object):
             fname = f'../y1/data/y1_DS_bin_z_0.2_0.35_lam_{ibin}.dat'
             rp_y1 = np.loadtxt(fname)[:,0]
 
-            if self.abundance_matching == False:
+            if self.binning == 'Ncyl':
                 lam_min = self.lam_min_list[ibin]
                 if self.thresholded == True:
                     pass 
                 else:
                     lam_max = self.lam_max_list[ibin]
 
-            if self.abundance_matching == True:
+            if self.binning == 'abundance_matching':
                 counts_min = self.counts_min_list[ibin]
                 if self.thresholded == True:
                     space_density = counts_min / self.vol
@@ -394,7 +415,8 @@ if __name__ == "__main__":
     #./plot_lensing.py ../yml/mini_uchuu/mini_uchuu_fid_hod.yml
 
     yml_fname = sys.argv[1]
-    plmu = PlotLensing(yml_fname)#, abundance_matching=None, thresholded=False)
+    binning = sys.argv[2]
+    plmu = PlotLensing(yml_fname, binning)#, abundance_matching=None, thresholded=False)
     plmu.read_particles()
     plmu.calc_lensing()
 
