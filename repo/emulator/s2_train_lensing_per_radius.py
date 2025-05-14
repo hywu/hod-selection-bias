@@ -9,16 +9,11 @@ import joblib
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 
-abun_or_lam = 'lam'
-
-
-
 loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
-#emu_name = 'fixhod'
-#emu_name = 'fixcos'
-#emu_name = 'all'
 
-emu_name = sys.argv[1]
+
+binning = 'AB' # 'lam' # 'abun'
+emu_name = sys.argv[1] #'narrow', 'wide', 'all'
 iz = int(sys.argv[2])
 ilam = int(sys.argv[3]) # 0, 1, 2, 3
 
@@ -33,13 +28,13 @@ if emu_name == 'iter1':
 #alpha = 1e-3 # for miscen
 
 zid = 3+iz
-train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/'
-plot_loc = f'../../plots/emulator/{emu_name}/z0p{zid}00/'
+train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/{binning}/'
+plot_loc = f'../../plots/emulator_train/{emu_name}/z0p{zid}00/{binning}/'
 
 data = np.loadtxt(f'{train_loc}/parameters_all.dat')
 X_all = data[:,1:]
 
-DS_all = np.loadtxt(f'{train_loc}/DS_{abun_or_lam}_bin_{ilam}_rad.dat')
+DS_all = np.loadtxt(f'{train_loc}/DS_{binning}_bin_{ilam}_rad.dat')
 
 ntrain, nrad = np.shape(DS_all)
 print('ntrain, nrad', ntrain, nrad)
@@ -69,11 +64,11 @@ for irad in range(nrad): # train one PC at a time
     f"Log-likelihood: {gpr.log_marginal_likelihood(gpr.kernel_.theta):.3f}")
 
     # save the model using joblib
-    joblib.dump(gpr, f'{train_loc}/DS_{abun_or_lam}_bin_{ilam}_rad_{irad}_gpr_.pkl')
+    joblib.dump(gpr, f'{train_loc}/DS_{binning}_bin_{ilam}_rad_{irad}_gpr_.pkl')
     # Load the model later
     # loaded_model = joblib.load('gpr_model.pkl')
     # save the kernel parameters myself
-    np.savetxt(f'{train_loc}/DS_{abun_or_lam}_bin_{ilam}_rad_{irad}_kernel.dat', gpr.kernel_.theta)
+    np.savetxt(f'{train_loc}/DS_{binning}_bin_{ilam}_rad_{irad}_kernel.dat', gpr.kernel_.theta)
 
     DS_recon[:,irad], std_prediction = gpr.predict(X_all, return_std=True)
  
@@ -101,7 +96,7 @@ for ileave in range(ntrain):
         y_looe = np.delete(DS_all[:,irad], ileave, axis=0)
         X_pred = np.array([X_all[ileave,:]])
         
-        hyperpara = np.loadtxt(f'{train_loc}/DS_{abun_or_lam}_bin_{ilam}_rad_{irad}_kernel.dat')#, gpr.kernel_.theta)
+        hyperpara = np.loadtxt(f'{train_loc}/DS_{binning}_bin_{ilam}_rad_{irad}_kernel.dat')#, gpr.kernel_.theta)
         hyperpara = np.exp(hyperpara)
         a = hyperpara[0]
         length_array = hyperpara[1:]
@@ -145,4 +140,4 @@ plt.semilogx(rp_rad, sig[4:]/DS_data, c='gray', ls=':', label='data error bar')
 plt.semilogx(rp_rad, -sig[4:]/DS_data, c='gray', ls=':')
 
 
-plt.savefig(f'{plot_loc}/emu_per_radius_err_{abun_or_lam}_bin_{ilam}_alpha_{alpha:.0e}.png')
+plt.savefig(f'{plot_loc}/emu_per_radius_err_{binning}_bin_{ilam}_alpha_{alpha:.0e}.png')

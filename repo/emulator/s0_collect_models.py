@@ -6,9 +6,9 @@ import os, sys
 loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
 data_loc = loc + 'emulator_data/'
 
+binning = 'AB' # 'lam' # 'abun'
 emu_name = sys.argv[1]
 iz = int(sys.argv[2])
-
 
 if emu_name == 'fixhod':
     cosmo_id_list_check = np.arange(130, 182, dtype=int)
@@ -43,12 +43,11 @@ cosmo_id_list_check = cosmo_id_list_check.astype(int)
 hod_id_list_check = hod_id_list_check.astype(int)
 
 zid = 3+iz
-train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/'
+train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/{binning}/'
 if os.path.isdir(train_loc) == False:
     os.makedirs(train_loc)
 
 #### data vector specs ####
-abun_or_lam = 'lam' # 'abun' #
 rich_name = 'q180_bg_miscen' #'q180_miscen'
 phase = 0
 
@@ -69,6 +68,8 @@ for cosmo_id in cosmo_id_list_check:
 
         ### Check abundance 
         abun_fname = obs_path+'abundance.dat'
+        if binning == 'AB':
+            abun_fname = obs_path+'abundance_AB.dat'
         if os.path.exists(abun_fname):
 
             x, x, Nc = np.loadtxt(abun_fname, unpack=True)
@@ -78,7 +79,7 @@ for cosmo_id in cosmo_id_list_check:
                 pass #print('unrealistic Nc, stop this model')
             else:
                 #print('reasonable Nc')
-                lens_fname = f'{obs_path}/DS_phys_noh_{abun_or_lam}_bin_3.dat'
+                lens_fname = f'{obs_path}/DS_phys_noh_{binning}_bin_3.dat'
                 if os.path.exists(lens_fname):
 
                     cosmo_id_list.append(cosmo_id)

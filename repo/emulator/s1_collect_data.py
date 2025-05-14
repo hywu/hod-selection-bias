@@ -9,14 +9,14 @@ from hod.utils.get_para_abacus_summit import get_cosmo_para, get_hod_para
 loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
 data_loc = loc + 'emulator_data/'
 
+binning = 'AB' # 'lam' # 'abun'
 emu_name = sys.argv[1]
 iz = int(sys.argv[2])
 
 zid = 3+iz
-train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/'
+train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/{binning}/'
 
 #### data vector specs ####
-abun_or_lam = 'lam' #'abun'
 emu_name = 'rad'
 rich_name = 'q180_bg_miscen' #'q180_miscen'
 phase = 0
@@ -73,8 +73,8 @@ rp_master_rad = rpmid_list[rpmid_list>0.2]
 print('len(rp_rad) = ', len(rp_master_rad))
 
 for ilam in range(4):
-    outfile_pca = open(f'{train_loc}/DS_{abun_or_lam}_bin_{ilam}_pca.dat', 'w')
-    outfile_rad = open(f'{train_loc}/DS_{abun_or_lam}_bin_{ilam}_rad.dat', 'w')
+    outfile_pca = open(f'{train_loc}/DS_{binning}_bin_{ilam}_pca.dat', 'w')
+    outfile_rad = open(f'{train_loc}/DS_{binning}_bin_{ilam}_rad.dat', 'w')
 
     outfile_pca.write('#log DS (phys, no h) \n')
     outfile_rad.write('#log DS (phys, no h) \n')
@@ -85,7 +85,7 @@ for ilam in range(4):
 
         model_name = f'hod{hod_id:0>6d}'
         out_path = data_loc + f'base_c{cosmo_id:0>3d}_ph{phase:0>3d}/z0p{zid}00/model_{model_name}/'
-        lens_fname = f'{out_path}/obs_{rich_name}_desy1/DS_phys_noh_{abun_or_lam}_bin_{ilam}.dat'
+        lens_fname = f'{out_path}/obs_{rich_name}_desy1/DS_phys_noh_{binning}_bin_{ilam}.dat'
         rp, DS = np.loadtxt(lens_fname, unpack=True)
         x = np.log(rp)
         y = np.log(DS)
