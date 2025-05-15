@@ -7,16 +7,16 @@ import fitsio
 import pandas as pd
 import os, sys
 
-redshift = 0.5 #0.4 #0.4 #0.3
+redshift = 0.3 #0.4 #0.5
 
 sim_name = 'L1000N3600/HYDRO_FIDUCIAL'
 halo_finder = 'HBT' #'VR'
 sim_label = sim_name.replace('/','_')
-plot_loc = f'../../plots/galaxies/{sim_label}/z{redshift}/'
+plot_loc = f'../../plots/flamingo/galaxies/{sim_label}/z{redshift}/'
 if os.path.isdir(plot_loc) == False: 
     os.makedirs(plot_loc)
 
-chi_cut = 6 #2  #default is 6 
+chi_cut = 8#6 #2  #default is 6 
 Mstar_lim = 2e+10
 master_loc = f'/cosma8/data/do012/dc-wu5/cylinder/output_{sim_name}/z{redshift}/'
 input_loc = master_loc + f'/model_mstar{Mstar_lim:.0e}_{halo_finder}/'
@@ -34,13 +34,7 @@ iz = M_i - M_z
 color_list = np.array([gr, ri, iz])
 color_name_list = ['g_r', 'r_i', 'i_z']
 
-#### correlation coefficient
-df = pd.DataFrame({'gr': gr, 'ri': ri, 'iz': iz})
-correlation_matrix = df.corr()
-print(correlation_matrix)
-Cov = df.cov()
-Cov = np.array(Cov)
-iCov = np.linalg.inv(Cov)
+
 
 #### fit the red-sequence with a straight line ####
 plt.figure(figsize=(4,6))
@@ -52,13 +46,14 @@ slope_list = []
 intercept_list = []
 std_list = []
 
+color_res = []
 for ic in range(3):
     color_name = color_name_list[ic]
     color = color_list[ic]
     x = M_z[sel] 
     y = color[sel]
     #plt.scatter(x,y,alpha=0.1)
-    m, b = np.polyfit(x, y, 1) # slope, intercept    
+    m, b = np.polyfit(x, y, 1) # slope, intercept
 
     res = np.std(y - (m * x + b))
     slope_list.append(m)
@@ -79,10 +74,29 @@ for ic in range(3):
     if ic==0: 
         #plt.legend()
         plt.title(sim_name.replace('_','-')+r', $\rm M_{vir}>%.e~h^{-1}M_\odot$'%Mvir_min, fontsize=10)
-    if ic==2: plt.xlabel(r'$\rm M_z$')
+    if ic==2: plt.xlabel(r'$ M_z$')
+
+    color_res.append(y - (m * x +b))
 
 plt.savefig(plot_loc+f'CMD_{Mvir_min:.0e}.png')
 
+gr_res = color_res[0]
+ri_res = color_res[1]
+iz_res = color_res[2]
+
+#### correlation coefficient of the residual
+df = pd.DataFrame({'gr': gr_res, 'ri': ri_res, 'iz': iz_res})
+correlation_matrix = df.corr()
+#print('correlation matrix',correlation_matrix)
+Cov = df.cov()
+#print('covariance matrix', Cov)
+Cov = np.array(Cov)
+iCov = np.linalg.inv(Cov)
+
+# old cov
+# df = pd.DataFrame({'gr': gr, 'ri': ri, 'iz': iz})
+# correlation_matrix = df.corr()
+# print('old correlation matrix',correlation_matrix) ##not very different
 
 
 #### Calculate the chi^2 ####
@@ -141,12 +155,13 @@ plt.savefig(plot_loc+f'chi2_{chi_cut}.png')
 
 
 #### find out density vs magnitude cut
-from get_flamingo_info import get_flamingo_cosmo
+from hod.utils.get_flamingo_info import get_flamingo_cosmo
 cosmo = get_flamingo_cosmo(sim_name)
 h = cosmo['h']
 vol = (1000 * h)**3
 
-M_z_cut_list = np.arange(-25, -18, 0.1)
+#M_z_cut_list = np.arange(-25, -17.5, 0.1)
+M_z_cut_list = np.linspace(min(M_z), max(M_z))
 den_list = []
 for M_z_cut in M_z_cut_list:
     sel = (chisq < chi_cut)&(M_z < M_z_cut)
