@@ -75,7 +75,7 @@ for cosmo_id in cosmo_id_list_check:
             x, x, Nc = np.loadtxt(abun_fname, unpack=True)
             Nc_ratio = np.mean(Nc / Nc_target)
         
-            if Nc_ratio < 0.25 or Nc_ratio > 4:
+            if False: #Nc_ratio < 0.25 or Nc_ratio > 4:
                 pass #print('unrealistic Nc, stop this model')
             else:
                 #print('reasonable Nc')
