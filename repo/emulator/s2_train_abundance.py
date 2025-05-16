@@ -11,9 +11,10 @@ from sklearn.gaussian_process.kernels import RBF
 
 loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
 
-binning = 'AB' # 'lam' # 'abun'
 emu_name = sys.argv[1]
-iz = int(sys.argv[2])
+binning = sys.argv[2]  #'AB' # 'lam' # 'abun'
+iz = 0
+
 zid = 3+iz
 train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/{binning}'
 plot_loc = f'../../plots/emulator_train/{emu_name}/z0p{zid}00/{binning}'

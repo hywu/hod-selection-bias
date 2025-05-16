@@ -6,15 +6,16 @@ import os, sys
 import emcee
 from get_model import GetModel
 
-
-# ./run_mcmc.py s8Omhod narrow abacus_summit q180_bg_miscen 0 0 
-# ./run_mcmc.py s8Omhod all cardinal d90 0 0 
+#./run_mcmc.py s8OmhodAB all abacus_summit q180_bg_miscen AB 0 0 
+# ./run_mcmc.py s8Omhod all abacus_summit q180_bg_miscen abun 0 0 
+# ./run_mcmc.py s8Omhod all cardinal d90 abun 0 0 
 para_name = sys.argv[1] #'s8Omhod'
 emu_name = sys.argv[2]  #'wide' # 'narrow' # 'iter'
 data_name = sys.argv[3] #'abacus_summit' #'flamingo'
 rich_name = sys.argv[4] #'q180_bg_miscen'
-iz = int(sys.argv[5])
-run_id = int(sys.argv[6])
+binning = sys.argv[5]
+iz = int(sys.argv[6])
+run_id = int(sys.argv[7])
 
 z_list = [0.3, 0.4, 0.5]
 redshift = z_list[iz]
@@ -26,8 +27,8 @@ parse = ParseYml(yml_name)
 nsteps, nwalkers, lsteps, burnin, params_free_name, params_free_ini, params_range,\
         params_fixed_name, params_fixed_value = parse.parse_yml()
 
-out_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_mcmc/{emu_name}/mcmc_{data_name}/'
-plot_loc = f'../../plots/mcmc/{emu_name}/{data_name}/'
+out_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_mcmc/{emu_name}/mcmc_{data_name}/{binning}/'
+plot_loc = f'../../plots/mcmc/{emu_name}/{data_name}/{binning}/'
 if os.path.isdir(out_loc) == False:
     os.makedirs(out_loc)
 if os.path.isdir(plot_loc) == False:
@@ -53,9 +54,13 @@ if __name__ == "__main__":
     data_vec = np.loadtxt(f'../data_vector/data_vector_{data_name}/data_vector_{rich_name}_z{redshift}.dat')
     cov = np.loadtxt(f'../data_vector/data_vector_abacus_summit/cov_z{redshift}.dat')
 
+    if binning == 'abun':
+        data_vec = data_vec[4:]
+        cov = cov[4:, 4:]
+
     #### Define the likelihood
     from emcee_tools import LnLikelihood, runmcmc
-    gm = GetModel(emu_name, iz, params_free_name, params_fixed_value, params_fixed_name)
+    gm = GetModel(emu_name, binning, iz, params_free_name, params_fixed_value, params_fixed_name)
     lnlike = LnLikelihood(data_vec, cov, gm.model, params_range,
                                  params_free_name, params_fixed_value, params_fixed_name)
 
@@ -67,7 +72,7 @@ if __name__ == "__main__":
                                        pool, burnin=burnin)
 
     #### Plot MCMC! 
-    os.system(f'./plot_mcmc.py {para_name} {emu_name} {data_name} {rich_name} {iz} {run_id} 2>&1 | tee sbatch_output/{emu_name}.out')
+    os.system(f'./plot_mcmc.py {para_name} {emu_name} {data_name} {rich_name} {binning} {iz} {run_id} 2>&1 | tee sbatch_output/{emu_name}.out')
 
     '''
     # moved to plot_mcmc.py

@@ -12,9 +12,9 @@ from sklearn.gaussian_process.kernels import RBF
 loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
 
 
-binning = 'AB' # 'lam' # 'abun'
-emu_name = sys.argv[1] #'narrow', 'wide', 'all'
-iz = int(sys.argv[2])
+emu_name = sys.argv[1]
+binning = sys.argv[2]  #'AB' # 'lam' # 'abun'
+iz = 0
 ilam = int(sys.argv[3]) # 0, 1, 2, 3
 
 alpha = 1e-6

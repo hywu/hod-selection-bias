@@ -8,13 +8,14 @@ import emcee
 from chainconsumer import Chain, ChainConsumer, ChainConfig
 from get_model import GetModel
 
-# ./plot_mcmc.py s8Omhod narrow abacus_summit q180_bg_miscen 0 0 
+# ./plot_mcmc.py s8Omhod all abacus_summit q180_bg_miscen abun 0 0 
 para_name = sys.argv[1] #'s8Omhod'
 emu_name = sys.argv[2] #'wide' # 'narrow'
 data_name = sys.argv[3] #'abacus_summit' #'flamingo'
 rich_name = sys.argv[4] #'q180_bg_miscen'
-iz = int(sys.argv[5])
-run_id = int(sys.argv[6])
+binning = sys.argv[5]
+iz = int(sys.argv[6])
+run_id = int(sys.argv[7])
 
 
 z_list = [0.3, 0.4, 0.5]
@@ -29,8 +30,8 @@ nsteps, nwalkers, lsteps, burnin, params_free_name, params_free_ini, params_rang
 
 
 
-out_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_mcmc/{emu_name}/mcmc_{data_name}/'
-plot_loc = f'../../plots/mcmc/{emu_name}/{data_name}/'
+out_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_mcmc/{emu_name}/mcmc_{data_name}/{binning}/'
+plot_loc = f'../../plots/mcmc/{emu_name}/{data_name}/{binning}/'
 
 out_file = f'{out_loc}/mcmc_{para_name}_{rich_name}_z{redshift}_run{run_id}.h5'
 print('output: ', out_file)
@@ -69,11 +70,12 @@ pc = PlotConfig(
 )
 c.set_plot_config(pc)
 c.set_override(ChainConfig(shade_alpha=0.5))
+#c.set_override(ChainConfig(show_contour_labels=True)) % 68% and 95%
 fig = c.plotter.plot()
 
 #### Plot the emulator range
 loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
-train_loc = loc + f'emulator_train/{emu_name}/z0p{3+iz}00/'
+train_loc = loc + f'emulator_train/{emu_name}/z0p{3+iz}00/{binning}/'
 df = pd.read_csv(f'{train_loc}/parameters.csv')
 df = df[parse.params_free_name]
 
@@ -92,7 +94,7 @@ for i in range(0, ndim):
                 #if line.get_linestyle() == "--":
                 line.set_linewidth(2)
                 
-plt.suptitle(f'{emu_name} {data_name} {rich_name}')
+plt.suptitle(f'{data_name} {rich_name} {binning} z={redshift}')
 
 plt.savefig(plot_loc+f'mcmc_{para_name}_{rich_name}_z{redshift}_run{run_id}.pdf', dpi=72)
 
@@ -107,10 +109,12 @@ nsub = 500
 idx = np.random.randint(0, nsamples, size=nsub)
 subsample = flat_samples[idx]
 
-gm = GetModel(emu_name, iz, params_free_name, params_fixed_value, params_fixed_name)
+gm = GetModel(emu_name, binning, iz, params_free_name, params_fixed_value, params_fixed_name)
+
 
 data_vec = np.loadtxt(f'../data_vector/data_vector_{data_name}/data_vector_{rich_name}_z{redshift}.dat')
 cov = np.loadtxt(f'../data_vector/data_vector_abacus_summit/cov_z{redshift}.dat')
+
 
 plt.figure(figsize=(14,7))
 #### counts
@@ -118,13 +122,17 @@ plt.subplot(1,2,1)
 x = np.arange(4)
 sigma = np.sqrt(np.diag(cov))
 plt.errorbar(x, data_vec[0:4], sigma[0:4], c='k', marker='o', mec='k', ls='', capsize=8)
-for i in range(nsub):
-    plt.plot(x, gm.model(subsample[i])[0:4], c='gray', alpha=0.01)
+
+if binning == 'abun':
+    pass
+else:
+    for i in range(nsub):
+        plt.plot(x, gm.model(subsample[i])[0:4], c='gray', alpha=0.01)
 plt.xlim(-0.1,3.1)
 plt.yscale('log')
 plt.ylabel('Counts')
 plt.xlabel('richness bin')
-plt.title(f' {emu_name} {data_name} z={redshift}')
+plt.title(f'{data_name} {rich_name} {binning} z={redshift}')
 
 #### lensing
 plt.subplot(1,2,2)
@@ -139,7 +147,11 @@ for ibin in range(4):
         c=f'C{ibin}', marker='o', mec=f'C{ibin}', ls='', capsize=8)
 
 for i in range(nsub):
-    lensing_model = gm.model(subsample[i])[4:]
+    if binning == 'abun':
+        lensing_model = gm.model(subsample[i])
+    else:
+        lensing_model = gm.model(subsample[i])[4:]
+    
     for ibin in range(4):
         plt.plot(rp, rp*lensing_model[ibin*nrp:(ibin+1)*nrp], c=f'C{ibin}', alpha=0.01)    
 plt.xlim(0.9*min(rp), 1.1*max(rp))

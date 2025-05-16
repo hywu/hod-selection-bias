@@ -6,9 +6,9 @@ import os, sys
 loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
 data_loc = loc + 'emulator_data/'
 
-binning = 'AB' # 'lam' # 'abun'
 emu_name = sys.argv[1]
-iz = int(sys.argv[2])
+binning = sys.argv[2]  #'AB' # 'lam' # 'abun'
+iz = 0
 
 if emu_name == 'fixhod':
     cosmo_id_list_check = np.arange(130, 182, dtype=int)

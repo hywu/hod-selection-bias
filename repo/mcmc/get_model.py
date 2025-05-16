@@ -7,9 +7,10 @@ sys.path.append('../emulator')
 from s3_pred_radius import PredDataVector
 
 class GetModel(object): 
-    def __init__(self, emu_name, iz, params_free_name, params_fixed_value,
+    def __init__(self, emu_name, binning, iz, params_free_name, params_fixed_value,
                  params_fixed_name, **kwargs):
-        self.pdv = PredDataVector(emu_name, iz)
+        self.binning = binning
+        self.pdv = PredDataVector(emu_name, binning, iz)
         self.params_fixed_name = params_fixed_name
         self.params_free_name = params_free_name
         self.params_fixed_value = params_fixed_value
@@ -45,6 +46,10 @@ class GetModel(object):
 
 
         X_input = np.append(cosmo_para, hod_para)
-        model = np.append(self.pdv.pred_abundance(X_input), self.pdv.pred_lensing(X_input))
+        
+        if self.binning == 'abun':
+            model = self.pdv.pred_lensing(X_input)
+        else:
+            model = np.append(self.pdv.pred_abundance(X_input), self.pdv.pred_lensing(X_input))
         return model
 
