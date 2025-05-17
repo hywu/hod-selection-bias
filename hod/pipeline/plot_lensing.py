@@ -20,7 +20,7 @@ from hod.utils.sample_matching_mass import sample_matching_mass
 from hod.utils.print_memory import print_memory
 
 class PlotLensing(object):
-    def __init__(self, yml_fname, binning,thresholded=False):
+    def __init__(self, yml_fname, binning, thresholded=False):
         #, abundance_matching=None, thresholded=False
         # binning: 'Ncyl', 'AB_scaling', 'abundance_matching'
 

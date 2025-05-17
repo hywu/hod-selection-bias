@@ -23,6 +23,7 @@ tau_miscen: 0.166
 rank_proxy: mass #_R1_eps10 #lum #d90_env #lum #mass #
 rank_cut: 0 #1.e+9 #3.162277e12 #
 
+binning: abun
 
 # # Cosmology
 # # http://skiesanduniverses.org/Simulations/Uchuu/
