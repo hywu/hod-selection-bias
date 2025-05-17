@@ -6,8 +6,8 @@ import os, sys
 import emcee
 from get_model import GetModel
 
+# ./run_mcmc.py s8Omhod all abacus_summit q180_bg_miscen abun 0 2 
 #./run_mcmc.py s8OmhodAB all abacus_summit q180_bg_miscen AB 0 0 
-# ./run_mcmc.py s8Omhod all abacus_summit q180_bg_miscen abun 0 0 
 # ./run_mcmc.py s8Omhod all cardinal d90 abun 0 0 
 para_name = sys.argv[1] #'s8Omhod'
 emu_name = sys.argv[2]  #'wide' # 'narrow' # 'iter'
@@ -51,12 +51,12 @@ with open(f'{out_loc}/para_{para_name}_{rich_name}_z{redshift}_run{run_id}.yml',
 
 if __name__ == "__main__":
     #### Get the data
-    data_vec = np.loadtxt(f'../data_vector/data_vector_{data_name}/data_vector_{rich_name}_z{redshift}.dat')
+    data_vec = np.loadtxt(f'../data_vector/data_vector_{data_name}/data_vector_{rich_name}_{binning}_z{redshift}.dat')
     cov = np.loadtxt(f'../data_vector/data_vector_abacus_summit/cov_z{redshift}.dat')
 
-    if binning == 'abun':
-        data_vec = data_vec[4:]
-        cov = cov[4:, 4:]
+    # if binning == 'abun':
+    #     data_vec = data_vec[4:]
+    #     cov = cov[4:, 4:]
 
     #### Define the likelihood
     from emcee_tools import LnLikelihood, runmcmc

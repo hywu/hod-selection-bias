@@ -112,34 +112,39 @@ subsample = flat_samples[idx]
 gm = GetModel(emu_name, binning, iz, params_free_name, params_fixed_value, params_fixed_name)
 
 
-data_vec = np.loadtxt(f'../data_vector/data_vector_{data_name}/data_vector_{rich_name}_z{redshift}.dat')
+data_vec = np.loadtxt(f'../data_vector/data_vector_{data_name}/data_vector_{rich_name}_{binning}_z{redshift}.dat')
 cov = np.loadtxt(f'../data_vector/data_vector_abacus_summit/cov_z{redshift}.dat')
 
 
 plt.figure(figsize=(14,7))
 #### counts
-plt.subplot(1,2,1)
-x = np.arange(4)
-sigma = np.sqrt(np.diag(cov))
-plt.errorbar(x, data_vec[0:4], sigma[0:4], c='k', marker='o', mec='k', ls='', capsize=8)
 
-if binning == 'abun':
-    pass
-else:
+if binning != 'abun':
+    plt.subplot(1,2,1)
+    x = np.arange(4)
+    sigma = np.sqrt(np.diag(cov))
+    plt.errorbar(x, data_vec[0:4], sigma[0:4], c='k', marker='o', mec='k', ls='', capsize=8)
+
     for i in range(nsub):
         plt.plot(x, gm.model(subsample[i])[0:4], c='gray', alpha=0.01)
-plt.xlim(-0.1,3.1)
-plt.yscale('log')
-plt.ylabel('Counts')
-plt.xlabel('richness bin')
-plt.title(f'{data_name} {rich_name} {binning} z={redshift}')
+    plt.xlim(-0.1,3.1)
+    plt.yscale('log')
+    plt.ylabel('Counts')
+    plt.xlabel('richness bin')
+    plt.title(f'{data_name} {rich_name} {binning} z={redshift}')
+
 
 #### lensing
 plt.subplot(1,2,2)
 rp = np.loadtxt(train_loc+f'rp_rad.dat')
 nrp = len(rp)
-lensing_vec = data_vec[4:]
-lensing_sigma = sigma[4:]
+
+if binning == 'abun':
+    lensing_vec = data_vec[:]
+    lensing_sigma = np.sqrt(np.diag(cov))
+else:
+    lensing_vec = data_vec[4:]
+    lensing_sigma = sigma[4:]
 
 for ibin in range(4):
     plt.errorbar(rp, rp*lensing_vec[ibin*nrp:(ibin+1)*nrp], \
