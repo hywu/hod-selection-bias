@@ -4,17 +4,19 @@ import sys
 
 #### Define the model class
 sys.path.append('../emulator')
-from s3_pred_radius import PredDataVector
+from s3_pred_radius import Preddata_vector
 
 class GetModel(object): 
     def __init__(self, emu_name, binning, iz, params_free_name, params_fixed_value,
-                 params_fixed_name, **kwargs):
+                 params_fixed_name, data_vector=['counts','lensing'], **kwargs):
         self.binning = binning
-        self.pdv = PredDataVector(emu_name, binning, iz)
+        
+        self.data_vector = data_vector
+        self.pdv = Preddata_vector(emu_name, binning, iz, data_vector)
         self.params_fixed_name = params_fixed_name
         self.params_free_name = params_free_name
         self.params_fixed_value = params_fixed_value
-       
+        
     def get_kw(self, params):
         kw = {} # if there's extra keyword
         for i, pf in enumerate(self.params_fixed_name):
@@ -47,9 +49,31 @@ class GetModel(object):
 
         X_input = np.append(cosmo_para, hod_para)
         
-        if self.binning == 'abun':
-            model = self.pdv.pred_lensing(X_input)
-        else:
-            model = np.append(self.pdv.pred_abundance(X_input), self.pdv.pred_lensing(X_input))
+        # if self.binning == 'abun':
+        #     model = self.pdv.pred_lensing(X_input)
+        # else:
+        #     model = np.append(self.pdv.pred_abundance(X_input), self.pdv.pred_lensing(X_input))
+
+        model = []
+        if 'counts' in self.data_vector:
+            model.extend(self.pdv.pred_abundance(X_input))
+        if 'lensing' in self.data_vector:
+            model.extend(self.pdv.pred_lensing(X_input))
+
         return model
+
+
+if __name__ == "__main__":
+    emu_name = 'all'
+    binning = 'lam'
+    iz = 0
+    zid = 3
+    yml_name = f'yml/emcee_template.yml'
+    from parse_yml import ParseYml
+    parse = ParseYml(yml_name)
+    nsteps, nwalkers, lsteps, burnin, params_free_name, params_free_ini, params_range,\
+        params_fixed_name, params_fixed_value = parse.parse_yml()
+
+    gm = GetModel(emu_name, binning, iz, params_free_name, params_fixed_value, params_fixed_name, data_vector=['counts'])
+    
 

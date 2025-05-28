@@ -9,28 +9,30 @@ loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
 #emu_name = 'fixhod'
 #emu_name = 'fixcos'
 
-class PredDataVector(object):
-    def __init__(self, emu_name, binning, iz):
+class Preddata_vector(object):
+    def __init__(self, emu_name, binning, iz, data_vector=['counts','lensing']):
         zid = 3+iz
         train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/{binning}/'
         #train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/'
         #print(train_loc)
-        #### emulator for abundance 
-        self.gpr_abun_list = []
-        for ilam in range(4):
-            gpr = joblib.load(f'{train_loc}/abundance_bin_{ilam}_gpr_.pkl')
-            self.gpr_abun_list.append(gpr)
 
-        #### emulator for lensing
-        # load all radii at the same time
-        rp_rad = np.loadtxt(f'{train_loc}/rp_rad.dat')
-        self.nrad = len(rp_rad)
+        if 'counts' in data_vector:
+            # emulator for abundance 
+            self.gpr_abun_list = []
+            for ilam in range(4):
+                gpr = joblib.load(f'{train_loc}/abundance_bin_{ilam}_gpr_.pkl')
+                self.gpr_abun_list.append(gpr)
 
-        self.gpr_lensing_list = []
-        for ilam in range(4):
-            for irad in range(self.nrad):
-                gpr = joblib.load(f'{train_loc}/DS_{binning}_bin_{ilam}_rad_{irad}_gpr_.pkl')
-                self.gpr_lensing_list.append(gpr)
+        if 'lensing' in data_vector:
+            # emulator for lensing
+            # load all radii at the same time
+            rp_rad = np.loadtxt(f'{train_loc}/rp_rad.dat')
+            self.nrad = len(rp_rad)
+            self.gpr_lensing_list = []
+            for ilam in range(4):
+                for irad in range(self.nrad):
+                    gpr = joblib.load(f'{train_loc}/DS_{binning}_bin_{ilam}_rad_{irad}_gpr_.pkl')
+                    self.gpr_lensing_list.append(gpr)
 
 
     def pred_abundance(self, X_input):
@@ -64,7 +66,7 @@ if __name__ == "__main__":
     X_test = np.atleast_2d(X_all[itest]) # just one set of parameters
 
     ####
-    pdv = PredDataVector(emu_name, binning, iz)
+    pdv = Preddata_vector(emu_name, binning, iz)
     #### lensing
     DS_pred = pdv.pred_lensing(X_test)
     DS_test = []

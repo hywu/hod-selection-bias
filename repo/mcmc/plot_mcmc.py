@@ -7,16 +7,24 @@ import os, sys
 import emcee
 from chainconsumer import Chain, ChainConsumer, ChainConfig
 from get_model import GetModel
+from get_data_vector import get_data_vector
 
-# ./plot_mcmc.py s8Omhod all abacus_summit q180_bg_miscen abun 0 0 
+# ./plot_mcmc.py s8Omhod all abacus_summit q180_bg_miscen lam counts 0 0 
 para_name = sys.argv[1] #'s8Omhod'
 emu_name = sys.argv[2] #'wide' # 'narrow'
 data_name = sys.argv[3] #'abacus_summit' #'flamingo'
 rich_name = sys.argv[4] #'q180_bg_miscen'
 binning = sys.argv[5]
-iz = int(sys.argv[6])
-run_id = int(sys.argv[7])
+data_vector_name = sys.argv[6] # 'counts', 'lensing'
+iz = int(sys.argv[7])
+run_id = int(sys.argv[8])
 
+if data_vector_name == 'counts':
+    data_vector = ['counts']
+if data_vector_name == 'lensing':
+    data_vector = ['lensing']
+if data_vector_name == 'counts_lensing':
+    data_vector = ['counts', 'lensing']
 
 z_list = [0.3, 0.4, 0.5]
 redshift = z_list[iz]
@@ -30,8 +38,8 @@ nsteps, nwalkers, lsteps, burnin, params_free_name, params_free_ini, params_rang
 
 
 
-out_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_mcmc/{emu_name}/mcmc_{data_name}/{binning}/'
-plot_loc = f'../../plots/mcmc/{emu_name}/{data_name}/{binning}/'
+out_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_mcmc/{emu_name}/mcmc_{data_name}/{binning}/{data_vector_name}/'
+plot_loc = f'../../plots/mcmc/{emu_name}/{data_name}/{binning}/{data_vector_name}/'
 
 out_file = f'{out_loc}/mcmc_{para_name}_{rich_name}_z{redshift}_run{run_id}.h5'
 print('output: ', out_file)
@@ -109,59 +117,66 @@ nsub = 500
 idx = np.random.randint(0, nsamples, size=nsub)
 subsample = flat_samples[idx]
 
-gm = GetModel(emu_name, binning, iz, params_free_name, params_fixed_value, params_fixed_name)
 
-
-data_vec = np.loadtxt(f'../data_vector/data_vector_{data_name}/data_vector_{rich_name}_{binning}_z{redshift}.dat')
-cov = np.loadtxt(f'../data_vector/data_vector_abacus_summit/cov_z{redshift}.dat')
+data_vec, cov = get_data_vector(data_name, rich_name, binning, iz, data_vector=data_vector)
+# data_vec = np.loadtxt(f'../data_vector/data_vector_{data_name}/data_vector_{rich_name}_{binning}_z{redshift}.dat')
+# cov = np.loadtxt(f'../data_vector/data_vector_abacus_summit/cov_z{redshift}.dat')
 
 
 plt.figure(figsize=(14,7))
-#### counts
 
-if binning != 'abun':
+#### counts
+if 'counts' in data_vector:
+    gm = GetModel(emu_name, binning, iz, params_free_name, params_fixed_value, params_fixed_name, data_vector=['counts'])
+    data_vec, cov = get_data_vector(data_name, rich_name, binning, iz, data_vector=['counts'])
+
     plt.subplot(1,2,1)
     x = np.arange(4)
     sigma = np.sqrt(np.diag(cov))
-    plt.errorbar(x, data_vec[0:4], sigma[0:4], c='k', marker='o', mec='k', ls='', capsize=8)
+    plt.errorbar(x, data_vec, sigma, c='k', marker='o', mec='k', ls='', capsize=8)
 
     for i in range(nsub):
-        plt.plot(x, gm.model(subsample[i])[0:4], c='gray', alpha=0.01)
+        plt.plot(x, gm.model(subsample[i]), c='gray', alpha=0.01)
     plt.xlim(-0.1,3.1)
     plt.yscale('log')
     plt.ylabel('Counts')
     plt.xlabel('richness bin')
     plt.title(f'{data_name} {rich_name} {binning} z={redshift}')
 
+if 'lensing' in data_vector:
+    #### lensing
+    plt.subplot(1,2,2)
+    rp = np.loadtxt(train_loc+f'rp_rad.dat')
+    nrp = len(rp)
 
-#### lensing
-plt.subplot(1,2,2)
-rp = np.loadtxt(train_loc+f'rp_rad.dat')
-nrp = len(rp)
+    # if binning == 'abun':
+    #     lensing_vec = data_vec[:]
+    #     lensing_sigma = np.sqrt(np.diag(cov))
+    # else:
+    #     lensing_vec = data_vec[4:]
+    #     lensing_sigma = sigma[4:]
 
-if binning == 'abun':
-    lensing_vec = data_vec[:]
-    lensing_sigma = np.sqrt(np.diag(cov))
-else:
-    lensing_vec = data_vec[4:]
-    lensing_sigma = sigma[4:]
+    gm = GetModel(emu_name, binning, iz, params_free_name, params_fixed_value, params_fixed_name, data_vector=['lensing'])
+    data_vec, cov = get_data_vector(data_name, rich_name, binning, iz, data_vector=['lensing'])
+    sigma = np.sqrt(np.diag(cov))
 
-for ibin in range(4):
-    plt.errorbar(rp, rp*lensing_vec[ibin*nrp:(ibin+1)*nrp], \
-        rp*lensing_sigma[ibin*nrp:(ibin+1)*nrp],\
-        c=f'C{ibin}', marker='o', mec=f'C{ibin}', ls='', capsize=8)
-
-for i in range(nsub):
-    if binning == 'abun':
-        lensing_model = gm.model(subsample[i])
-    else:
-        lensing_model = gm.model(subsample[i])[4:]
-    
     for ibin in range(4):
-        plt.plot(rp, rp*lensing_model[ibin*nrp:(ibin+1)*nrp], c=f'C{ibin}', alpha=0.01)    
-plt.xlim(0.9*min(rp), 1.1*max(rp))
-plt.xscale('log')
-plt.xlabel(r'$r_{\rm p}~[{\rm pMpc}]$')
-plt.ylabel(r'$r_{\rm p} \Delta\Sigma~[{\rm pMpc ~M_\odot/pc^2} ]$')
+        plt.errorbar(rp, rp*data_vec[ibin*nrp:(ibin+1)*nrp], \
+            rp*sigma[ibin*nrp:(ibin+1)*nrp],\
+            c=f'C{ibin}', marker='o', mec=f'C{ibin}', ls='', capsize=8)
+
+    for i in range(nsub):
+        #if binning == 'abun':
+        lensing_model = gm.model(subsample[i])
+        #else:
+        #lensing_model = gm.model(subsample[i])[4:]
+        
+        for ibin in range(4):
+            plt.plot(rp, rp*lensing_model[ibin*nrp:(ibin+1)*nrp], c=f'C{ibin}', alpha=0.01)
+    plt.xlim(0.9*min(rp), 1.1*max(rp))
+    plt.xscale('log')
+    plt.xlabel(r'$r_{\rm p}~[{\rm pMpc}]$')
+    plt.ylabel(r'$r_{\rm p} \Delta\Sigma~[{\rm pMpc ~M_\odot/pc^2} ]$')
+
 plt.savefig(plot_loc+f'pred_{para_name}_z{redshift}_run{run_id}.pdf', dpi=72)
 print(f'plot saved at {plot_loc}')

@@ -12,8 +12,6 @@ class ParseYml(object):
         '''
         Reading the mcmc setup from a yaml file
         '''
-        
-        
         self.params_free_ini = np.array([])
         lsteps = np.array([])
         
@@ -61,6 +59,8 @@ if __name__ == "__main__":
     filename = 'yml/emcee_template.yml'
     parse = ParseYml(filename)
     parse.parse_yml()
+
+    print('data_vector', parse.data_vector)
 
     print('params_free_name', parse.params_free_name)
     print('params_free_range', parse.params_free_range)
