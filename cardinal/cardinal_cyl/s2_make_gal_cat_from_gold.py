@@ -23,8 +23,8 @@ if os.path.isdir(output_loc+'temp/') == False:
     os.makedirs(output_loc+'temp/')
 
 
-cat_loc = '/projects/shuleic/shuleic_unify_HOD/shuleic_unify_HOD/Cardinalv3/'
-fname = cat_loc + 'Cardinal-3_v2.0_Y6a_gold.h5'
+card_loc = '/projects/shuleic/shuleic_unify_HOD/shuleic_unify_HOD/Cardinalv3/'
+fname = card_loc + 'Cardinal-3_v2.0_Y6a_gold.h5'
 f = h5py.File(fname, 'r')
 data = f['catalog/gold']
 
@@ -34,10 +34,10 @@ pz_all = data['pz'][:]
 ra_all = data['ra'][:]
 dec_all = data['dec'][:]
 chi_all = np.sqrt(px_all**2 + py_all**2 + pz_all**2) # there is no redshift. sigh.
-mag_g_all = data['mag_g_true'][:]
-mag_r_all = data['mag_r_true'][:]
-mag_i_all = data['mag_i_true'][:]
-mag_z_all = data['mag_z_true'][:]
+mag_g_all = data['mag_g'][:]
+mag_r_all = data['mag_r'][:]
+mag_i_all = data['mag_i'][:]
+mag_z_all = data['mag_z'][:]
 z_all = redshift_chi_interp(chi_all)
 
 '''
@@ -65,6 +65,9 @@ def calc_one_bin(iz):
     zmax = zmin + dz
     zmid = zmin + 0.5 *dz
 
+    
+
+    '''
     mag_i_cut = mag_i_lim_Rykoff14(zmid)
     print('mag_i_cut', mag_i_cut)
 
@@ -76,7 +79,7 @@ def calc_one_bin(iz):
 
     i_z_mean = i_z_vs_redshift(zmid)
     i_z_std = sigma_i_z_vs_redshift(zmid)
-
+    '''
     sel = (z_all > zmin)&(z_all < zmax)
 
     chi_gal = chi_all[sel]

@@ -9,8 +9,8 @@ from astropy.cosmology import FlatLambdaCDM
 cosmo = FlatLambdaCDM(H0=100, Om0=0.286)
 
 # use gold mask to get area
-cat_loc = '/projects/shuleic/shuleic_unify_HOD/shuleic_unify_HOD/Cardinalv3/'
-fname = cat_loc + 'Cardinal-3_v2.0_Y6a_gold.h5'
+card_loc = '/projects/shuleic/shuleic_unify_HOD/shuleic_unify_HOD/Cardinalv3/'
+fname = card_loc + 'Cardinal-3_v2.0_Y6a_gold.h5'
 f = h5py.File(fname, 'r')
 hpix = f['masks/gold/hpix'][:]
 npix = len(hpix)
