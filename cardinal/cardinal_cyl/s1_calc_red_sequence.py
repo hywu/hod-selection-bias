@@ -11,9 +11,11 @@ import pandas as pd
 # plot the red sequence
 # output the redsequence model (slope, intercept, scatter)
 
-# TODO: is it correct to use z-band?
-# TODO: should i use a different pmem_cut?
-# TODO: how to get 0.2 Lstar?
+# TODO: should I use a different pmem_cut?
+# TODO: z-band cut is a soft cut. How to get 0.2 Lstar?
+
+# DES redmapper use z-band (Rykoff 16 Sec 3.5)
+
 pmem_cut = 0.9
 
 card_loc = '/projects/shuleic/shuleic_unify_HOD/shuleic_unify_HOD/Cardinalv3/'
@@ -139,17 +141,18 @@ def get_red_sequence_model(zmin, zmax):
 
 if __name__ == "__main__":
     dz = 0.01
-    zmin_list = np.arange(0.2, 0.641, dz)[0:2]
+    #zmin_list = np.arange(0.2, 0.641, dz)#[0:2]
+    zmin_list = np.arange(0.14, 0.76, dz)
 
     # clear the files
     for ic in range(3):
         color_name = color_name_list[ic]
         outfile = open(f'../cardinal_cyl/data_member/{color_name}_model.dat','w')
-        outfile.write('#zmin, zmax, intercept, slope, scatter, mean_color \n')
+        outfile.write('# zmin, zmax, intercept, slope, scatter, mean_color \n')
         outfile.close()
     
     outfile = open(f'../cardinal_cyl/data_member/mag_z_limit.dat','w')
-    outfile.write('zmin, zmax, mag_z_limit \n')
+    outfile.write('# zmin, zmax, mag_z_limit \n')
     outfile.close()
 
     # save results to files

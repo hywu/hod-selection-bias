@@ -10,13 +10,14 @@ z_list = np.arange(0,1,0.01)
 chi_list = cosmo.comoving_distance(z_list).value
 from scipy.interpolate import interp1d
 z_chi = interp1d(chi_list, z_list)
+from sklearn.neighbors import BallTree
 
+### uses percolation, across boundaries
+### uses pmem weights
+### uses R_lam iteration
+### uses background subtraction
 
-### TODO: add percolation, across boundaries
-### TODO: add pmem weights # Done
-### TODO: add R_lam iteration # Done
-### TODO: background subtraction # Done
-
+perc = True
 use_rlambda = True
 which_pmem = 'quad'
 if which_pmem == 'quad':
@@ -44,24 +45,19 @@ ra_all = np.zeros(1000)
 dec_all = np.zeros(1000)
 chi_all = np.zeros(1000)
 '''
-#plt.scatter(ra_all[::100], dec_all[::100], c='C0', s=0.01)
-
 
 # read in halos (ra, dec, chi), sorted by mass
 data, header = fitsio.read(output_loc+'/../halos_from_gold.fit', header=True)
-#print(header)
 M_cen_all = data['mvir']
 ids_cen_all = data['haloid']
 ra_cen_all = data['ra']
 dec_cen_all = data['dec']
 chi_cen_all = data['chi']
 
-# plt.scatter(ra_cen_all[::100], dec_cen_all[::100], c='C1', s=1)
-# plt.savefig('test.png')
-# exit()
+
 # calculate richness for one redshift bin
 class CylinderRichnessLightcone(object):
-    def __init__(self, zmin, zmax):#, sample, method, radius, depth):
+    def __init__(self, zmin, zmax):
         self.zmin = zmin
         self.zmax = zmax
         self.zmid = 0.5 * (self.zmin + self.zmax)
@@ -74,43 +70,80 @@ class CylinderRichnessLightcone(object):
 
         self.density_bg = density_bg_inerp(self.zmid)
 
-    def get_galaxies_ra_dec(self): # for cone
-        sel = (chi_all >= self.chi_min - 5*depth)&(chi_all <= self.chi_max + 5*depth) # not working for gauss
+
+
+        #### get galaxies
+        if which_pmem == 'quad':
+            sel = (chi_all >= self.chi_min - depth)&(chi_all <= self.chi_max + depth) 
+        if which_pmem == 'gauss':
+            sel = (chi_all >= self.chi_min - 5 * depth)&(chi_all <= self.chi_max + 5 * depth) 
+            
         self.chi_gal = chi_all[sel]
         self.ra_gal = ra_all[sel] # deg
         self.dec_gal = dec_all[sel] # deg
-        print('number of galaxies', len(self.chi_gal))
+        self.gal_taken = np.zeros(len(self.chi_gal)) # for percolation
 
-    def get_richness_cone(self, ra_cen, dec_cen, chi_cen): 
+
+
+        #### get halos ####
+        sel_halo = (chi_cen_all > self.chi_min - depth)&(chi_cen_all < self.chi_max + depth) # include extra dpeth for percolation
+        sel_halo = sel_halo & (M_cen_all > 1e13)
+        M_cen = M_cen_all[sel_halo]
+        ids_cen = ids_cen_all[sel_halo]
+        ra_cen = ra_cen_all[sel_halo]
+        dec_cen = dec_cen_all[sel_halo]
+        chi_cen = chi_cen_all[sel_halo]
+
+        # sort by mass
+        ind = np.argsort(-M_cen)
+        self.ids_cen = ids_cen[ind]
+        self.M_cen = M_cen[ind]
+        self.ra_cen = ra_cen[ind]
+        self.dec_cen = dec_cen[ind]
+        self.chi_cen = chi_cen[ind]
+        self.ncen = len(self.M_cen)
+        print('number of halos', len(ids_cen))
+
+
+        ##### build a tree! for a rough radius cut
+        # haversine takes: latitude (dec), longitude (RA)
+        X_gal = np.column_stack([self.dec_gal*np.pi/180., self.ra_gal*np.pi/180.])
+        tree = BallTree(X_gal, metric='haversine')
+        print('number of galaxies', len(self.chi_gal))
+        X_cen = np.column_stack([self.dec_cen*np.pi/180., self.ra_cen*np.pi/180.])
+        theta_max = 2 / self.chi_min # set max to 2 hiMpc.
+        self.indexes_tree = tree.query_radius(X_cen, r=theta_max)
+
+
+
+
+    def get_richness_cone(self, i_cen):#, ra_cen, dec_cen, chi_cen): # one center at a time
+        gal_ind = self.indexes_tree[i_cen]
+
+        ra_gal = self.ra_gal[gal_ind]
+        dec_gal = self.dec_gal[gal_ind]
+        chi_gal = self.chi_gal[gal_ind]
+
+        ra_cen = self.ra_cen[i_cen]
+        dec_cen = self.dec_cen[i_cen]
+        chi_cen = self.chi_cen[i_cen]
+
+
+        #### step 1: cut the LOS ####
         if which_pmem == 'quad':
-            sel1 = (np.abs(self.chi_gal - chi_cen) < depth) # not working for gauss
-        #Ncyl = len(self.chi_gal)
-        #ang_sep_2 = np.zeros(Ncyl) + 1e5 # same lengh as self.chi_gal
-        dz = np.abs(self.chi_gal[sel1] - chi_cen)
-        d_ra = self.ra_gal[sel1] - ra_cen
-        d_dec = self.dec_gal[sel1] - dec_cen
+            sel_z = (np.abs(chi_gal - chi_cen) < depth)
+        if which_pmem == 'quad':
+            sel_z = (np.abs(chi_gal - chi_cen) < 5 * depth)
+
+        sel_z = sel_z & (self.gal_taken[gal_ind] < 0.8) # percolation threshold = 0.8
+
+        dz = np.abs(chi_gal[sel_z] - chi_cen)
+        # calculate small distances using brute force
+        d_ra = ra_gal[sel_z] - ra_cen
+        d_dec = dec_gal[sel_z] - dec_cen
         ang_sep_2 = d_ra**2 * np.cos(dec_cen*np.pi/180.)**2 + d_dec**2
         r = np.sqrt(ang_sep_2) * (np.pi/180.) * chi_cen # projected separation in Mpc/h
-
-        #radius = 1 # pMpc/h
-        #sel_uni = (r<radius)*(dz<300)
-        #print('len(r[sel_uni]) = ', len(r[sel_uni]))
-        #exit()
-
-        # if use_rlambda == False:
-        #     # if self.unit == 'chimp':
-        #     #     ang_cyl = radius / chi_cen * (180. / np.pi) # deg
-        #     # if self.unit == 'phys':
-        # DA = chi_cen / (1+self.zmid)  # pMpc/h
-        # ang_cyl = (radius / DA) * (180. / np.pi) # deg
-        # sel = (ang_sep_2 < ang_cyl**2)
-        # print('len(ang_sep_2[sel])', len(ang_sep_2[sel]))
-        # exit()
-
-        #     #if weight == 'None':
-        #     richness = len(ang_sep_2[sel])
         redshift = z_chi(chi_cen)
-        #print('redshift', redshift)
         scale_factor = 1./(1.+redshift)
 
         if use_rlambda == True:
@@ -138,63 +171,34 @@ class CylinderRichnessLightcone(object):
         #     richness = np.sum(w[w > 0])
 
         #print('before', len(self.chi_gal[self.chi_gal > 0]))
-        # if perc == True:
-        #     self.chi_gal[sel] = -1  # effectively removing these galaxies # can't do arr[sel1][sel2]=-1
-        #     #print('after', len(self.chi_gal[self.chi_gal > 0]))
+        if perc == True:
+            sel_mem = (r < rlam)
+            self.gal_taken[np.array(gal_ind)[sel_z][sel_mem]] += pmem[sel_mem]
+
+            #ind_taken = np.arange(len(self.gal_taken))[sel_z][sel_mem]
+            #self.gal_taken[ind_taken] += pmem[sel_mem]
+            #self.chi_gal[sel] = -1  # effectively removing these galaxies # can't do arr[sel_z][sel2]=-1
+            #print('after', len(self.chi_gal[self.chi_gal > 0]))
         #return richness
         return rlam, Ncyl, redshift
 
     def measure_richness(self):
-        sel = (chi_cen_all > self.chi_min)&(chi_cen_all < self.chi_max)&(M_cen_all > 1e14)
-        M_cen = M_cen_all[sel]
-        ids_cen = ids_cen_all[sel]
-        ra_cen = ra_cen_all[sel]
-        dec_cen = dec_cen_all[sel]
-        chi_cen = chi_cen_all[sel]
-
-        # sort by mass
-        ind = np.argsort(-M_cen)
-        M_cen = M_cen[ind]
-        ids_cen = ids_cen[ind]
-        ra_cen = ra_cen[ind]
-        dec_cen = dec_cen[ind]
-        chi_cen = chi_cen[ind]
-
-
-        # px_cen = data['px'][sel]
-        # py_cen = data['py'][sel]
-        # pz_cen = data['pz'][sel]
-
-        #z_cos = z_cos[sel]
-        #M_cen = M_cen[sel]
-        #chi_cen = cosmo.comoving_distance(z_cos).value
-        # px_cen = chi_cen * np.sin(dec_cen * np.pi / 180.)
-        # py_cen = chi_cen * np.cos(dec_cen * np.pi / 180.) * np.cos(ra_cen * np.pi / 180.)
-        # pz_cen = chi_cen * np.cos(dec_cen * np.pi / 180.) * np.sin(ra_cen * np.pi / 180.)
-        #px_cen, py_cen, pz_cen = astropy.coordinates.spherical_to_cartesian(chi_cen, dec_cen*np.pi/180., ra_cen*np.pi/180.)
-        # px_cen = px_cen.value
-        # py_cen = py_cen.value
-        # pz_cen = pz_cen.value
-        #Radius_cen = 1 + np.zeros(len(ids_cen)) #data['r_lambda'][sel]
-
-        print('number of halos', len(ids_cen))
-
-        self.get_galaxies_ra_dec()
 
         ## looping through halos
         outfile2 = open(self.richness_file,'w')
         outfile2.write('id Mvir Ncyl Rcyl z_cos\n')
-        id_to_start = 0
-        for i in range(id_to_start, len(ids_cen)):
+        #id_to_start = 0
+        for i in range(self.ncen):#range(id_to_start, len(ids_cen)):
             #radius = Radius_cen[i]
             ## calculation richness
-            rlam, richness, redshift = self.get_richness_cone(ra_cen[i], dec_cen[i], chi_cen[i])
-            outfile2.write('%-12i \t'%(ids_cen[i])) # write ID first
-            outfile2.write('%-12e \t'%(M_cen[i])) # need mass. ID is not unique
-            outfile2.write('%-12g \t'%(richness))
-            outfile2.write('%-12g '%(rlam))
-            outfile2.write('%-12g '%(redshift))
-            outfile2.write('\n')
+            rlam, richness, redshift = self.get_richness_cone(i)#ra_cen[i], dec_cen[i], chi_cen[i])
+            if redshift > self.zmin and redshift < self.zmax: # excluding extra percolating halos
+                outfile2.write('%-12i \t'%(self.ids_cen[i])) # write ID first
+                outfile2.write('%-12e \t'%(self.M_cen[i])) # need mass. ID is not unique
+                outfile2.write('%-12g \t'%(richness))
+                outfile2.write('%-12g '%(rlam))
+                outfile2.write('%-12g '%(redshift))
+                outfile2.write('\n')
 
         outfile2.close()
 
@@ -210,7 +214,8 @@ def calc_one_bin(ibin):
 
 if __name__ == "__main__":
     #calc_one_bin(0)
-    
+    #exit()
+
     n_parallel = len(zmin_list)
     
     import os

@@ -33,7 +33,7 @@ print('gold area [sq deg] = ',  fsky * 41253.)
 def volume_gold(zmin, zmax):
     vol_allsky = cosmo.comoving_volume(zmax).value - cosmo.comoving_volume(zmin).value
     vol = vol_allsky * fsky
-    print('gold volume %g [hiGpc^3]'%(vol * 1e-9))
+    #print('gold volume %g [hiGpc^3]'%(vol * 1e-9))
     return vol
 
 
@@ -54,7 +54,7 @@ def volume_redmapper(zmin, zmax):
         fsky = 0.5*(area[iz] + area[iz+1]) / 41253.
         vol += (vol_allsky * fsky)
     print(vol)
-    print('Redmapper volume = %g (Gpc/h)^3'%(vol*1e-9))
+    #print('Redmapper volume = %g (Gpc/h)^3'%(vol*1e-9))
     # redmapper volume is smaller than gold
     return vol
 

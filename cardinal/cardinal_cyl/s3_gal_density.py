@@ -3,10 +3,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.style.use('MNRAS')
 import fitsio
-import h5py
 import sys
+
 from astropy.cosmology import FlatLambdaCDM
 cosmo = FlatLambdaCDM(H0=100, Om0=0.286)
+'''
+import h5py
 
 # use gold mask to get area
 card_loc = '/projects/shuleic/shuleic_unify_HOD/shuleic_unify_HOD/Cardinalv3/'
@@ -19,6 +21,7 @@ nside = 4096
 npix_tot = healpy.nside2npix(nside)
 fsky = npix/npix_tot
 print('gold area [sq deg] = ',  fsky * 41253.)
+'''
 
 # get galaxy catalog
 chisq_cut = int(sys.argv[1])#100
@@ -26,16 +29,18 @@ output_loc = '/projects/hywu/cluster_sims/cluster_finding/data/cardinal_cyl/'
 output_loc += f'model_chisq{chisq_cut}/'
 fname = output_loc + 'gals.fit'
 data, header = fitsio.read(fname, header=True)
-print(header)
+#print(header)
 chi = data['chi']
 
+from volume_cardinal import volume_gold
 
 def get_gal_density(zmin, zmax):
 
     # volume in this bin
-    vol_allsky = cosmo.comoving_volume(zmax).value - cosmo.comoving_volume(zmin).value
-    vol = vol_allsky * fsky
-    print('gold volume %g [hiGpc^3]'%(vol * 1e-9))
+    #vol_allsky = cosmo.comoving_volume(zmax).value - cosmo.comoving_volume(zmin).value
+    #vol = vol_allsky * fsky
+    vol = volume_gold(zmin, zmax)
+    #print('gold volume %g [hiGpc^3]'%(vol * 1e-9))
 
     # count galaxies
     chi_min = cosmo.comoving_distance(zmin).value
@@ -54,6 +59,6 @@ for iz in range(nz):
     zmax = z_list[iz+1]
     zmid = 0.5*(zmin + zmax)
     ngal = get_gal_density(zmin, zmax)
-    print(zmid, ngal)
+    #print(zmid, ngal)
     outfile.write('%12g %12g\n'%(zmid, ngal))
 outfile.close()

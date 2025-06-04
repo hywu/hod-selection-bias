@@ -11,8 +11,12 @@ z_list = np.arange(0,5,0.0001)
 chi_list = cosmo.comoving_distance(z_list).value
 redshift_chi_interp = interp1d(chi_list, z_list)
 
-from magnitude_cut import mag_i_lim_Rykoff14
-from member_color_interp import *
+#from magnitude_cut import mag_i_lim_Rykoff14
+#from member_color_interp import *
+from red_sequence_model import mag_z_lim
+from red_sequence_model import g_r_vs_mag_redshift, sigma_g_r_vs_redshift
+from red_sequence_model import r_i_vs_mag_redshift, sigma_r_i_vs_redshift
+from red_sequence_model import i_z_vs_mag_redshift, sigma_i_z_vs_redshift
 
 chisq_cut = int(sys.argv[1])
 
@@ -64,32 +68,32 @@ def calc_one_bin(iz):
     zmin = zmin_list[iz]
     zmax = zmin + dz
     zmid = zmin + 0.5 *dz
-
     
-
-    '''
-    mag_i_cut = mag_i_lim_Rykoff14(zmid)
-    print('mag_i_cut', mag_i_cut)
-
-    g_r_mean = g_r_vs_redshift(zmid)
-    g_r_std = sigma_g_r_vs_redshift(zmid)
-
-    r_i_mean = r_i_vs_redshift(zmid)
-    r_i_std = sigma_r_i_vs_redshift(zmid)
-
-    i_z_mean = i_z_vs_redshift(zmid)
-    i_z_std = sigma_i_z_vs_redshift(zmid)
-    '''
-    sel = (z_all > zmin)&(z_all < zmax)
-
+    mag_z_cut = mag_z_lim(zmid)
+    #print('mag_z_cut', mag_z_cut)
+    sel = (z_all > zmin)&(z_all < zmax)&(mag_z_all < mag_z_cut)
     chi_gal = chi_all[sel]
     ra_gal = ra_all[sel] # deg
     dec_gal = dec_all[sel] 
 
-    g_r = mag_g_all[sel] - mag_r_all[sel]
-    r_i = mag_r_all[sel] - mag_i_all[sel]
-    i_z = mag_i_all[sel] - mag_z_all[sel]
+    mag_g = mag_g_all[sel]
+    mag_r = mag_r_all[sel]
+    mag_i = mag_i_all[sel]
+    mag_z = mag_z_all[sel]
 
+    g_r = mag_g - mag_r
+    r_i = mag_r - mag_i
+    i_z = mag_i - mag_z
+
+    g_r_mean = g_r_vs_mag_redshift(mag_z, zmid)
+    g_r_std = sigma_g_r_vs_redshift(zmid)
+
+    r_i_mean = r_i_vs_mag_redshift(mag_z, zmid)
+    r_i_std = sigma_r_i_vs_redshift(zmid)
+
+    i_z_mean = i_z_vs_mag_redshift(mag_z, zmid)
+    i_z_std = sigma_i_z_vs_redshift(zmid)
+    
     chisq = (g_r - g_r_mean)**2 / g_r_std**2
     chisq += (r_i - r_i_mean)**2 / r_i_std**2
     chisq += (i_z - i_z_mean)**2 / i_z_std**2
@@ -111,7 +115,7 @@ if __name__ == "__main__":
     n_parallel = len(zmin_list)
 
     #calc_one_bin(0)
-    
+    #exit()
     import os
     from concurrent.futures import ProcessPoolExecutor
     n_cpu = os.getenv('SLURM_CPUS_PER_TASK')
