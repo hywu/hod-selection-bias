@@ -8,6 +8,7 @@ from get_model import GetModel
 from get_data_vector import get_data_vector
 
 # ./run_mcmc.py s8Omhod all abacus_summit q180_bg_miscen lam counts 0 0 
+#./run_mcmc.py s8Omhod all cardinal q180 abun lensing 0 0 
 para_name = sys.argv[1] #'s8Omhod'
 emu_name = sys.argv[2]  #'all' # 'narrow'
 data_name = sys.argv[3] #'abacus_summit' #'flamingo'
