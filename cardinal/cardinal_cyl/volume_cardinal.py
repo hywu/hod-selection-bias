@@ -1,21 +1,8 @@
 #!/usr/bin/env python
-# %load_ext autoreload
-# %autoreload 2
-# import numpy as np
-# import matplotlib.pyplot as plt
-# plt.style.use('MNRAS')
-#from scipy import linalg
-#from scipy.interpolate import interp1d
 import h5py
 import fitsio
-
 from astropy.cosmology import FlatLambdaCDM
 cosmo = FlatLambdaCDM(H0=100, Om0=0.286) # Mpc/h units
-
-card_loc = '/projects/shuleic/shuleic_unify_HOD/shuleic_unify_HOD/Cardinalv3/'
-# zmin = 0.2
-# zmax = 0.35
-
 
 # Gold
 # use gold mask to get area
@@ -28,7 +15,6 @@ import healpy
 nside = 4096
 npix_tot = healpy.nside2npix(nside)
 fsky = npix/npix_tot
-print('gold area [sq deg] = ',  fsky * 41253.)
 
 def volume_gold(zmin, zmax):
     vol_allsky = cosmo.comoving_volume(zmax).value - cosmo.comoving_volume(zmin).value
@@ -53,11 +39,13 @@ def volume_redmapper(zmin, zmax):
         vol_allsky = cosmo.comoving_volume(z[iz+1]).value - cosmo.comoving_volume(z[iz]).value
         fsky = 0.5*(area[iz] + area[iz+1]) / 41253.
         vol += (vol_allsky * fsky)
-    print(vol)
+    #print(vol)
     #print('Redmapper volume = %g (Gpc/h)^3'%(vol*1e-9))
     # redmapper volume is smaller than gold
     return vol
 
 if __name__ == "__main__":
+    print('gold area [sq deg] = ',  fsky * 41253.)
+
     print(volume_gold(0.2,0.21))
     print(volume_redmapper(0.2,0.21))
