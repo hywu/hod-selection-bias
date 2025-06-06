@@ -24,6 +24,8 @@ class PlotAbundance(object):
             except yaml.YAMLError as exc:
                 print(exc)
         
+        self.binning = self.para.get('binning', 'Ncyl')
+
         #### For AbacusSummit ####
         if self.para['nbody'] == 'abacus_summit':
             cosmo_id = self.para.get('cosmo_id', None)
@@ -39,7 +41,6 @@ class PlotAbundance(object):
             #h = cosmo_abacus['hubble']
             Om0 = cosmo_abacus['OmegaM']
 
-            self.binning = self.para.get('binning', 'Ncyl')
             if self.binning == 'AB_scaling':
                 hod_para = get_hod_para(hod_id)
                 self.A = hod_para['A']
