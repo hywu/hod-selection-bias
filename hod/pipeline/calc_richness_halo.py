@@ -27,6 +27,11 @@ with open(yml_fname, 'r') as stream:
 
 redshift = para['redshift']
 
+model_name = para['model_name']
+rich_name = para['rich_name']
+miscen = para.get('miscen', False)
+
+
 #### For AbacusSummit ####
 if para['nbody'] == 'abacus_summit':
     cosmo_id = para.get('cosmo_id', None)
@@ -40,18 +45,18 @@ if para['nbody'] == 'abacus_summit':
     hod_id = para['hod_id']
     hod_para = get_hod_para(hod_id)
     depth = hod_para['depth']
-    f_miscen = hod_para['f_miscen']
-    tau_miscen = hod_para['tau_miscen']
+    if miscen == True:
+        f_miscen = hod_para['f_miscen']
+        tau_miscen = hod_para['tau_miscen']
 
 else:
     output_loc = para['output_loc']
     depth = para['depth']
-    f_miscen = para['f_miscen']
-    tau_miscen = para['tau_miscen']
+    if miscen == True:
+        f_miscen = para['f_miscen']
+        tau_miscen = para['tau_miscen']
 
-model_name = para['model_name']
-rich_name = para['rich_name']
-miscen = para.get('miscen', False)
+
 
 
 

@@ -1,28 +1,36 @@
-model_name: redmagic_chi6_1e-02_HBT #redmagic_6e-3 #  mstar2e+10 #
-#rich_name: q180_bg_miscen #  _R1_eps10 #lum #d90_env #d90_mass
-rich_name: d90_bg_miscen #  _R1_eps10 #lum #d90_env #d90_mass
+model_name: redmagic_chi6_1e-02_HBT
+#rich_name: q180_bg_miscen # done
+#rich_name: q180_bg # done
+#rich_name: d30_bg_miscen # done
+#rich_name: q180_R1_bg_miscen # done
+rich_name: d1_bg_miscen
 
 nbody: flamingo
-nbody_loc: /cosma8/data/dp004/flamingo/Runs/L1000N3600/HYDRO_FIDUCIAL/
-output_loc: /cosma8/data/do012/dc-wu5/cylinder/output_L1000N3600/HYDRO_FIDUCIAL/z0.3/
+#nbody_loc: /cosma8/data/dp004/flamingo/Runs/L1000N3600/HYDRO_FIDUCIAL/
+#output_loc: /cosma8/data/do012/dc-wu5/cylinder/output_L1000N3600/HYDRO_FIDUCIAL/z0.3/
+nbody_loc: /projects/hywu/cluster_sims/cluster_finding/data/flamingo/output_L1000N3600/HYDRO_FIDUCIAL/
+output_loc: /projects/hywu/cluster_sims/cluster_finding/data/flamingo/output_L1000N3600/HYDRO_FIDUCIAL/z0.3/
 redshift: 0.3
 
 # richness
 perc: True
 use_rlambda: True
+# use_rlambda: False
+# radius: 1
 save_members: False
 use_pmem: True
 # which_pmem: quad
 # depth: 180
 which_pmem: uniform
-depth: 90
+depth: 1
 subtract_background: True
-miscen: True
-f_miscen: 0.165
-tau_miscen: 0.166
+# miscen: True
+# f_miscen: 0.165
+# tau_miscen: 0.166
+miscen: False
 
-rank_proxy: mass #_R1_eps10 #lum #d90_env #lum #mass #
-rank_cut: 0 #1.e+9 #3.162277e12 #
+#rank_proxy: mass #_R1_eps10 #lum #d90_env #lum #mass #
+#rank_cut: 0 #1.e+9 #3.162277e12 #
 
 binning: abun
 
