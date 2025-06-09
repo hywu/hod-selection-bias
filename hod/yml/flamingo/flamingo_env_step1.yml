@@ -1,0 +1,30 @@
+model_name: redmagic_6e-3 # mstar2e+10 # 
+rich_name: d90_R1_eps10_env #_none #d90_lum #d90_mass
+
+nbody: flamingo
+nbody_loc: /cosma8/data/dp004/flamingo/Runs/L1000N3600/HYDRO_FIDUCIAL/
+output_loc: /cosma8/data/do012/dc-wu5/cylinder/output_L1000N3600/HYDRO_FIDUCIAL/
+
+redshift: 0.3
+
+# richness
+depth: 90
+perc: False #True
+rank_proxy: none #lum #mass #
+rank_cut: -1 #1.e+9 #3.162277e12 #
+use_cylinder: True
+use_pmem: False
+use_rlambda: False #True
+radius: 1 # -1
+save_members: False #True #False #
+use_rp_weight: True
+epsilon: 10
+
+# # Cosmology
+OmegaM: 0.3089 ##needed by HOD..
+
+mdef: vir
+
+pec_vel: False #True
+
+#sat_from_part: True
