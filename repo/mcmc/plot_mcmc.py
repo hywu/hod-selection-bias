@@ -16,8 +16,9 @@ data_name = sys.argv[3] #'abacus_summit' #'flamingo'
 rich_name = sys.argv[4] #'q180_bg_miscen'
 binning = sys.argv[5]
 data_vector_name = sys.argv[6] # 'counts', 'lensing'
-iz = int(sys.argv[7])
-run_id = int(sys.argv[8])
+cov_name = sys.argv[7] # 'desy1', 'area10k', 'nsrc50'
+iz = int(sys.argv[8])
+run_id = int(sys.argv[9])
 
 if data_vector_name == 'counts':
     data_vector = ['counts']
@@ -38,8 +39,8 @@ nsteps, nwalkers, lsteps, burnin, params_free_name, params_free_ini, params_rang
 
 
 
-out_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_mcmc/{emu_name}/mcmc_{data_name}/{binning}/{data_vector_name}/'
-plot_loc = f'../../plots/mcmc/{emu_name}/{data_name}/{binning}/{data_vector_name}/'
+out_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_mcmc/{emu_name}/mcmc_{data_name}/{binning}/{data_vector_name}/{cov_name}/'
+plot_loc = f'../../plots/mcmc/{emu_name}/{data_name}/{binning}/{data_vector_name}/{cov_name}/'
 
 out_file = f'{out_loc}/mcmc_{para_name}_{rich_name}_z{redshift}_run{run_id}.h5'
 print('output: ', out_file)
@@ -118,7 +119,7 @@ idx = np.random.randint(0, nsamples, size=nsub)
 subsample = flat_samples[idx]
 
 
-data_vec, cov = get_data_vector(data_name, rich_name, binning, iz, data_vector=data_vector)
+data_vec, cov = get_data_vector(data_name, rich_name, binning, iz, data_vector=data_vector, cov_name=cov_name)
 # data_vec = np.loadtxt(f'../data_vector/data_vector_{data_name}/data_vector_{rich_name}_{binning}_z{redshift}.dat')
 # cov = np.loadtxt(f'../data_vector/data_vector_abacus_summit/cov_z{redshift}.dat')
 
@@ -128,7 +129,7 @@ plt.figure(figsize=(14,7))
 #### counts
 if 'counts' in data_vector:
     gm = GetModel(emu_name, binning, iz, params_free_name, params_fixed_value, params_fixed_name, data_vector=['counts'])
-    data_vec, cov = get_data_vector(data_name, rich_name, binning, iz, data_vector=['counts'])
+    data_vec, cov = get_data_vector(data_name, rich_name, binning, iz, data_vector=['counts'], cov_name=cov_name)
 
     plt.subplot(1,2,1)
     x = np.arange(4)

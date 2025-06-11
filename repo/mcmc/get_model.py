@@ -8,15 +8,17 @@ from s3_pred_radius import Preddata_vector
 
 class GetModel(object): 
     def __init__(self, emu_name, binning, iz, params_free_name, params_fixed_value,
-                 params_fixed_name, data_vector=['counts','lensing'], **kwargs):
+                 params_fixed_name, data_vector=['counts','lensing'], survey_area=1437, **kwargs):
         self.binning = binning
         
         self.data_vector = data_vector
+        self.survey_area = survey_area
         self.pdv = Preddata_vector(emu_name, binning, iz, data_vector)
         self.params_fixed_name = params_fixed_name
         self.params_free_name = params_free_name
         self.params_fixed_value = params_fixed_value
         
+
     def get_kw(self, params):
         kw = {} # if there's extra keyword
         for i, pf in enumerate(self.params_fixed_name):
@@ -55,8 +57,9 @@ class GetModel(object):
         #     model = np.append(self.pdv.pred_abundance(X_input), self.pdv.pred_lensing(X_input))
 
         model = []
+        area_factor = self.survey_area / 1437.
         if 'counts' in self.data_vector:
-            model.extend(self.pdv.pred_abundance(X_input))
+            model.extend(self.pdv.pred_abundance(X_input) * area_factor)
         if 'lensing' in self.data_vector:
             model.extend(self.pdv.pred_lensing(X_input))
 
