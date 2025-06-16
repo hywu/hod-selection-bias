@@ -9,7 +9,7 @@ loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
 #emu_name = 'fixhod'
 #emu_name = 'fixcos'
 
-class Preddata_vector(object):
+class PredDataVector(object):
     def __init__(self, emu_name, binning, iz, data_vector=['counts','lensing']):
         zid = 3+iz
         train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/{binning}/'
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     X_test = np.atleast_2d(X_all[itest]) # just one set of parameters
 
     ####
-    pdv = Preddata_vector(emu_name, binning, iz)
+    pdv = PredDataVector(emu_name, binning, iz)
     #### lensing
     DS_pred = pdv.pred_lensing(X_test)
     DS_test = []

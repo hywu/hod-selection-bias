@@ -3,25 +3,28 @@ import numpy as np
 from numpy.random import default_rng
 import matplotlib.pyplot as plt
 import fitsio
-#import h5py
-import os
-import sys
+import os, sys
 import yaml
 from scipy.interpolate import interp1d
+from astropy.cosmology import FlatLambdaCDM
 
 import timeit
 start = timeit.default_timer()
 start_master = start * 1
 
 #sys.path.append('../utils')
+from hod.utils.get_para_abacus_summit import get_hod_para
 from hod.utils.read_sim import read_sim
 from hod.utils.measure_lensing import MeasureLensing
 from hod.utils.sample_matching_mass import sample_matching_mass
 from hod.utils.print_memory import print_memory
 
+# This code is really messy...
+
 class PlotLensing(object):
     def __init__(self, yml_fname, binning, thresholded=False):
-        #, abundance_matching=None, thresholded=False
+        #, abundance_matching=None # deprecated variable
+
         # binning: 'Ncyl', 'AB_scaling', 'abundance_matching'
 
         self.binning = binning
@@ -85,7 +88,6 @@ class PlotLensing(object):
             output_loc = para['output_loc']+f'/base_c{cosmo_id:0>3d}_ph{phase:0>3d}/z{z_str}/'
 
             if binning == 'AB_scaling':
-                from hod.utils.get_para_abacus_summit import get_hod_para
                 hod_para = get_hod_para(hod_id)
                 self.A = hod_para['A']
                 self.B = hod_para['B']
@@ -108,12 +110,32 @@ class PlotLensing(object):
         self.hubble = self.readcat.hubble
         self.vol = self.boxsize**3
 
+        
+
         if self.binning == 'abundance_matching':
             if self.survey == 'desy1':
+                survey_area_sq_deg = 1437
+                if redshift == 0.3:
+                     zmin = 0.2 
+                     zmax = 0.35
+                #### Y1 volume assuming this cosmology ####
+                from hod.utils.get_para_abacus_summit import get_cosmo_para, get_hod_para
+                cosmo_abacus = get_cosmo_para(cosmo_id)
+                Om0 = cosmo_abacus['OmegaM']
+                fsky = survey_area_sq_deg/41253.
+                cosmo = FlatLambdaCDM(H0=100, Om0=Om0)
+                self.desy1_vol = fsky * 4. * np.pi/3. * (cosmo.comoving_distance(zmax).value**3 - cosmo.comoving_distance(zmin).value**3) #* h**3  # (h/Mpc)**3
+                # TODO: use redmapper area to get the accurate volume
+
                 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
                 out_loc = os.path.join(BASE_DIR, '../y1/data/')
                 if redshift == 0.3: 
-                    cum_den = np.loadtxt(out_loc+'cluster_cumulative_density_z_0.2_0.35.dat')
+                    cum_counts = np.loadtxt(out_loc+'cluster_cumulative_counts_no_miscen_z_0.2_0.35.dat')
+                cum_den = cum_counts/self.desy1_vol
+                # BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+                # out_loc = os.path.join(BASE_DIR, '../y1/data/')
+                # if redshift == 0.3: 
+                #     cum_den = np.loadtxt(out_loc+'cluster_cumulative_density_z_0.2_0.35.dat')
             if self.survey == 'sdss':
                 cum_den = np.array([1.400836e-04])
 
@@ -121,9 +143,9 @@ class PlotLensing(object):
             counts_list = np.append(counts_list, 0)
             self.counts_min_list = counts_list[0:-1]
             self.counts_max_list = counts_list[1:]
-
+        
         if self.binning == 'abundance_matching':
-            self.outname = 'abun'
+            self.outname = 'abun2' # 'abun': buggy
         if self.binning == 'Ncyl':
             self.outname = 'lam'
         if self.binning == 'AB_scaling':

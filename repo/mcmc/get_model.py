@@ -4,7 +4,7 @@ import sys
 
 #### Define the model class
 sys.path.append('../emulator')
-from s3_pred_radius import Preddata_vector
+from s3_pred_radius import PredDataVector
 
 class GetModel(object): 
     def __init__(self, emu_name, binning, iz, params_free_name, params_fixed_value,
@@ -13,7 +13,7 @@ class GetModel(object):
         
         self.data_vector = data_vector
         self.survey_area = survey_area
-        self.pdv = Preddata_vector(emu_name, binning, iz, data_vector)
+        self.pdv = PredDataVector(emu_name, binning, iz, data_vector)
         self.params_fixed_name = params_fixed_name
         self.params_free_name = params_free_name
         self.params_fixed_value = params_fixed_value

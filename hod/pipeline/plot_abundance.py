@@ -76,7 +76,6 @@ class PlotAbundance(object):
 
         fsky = survey_area_sq_deg/41253.
         cosmo = FlatLambdaCDM(H0=100, Om0=Om0)
-        
         self.survey_vol = fsky * 4. * np.pi/3. * (cosmo.comoving_distance(zmax).value**3 - cosmo.comoving_distance(zmin).value**3) #* h**3  # (h/Mpc)**3
         #print('sim_vol', self.sim_vol)
         #print('survey_vol', self.survey_vol)
