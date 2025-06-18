@@ -1,9 +1,11 @@
 model_name: redmagic_chi6_1e-02_HBT
-#rich_name: q180_bg_miscen # done
+rich_name: q180_bg_miscen
 #rich_name: q180_bg # done
 #rich_name: d30_bg_miscen # done
 #rich_name: q180_R1_bg_miscen # done
-rich_name: d1_bg_miscen
+#rich_name: d1_bg_miscen
+### TODO! This is too prone to mistakes.  Write a script for generating different yml files.
+
 
 nbody: flamingo
 #nbody_loc: /cosma8/data/dp004/flamingo/Runs/L1000N3600/HYDRO_FIDUCIAL/
@@ -19,15 +21,15 @@ use_rlambda: True
 # radius: 1
 save_members: False
 use_pmem: True
-# which_pmem: quad
-# depth: 180
-which_pmem: uniform
-depth: 1
+which_pmem: quad
+depth: 180
+# which_pmem: uniform
+# depth: 1
 subtract_background: True
-# miscen: True
-# f_miscen: 0.165
-# tau_miscen: 0.166
-miscen: False
+miscen: True
+f_miscen: 0.165
+tau_miscen: 0.166
+#miscen: False
 
 #rank_proxy: mass #_R1_eps10 #lum #d90_env #lum #mass #
 #rank_cut: 0 #1.e+9 #3.162277e12 #
@@ -36,7 +38,7 @@ binning: abun
 
 # # Cosmology
 # # http://skiesanduniverses.org/Simulations/Uchuu/
-OmegaM: 0.3089 ##needed by HOD..
+OmegaM: 0.3089 ##needed by HOD and abundance matching...
 # OmegaL: 0.6911
 # hubble: 0.6774
 # sigma8: 0.8159

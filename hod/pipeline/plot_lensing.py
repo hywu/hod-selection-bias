@@ -13,7 +13,6 @@ start = timeit.default_timer()
 start_master = start * 1
 
 #sys.path.append('../utils')
-from hod.utils.get_para_abacus_summit import get_hod_para
 from hod.utils.read_sim import read_sim
 from hod.utils.measure_lensing import MeasureLensing
 from hod.utils.sample_matching_mass import sample_matching_mass
@@ -87,12 +86,18 @@ class PlotLensing(object):
             if redshift == 0.5: z_str = '0p500'
             output_loc = para['output_loc']+f'/base_c{cosmo_id:0>3d}_ph{phase:0>3d}/z{z_str}/'
 
+            from hod.utils.get_para_abacus_summit import get_hod_para
+
+            cosmo_abacus = get_cosmo_para(cosmo_id)
+            Om0 = cosmo_abacus['OmegaM']
+
             if binning == 'AB_scaling':
                 hod_para = get_hod_para(hod_id)
                 self.A = hod_para['A']
                 self.B = hod_para['B']
         else:
             output_loc = para['output_loc']
+            Om0 = para['OmegaM']
 
         #output_loc = para['output_loc']
         model_name = para['model_name']
@@ -120,8 +125,7 @@ class PlotLensing(object):
                      zmax = 0.35
                 #### Y1 volume assuming this cosmology ####
                 from hod.utils.get_para_abacus_summit import get_cosmo_para, get_hod_para
-                cosmo_abacus = get_cosmo_para(cosmo_id)
-                Om0 = cosmo_abacus['OmegaM']
+
                 fsky = survey_area_sq_deg/41253.
                 cosmo = FlatLambdaCDM(H0=100, Om0=Om0)
                 self.desy1_vol = fsky * 4. * np.pi/3. * (cosmo.comoving_distance(zmax).value**3 - cosmo.comoving_distance(zmin).value**3) #* h**3  # (h/Mpc)**3

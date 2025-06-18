@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 plt.style.use('MNRAS')
-import sys
+import os, sys
 import numpy as np
 import matplotlib.pyplot as plt
 import joblib
@@ -13,9 +13,9 @@ loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
 
 
 emu_name = sys.argv[1]
-binning = sys.argv[2]  #'AB' # 'lam' # 'abun'
+binning = sys.argv[2]
 iz = 0
-ilam = int(sys.argv[3]) # 0, 1, 2, 3
+ilam = int(sys.argv[3])
 
 alpha = 1e-6
 if emu_name == 'iter1':
@@ -30,6 +30,9 @@ if emu_name == 'iter1':
 zid = 3+iz
 train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/{binning}/'
 plot_loc = f'../../plots/emulator_train/{emu_name}/z0p{zid}00/{binning}/'
+
+if os.path.isdir(plot_loc) == False:
+    os.makedirs(plot_loc)
 
 data = np.loadtxt(f'{train_loc}/parameters_all.dat')
 X_all = data[:,1:]
@@ -130,7 +133,7 @@ from scipy.interpolate import interp1d
 DS_interp = interp1d(np.log(rp_in), np.log(DS_in))
 DS_data = (np.exp(DS_interp(np.log(rp_rad))))
 rp_in, DS_in = np.loadtxt(data_loc + f'DS_phys_noh_lam_bin_{ilam}.dat', unpack=True)
-cov_loc = '/users/hywu/work/cluster-lensing-cov-public/examples/abacus_summit_analytic/'
+cov_loc = '/users/hywu/work/cluster-lensing-cov-public/examples/abacus_summit_analytic_desy1/'
 lam = [20, 30, 45, 60, 1000]
 z = [0.2, 0.35, 0.5, 0.65]
 rp_cov = np.loadtxt(cov_loc + f'rp_phys_noh_{z[iz]}_{z[iz+1]}_{lam[ilam]}_{lam[ilam+1]}.dat')

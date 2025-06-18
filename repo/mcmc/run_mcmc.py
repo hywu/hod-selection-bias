@@ -7,12 +7,12 @@ import emcee
 from get_model import GetModel
 from get_data_vector import get_data_vector
 
-# ./run_mcmc.py s8Omhod all flamingo q180_bg_miscen lam counts area10k 0 0 
+# ./run_mcmc.py s8Omhod all abacus_summit q180_bg_miscen abun2 lensing desy1 0 0 
 para_name = sys.argv[1] #'s8Omhod'
 emu_name = sys.argv[2]  #'all' # 'narrow'
 data_name = sys.argv[3] #'abacus_summit' #'flamingo'
 rich_name = sys.argv[4] #'q180_bg_miscen'
-binning = sys.argv[5]
+binning = sys.argv[5] # 'lam', 'abun2'
 data_vector_name = sys.argv[6] # 'counts', 'lensing'
 cov_name = sys.argv[7] # 'desy1', 'area10k', 'nsrc50'
 iz = int(sys.argv[8])
