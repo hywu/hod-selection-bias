@@ -55,16 +55,19 @@ class CalcGalDen(object):
         self.vol = self.boxsize**3
 
     def calc_gal_den(self):
+        print('doing gal den')
         # calculate galaxy density
         den_fname = f'{self.out_path}/gal_density.dat'
-        if os.path.exists(den_fname) == False:
+        fsat_fname = f'{self.out_path}/fsat.dat'
+        if os.path.exists(fsat_fname) == False:
             # read in galaxies
             gal_cat_format = self.para.get('gal_cat_format', 'fits')
             if gal_cat_format == 'fits':
                 gal_fname = f'{self.out_path}/gals.fit'
                 data, header = fitsio.read(gal_fname, header=True)
                 x_gal_in = data['px']
-            
+                iscen = data['iscen']
+                print('read files')
             # if gal_cat_format == 'h5':
             #     import h5py
             #     loc = '/bsuhome/hwu/scratch/abacus_summit/'
@@ -77,9 +80,18 @@ class CalcGalDen(object):
             ngal = len(x_gal_in)/self.vol
             data = np.array([ngal]).transpose()
             np.savetxt(den_fname, data, fmt='%-12g', header='ngal (h^3 Mpc^-3)')
+
+            fsat = 1-len(iscen[iscen==1])/len(x_gal_in)
+            data = np.array([fsat]).transpose()
+            np.savetxt(fsat_fname, data, fmt='%-12g', header='fsat (N_cen / N_gal_tot)')
+            print('file saved', den_fname)
+            print('file saved', fsat_fname)
+
         else:
-            pass #print('gal density done')
-        print('file saved', den_fname)
+           pass #print('gal density done')
+
+
+
 
 if __name__ == "__main__":
     yml_fname = sys.argv[1]
