@@ -6,7 +6,8 @@ import os
 import sys
 import yaml
 from hod.utils.read_sim import read_sim
-from astropy.cosmology import FlatLambdaCDM
+#from astropy.cosmology import w0waCDM
+from astropy.cosmology import w0waCDM
 
 #sys.path.append('../utils')
 
@@ -40,6 +41,8 @@ class PlotAbundance(object):
             cosmo_abacus = get_cosmo_para(cosmo_id)
             #h = cosmo_abacus['hubble']
             Om0 = cosmo_abacus['OmegaM']
+            w0 = cosmo_abacus['w0']
+            wa = cosmo_abacus['wa']
 
             if self.binning == 'AB_scaling':
                 hod_para = get_hod_para(hod_id)
@@ -75,7 +78,9 @@ class PlotAbundance(object):
         print('abundance saved at:', self.ofname)
 
         fsky = survey_area_sq_deg/41253.
-        cosmo = FlatLambdaCDM(H0=100, Om0=Om0)
+        #cosmo = w0waCDM(H0=100, Om0=Om0)
+        Ode0 = 1 - Om0
+        cosmo = w0waCDM(H0=100, Om0=Om0, Ode0=Ode0, w0=w0, wa=wa)
         self.survey_vol = fsky * 4. * np.pi/3. * (cosmo.comoving_distance(zmax).value**3 - cosmo.comoving_distance(zmin).value**3) #* h**3  # (h/Mpc)**3
         #print('sim_vol', self.sim_vol)
         #print('survey_vol', self.survey_vol)
