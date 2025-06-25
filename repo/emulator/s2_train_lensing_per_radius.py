@@ -14,8 +14,9 @@ loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
 
 emu_name = sys.argv[1]
 binning = sys.argv[2]
+survey = sys.argv[3] #'desy1thre' # 'desy1'
 iz = 0
-ilam = int(sys.argv[3])
+ilam = int(sys.argv[4])
 
 alpha = 1e-6
 if emu_name == 'iter1':
@@ -28,8 +29,8 @@ if emu_name == 'iter1':
 #alpha = 1e-3 # for miscen
 
 zid = 3+iz
-train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/{binning}/'
-plot_loc = f'../../plots/emulator_train/{emu_name}/z0p{zid}00/{binning}/'
+train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/{survey}_{binning}/'
+plot_loc = f'../../plots/emulator_train/{emu_name}/z0p{zid}00/{survey}_{binning}/'
 
 if os.path.isdir(plot_loc) == False:
     os.makedirs(plot_loc)
@@ -126,13 +127,14 @@ plt.title(f'LOSOE, bin {ilam}, '+ r'$\alpha$=%.e'%alpha)
 #plt.ylim(-0.025, 0.025)
 
 #### add data error bars
-data_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_data/base_c000_ph000/z0p{zid}00/model_hod000000/obs_q180_desy1/'
+rich_name = 'q180_bg_miscen' #'q180_miscen'
+data_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_data/base_c000_ph000/z0p{zid}00/model_hod000000/obs_{rich_name}_{survey}/'
 rp_rad = np.loadtxt(train_loc + f'rp_rad.dat')
-rp_in, DS_in = np.loadtxt(data_loc + f'DS_phys_noh_lam_bin_{ilam}.dat', unpack=True)
+rp_in, DS_in = np.loadtxt(data_loc + f'DS_phys_noh_{binning}_bin_{ilam}.dat', unpack=True)
 from scipy.interpolate import interp1d
 DS_interp = interp1d(np.log(rp_in), np.log(DS_in))
 DS_data = (np.exp(DS_interp(np.log(rp_rad))))
-rp_in, DS_in = np.loadtxt(data_loc + f'DS_phys_noh_lam_bin_{ilam}.dat', unpack=True)
+#rp_in, DS_in = np.loadtxt(data_loc + f'DS_phys_noh_lam_bin_{ilam}.dat', unpack=True)
 cov_loc = '/users/hywu/work/cluster-lensing-cov-public/examples/abacus_summit_analytic_desy1/'
 lam = [20, 30, 45, 60, 1000]
 z = [0.2, 0.35, 0.5, 0.65]

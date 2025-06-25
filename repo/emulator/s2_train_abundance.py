@@ -13,11 +13,13 @@ loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
 
 emu_name = sys.argv[1]
 binning = sys.argv[2]  #'AB' # 'lam' # 'abun'
+survey = sys.argv[3] #'desy1thre' # 'desy1'
+
 iz = 0
 
 zid = 3+iz
-train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/{binning}'
-plot_loc = f'../../plots/emulator_train/{emu_name}/z0p{zid}00/{binning}'
+train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/{survey}_{binning}/'
+plot_loc = f'../../plots/emulator_train/{emu_name}/z0p{zid}00/{survey}_{binning}/'
 
 if os.path.isdir(plot_loc) == False:
     os.makedirs(plot_loc)
@@ -123,8 +125,12 @@ plt.title(f'LOSOE, '+ r'$\alpha$=%.e'%alpha)
 #plt.ylim(-0.025, 0.025)
 
 #### add data error bars
-data_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_data/base_c000_ph000/z0p{zid}00/model_hod000000/obs_q180_desy1/'
-x, x, NC_data = np.loadtxt(data_loc+'abundance.dat',unpack=True)
+data_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_data/base_c000_ph000/z0p{zid}00/model_hod000000/obs_q180_{survey}/'
+#x, x, NC_data = np.loadtxt(data_loc+'abundance.dat',unpack=True)
+if zid == 3:
+    Nc_data = np.array([762, 376, 123, 91]) # DES Y1 counts (no miscen)
+
+
 cov_loc = '/users/hywu/work/cluster-lensing-cov-public/examples/abacus_summit_analytic/'
 #cov_NC = np.diag(NC_data)
 lam = [20, 30, 45, 60, 1000]

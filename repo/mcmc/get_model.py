@@ -7,13 +7,13 @@ sys.path.append('../emulator')
 from s3_pred_radius import PredDataVector
 
 class GetModel(object): 
-    def __init__(self, emu_name, binning, iz, params_free_name, params_fixed_value,
+    def __init__(self, emu_name, binning, iz, survey, params_free_name, params_fixed_value,
                  params_fixed_name, data_vector=['counts','lensing'], survey_area=1437, **kwargs):
         self.binning = binning
         
         self.data_vector = data_vector
         self.survey_area = survey_area
-        self.pdv = PredDataVector(emu_name, binning, iz, data_vector)
+        self.pdv = PredDataVector(emu_name, binning, iz, survey, data_vector)
         self.params_fixed_name = params_fixed_name
         self.params_free_name = params_free_name
         self.params_fixed_value = params_fixed_value
@@ -68,7 +68,8 @@ class GetModel(object):
 
 if __name__ == "__main__":
     emu_name = 'all'
-    binning = 'lam'
+    binning = 'abun'#'lam'
+    survey = 'desy1thre'
     iz = 0
     zid = 3
     yml_name = f'yml/emcee_template.yml'
@@ -77,6 +78,6 @@ if __name__ == "__main__":
     nsteps, nwalkers, lsteps, burnin, params_free_name, params_free_ini, params_range,\
         params_fixed_name, params_fixed_value = parse.parse_yml()
 
-    gm = GetModel(emu_name, binning, iz, params_free_name, params_fixed_value, params_fixed_name, data_vector=['counts'])
+    gm = GetModel(emu_name, binning, iz, survey, params_free_name, params_fixed_value, params_fixed_name, data_vector=['lensing'])
     
 

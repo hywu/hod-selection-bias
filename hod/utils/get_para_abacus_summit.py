@@ -10,6 +10,9 @@ def get_cosmo_para(cosmo_id_wanted):
     df.columns = df.columns.str.replace(' ', '')
     #print(df.columns)
     nrows = df.shape[0]
+    
+    cosmo_dict = None # update if the cosmology exsits. otherwise return None
+
     for irow in range(nrows):
         # retrieve one cosmology at a time
         row = df.iloc[irow]
@@ -30,12 +33,14 @@ def get_cosmo_para(cosmo_id_wanted):
             #sigma8 = row['sigma8_cb'] # baryons-plus-cdm-only (CLASS)
             sigma8 = row['sigma8_m']
             ns = row['n_s']
-            break
+        
+            cosmo_dict = {'cosmo_id': cosmo_id, 'OmegaM': OmegaM, 'OmegaL': OmegaL,
+                'hubble': hubble,'sigma8': sigma8,'OmegaB': OmegaB,'ns': ns, 
+                'w0': row['w0_fld'], 'wa': row['wa_fld'], 'alpha_s': row['alpha_s'],
+                'Nur': row['N_ur']}
 
-    cosmo_dict = {'cosmo_id': cosmo_id, 'OmegaM': OmegaM, 'OmegaL': OmegaL,
-        'hubble': hubble,'sigma8': sigma8,'OmegaB': OmegaB,'ns': ns, 
-        'w0': row['w0_fld'], 'wa': row['wa_fld'], 'alpha_s': row['alpha_s'],
-        'Nur': row['N_ur']}
+            
+
     return cosmo_dict
 
 
@@ -68,11 +73,11 @@ def get_hod_para(hod_id_wanted):#, miscen=False):
     return row_output.to_dict() # converting a data frame to a dictionary
     
 if __name__ == "__main__":
-    #print(get_cosmo_para(0))
+    print(get_cosmo_para(5))
 
 
-    print(get_hod_para(0))
-    print(get_hod_para(14))
-    print(get_hod_para(18))
+    # print(get_hod_para(0))
+    # print(get_hod_para(14))
+    # print(get_hod_para(18))
     #print(get_hod_para(201))
     #print(get_hod_para(2051))

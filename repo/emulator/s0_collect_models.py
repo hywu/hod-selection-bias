@@ -8,6 +8,7 @@ data_loc = loc + 'emulator_data/'
 
 emu_name = sys.argv[1]
 binning = sys.argv[2]  #'AB' # 'lam' # 'abun'
+survey = sys.argv[3]  #'desy1thre' # 'desy1'
 iz = 0
 
 if emu_name == 'fixhod':
@@ -43,7 +44,7 @@ cosmo_id_list_check = cosmo_id_list_check.astype(int)
 hod_id_list_check = hod_id_list_check.astype(int)
 
 zid = 3+iz
-train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/{binning}/'
+train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/{survey}_{binning}/'
 if os.path.isdir(train_loc) == False:
     os.makedirs(train_loc)
 
@@ -56,14 +57,17 @@ cosmo_id_list = []
 hod_id_list = []
 
 
-x, x, Nc_target = np.loadtxt(f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_data/base_c000_ph000/z0p{zid}00/model_hod000000/obs_q180_desy1/abundance.dat', unpack=True) # TODO: change to DES counts
+# x, x, Nc_target = np.loadtxt(f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_data/base_c000_ph000/z0p{zid}00/model_hod000000/obs_q180_bg_miscen_{survey}/abundance.dat', unpack=True) # TODO: change to DES counts
+if zid == 3:
+    Nc_target = np.array([762, 376, 123, 91]) # DES Y1 counts (no miscen)
+
 
 for cosmo_id in cosmo_id_list_check:
     #cosmo_para = get_cosmo_para(cosmo_id)
     for hod_id in hod_id_list_check:
         model_name = f'hod{hod_id:0>6d}'
         out_path = data_loc + f'base_c{cosmo_id:0>3d}_ph{phase:0>3d}/z0p{zid}00/model_{model_name}/'
-        survey = 'desy1'
+        
         obs_path = f'{out_path}/obs_{rich_name}_{survey}/'
 
         ### Check abundance 
@@ -79,7 +83,11 @@ for cosmo_id in cosmo_id_list_check:
                 pass #print('unrealistic Nc, stop this model')
             else:
                 #print('reasonable Nc')
-                lens_fname = f'{obs_path}/DS_phys_noh_{binning}_bin_3.dat'
+                if survey == 'desy1':
+                    lens_fname = f'{obs_path}/DS_phys_noh_{binning}_bin_3.dat'
+                if survey == 'desy1thre':
+                    lens_fname = f'{obs_path}/DS_phys_noh_{binning}_bin_0.dat'
+
                 if os.path.exists(lens_fname):
 
                     cosmo_id_list.append(cosmo_id)

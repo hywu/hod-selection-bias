@@ -19,6 +19,7 @@ data_vector_name = sys.argv[6] # 'counts', 'lensing'
 cov_name = sys.argv[7] # 'desy1', 'area10k', 'nsrc50'
 iz = int(sys.argv[8])
 run_id = int(sys.argv[9])
+survey = 'desy1thre'
 
 if data_vector_name == 'counts':
     data_vector = ['counts']
@@ -39,8 +40,8 @@ nsteps, nwalkers, lsteps, burnin, params_free_name, params_free_ini, params_rang
 
 
 
-out_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_mcmc/{emu_name}/mcmc_{data_name}/{binning}/{data_vector_name}/{cov_name}/'
-plot_loc = f'../../plots/mcmc/{emu_name}/{data_name}/{binning}/{data_vector_name}/{cov_name}/'
+out_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_mcmc/{emu_name}/mcmc_{data_name}/{survey}_{binning}/{data_vector_name}/{cov_name}/'
+plot_loc = f'../../plots/mcmc/{emu_name}/{data_name}/{survey}_{binning}/{data_vector_name}/{cov_name}/'
 
 out_file = f'{out_loc}/mcmc_{para_name}_{rich_name}_z{redshift}_run{run_id}.h5'
 print('output: ', out_file)
@@ -84,7 +85,8 @@ fig = c.plotter.plot()
 
 #### Plot the emulator range
 loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
-train_loc = loc + f'emulator_train/{emu_name}/z0p{3+iz}00/{binning}/'
+#train_loc = loc + f'emulator_train/{emu_name}/z0p{3+iz}00/{binning}/'
+train_loc = loc + f'emulator_train/{emu_name}/z0p{3+iz}00/{survey}_{binning}/'
 df = pd.read_csv(f'{train_loc}/parameters.csv')
 df = df[parse.params_free_name]
 
@@ -119,7 +121,12 @@ idx = np.random.randint(0, nsamples, size=nsub)
 subsample = flat_samples[idx]
 
 
-data_vec, cov = get_data_vector(data_name, rich_name, binning, iz, data_vector=data_vector, cov_name=cov_name)
+if cov_name=='area10k':
+    survey_area = 10_000.
+else:
+    survey_area = 1437.
+
+data_vec, cov = get_data_vector(data_name, rich_name, binning, iz, survey=survey, data_vector=data_vector, survey_area=survey_area, cov_name=cov_name)
 # data_vec = np.loadtxt(f'../data_vector/data_vector_{data_name}/data_vector_{rich_name}_{binning}_z{redshift}.dat')
 # cov = np.loadtxt(f'../data_vector/data_vector_abacus_summit/cov_z{redshift}.dat')
 
@@ -128,8 +135,8 @@ plt.figure(figsize=(14,7))
 
 #### counts
 if 'counts' in data_vector:
-    gm = GetModel(emu_name, binning, iz, params_free_name, params_fixed_value, params_fixed_name, data_vector=['counts'])
-    data_vec, cov = get_data_vector(data_name, rich_name, binning, iz, data_vector=['counts'], cov_name=cov_name)
+    gm = GetModel(emu_name, binning, iz, survey, params_free_name, params_fixed_value, params_fixed_name, data_vector=['counts'])
+    data_vec, cov = get_data_vector(data_name, rich_name, binning, survey, iz, data_vector=['counts'], cov_name=cov_name)
 
     plt.subplot(1,2,1)
     x = np.arange(4)
@@ -157,8 +164,8 @@ if 'lensing' in data_vector:
     #     lensing_vec = data_vec[4:]
     #     lensing_sigma = sigma[4:]
 
-    gm = GetModel(emu_name, binning, iz, params_free_name, params_fixed_value, params_fixed_name, data_vector=['lensing'])
-    data_vec, cov = get_data_vector(data_name, rich_name, binning, iz, data_vector=['lensing'])
+    gm = GetModel(emu_name, binning, iz, survey, params_free_name, params_fixed_value, params_fixed_name, data_vector=['lensing'])
+    data_vec, cov = get_data_vector(data_name, rich_name, binning, iz, survey, data_vector=['lensing'])
     sigma = np.sqrt(np.diag(cov))
 
     for ibin in range(4):

@@ -7,17 +7,17 @@ import emcee
 from get_model import GetModel
 from get_data_vector import get_data_vector
 
-# ./run_mcmc.py s8Omhod all abacus_summit q180_bg_miscen abun2 lensing desy1 0 0 
+# ./run_mcmc.py s8Omhod all abacus_summit q180_bg_miscen abun lensing desy1thre 0 0 
 para_name = sys.argv[1] #'s8Omhod'
 emu_name = sys.argv[2]  #'all' # 'narrow'
 data_name = sys.argv[3] #'abacus_summit' #'flamingo'
 rich_name = sys.argv[4] #'q180_bg_miscen'
-binning = sys.argv[5] # 'lam', 'abun2'
+binning = sys.argv[5] # 'lam', 'abun'
 data_vector_name = sys.argv[6] # 'counts', 'lensing'
-cov_name = sys.argv[7] # 'desy1', 'area10k', 'nsrc50'
+cov_name = sys.argv[7] # 'desy1', 'area10k', 'nsrc50', 'desy1thre'
 iz = int(sys.argv[8])
 run_id = int(sys.argv[9])
-
+survey = cov_name
 
 if data_vector_name == 'counts':
     data_vector = ['counts']
@@ -37,8 +37,8 @@ nsteps, nwalkers, lsteps, burnin, params_free_name, params_free_ini, params_rang
         params_fixed_name, params_fixed_value = parse.parse_yml()
 
 
-out_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_mcmc/{emu_name}/mcmc_{data_name}/{binning}/{data_vector_name}/{cov_name}/'
-plot_loc = f'../../plots/mcmc/{emu_name}/{data_name}/{binning}/{data_vector_name}/{cov_name}/'
+out_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_mcmc/{emu_name}/mcmc_{data_name}/{survey}_{binning}/{data_vector_name}/'
+plot_loc = f'../../plots/mcmc/{emu_name}/{data_name}/{survey}_{binning}/{data_vector_name}/'
 if os.path.isdir(out_loc) == False:
     os.makedirs(out_loc)
 if os.path.isdir(plot_loc) == False:
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     else:
         survey_area = 1437.
 
-    data_vec, cov = get_data_vector(data_name, rich_name, binning, iz, data_vector=data_vector, survey_area=survey_area, cov_name=cov_name)
+    data_vec, cov = get_data_vector(data_name, rich_name, binning, iz, survey=survey, data_vector=data_vector, survey_area=survey_area, cov_name=cov_name)
     print(data_vector)
     print('data vector size', len(data_vec))
 
@@ -81,7 +81,7 @@ if __name__ == "__main__":
 
     #### Define the likelihood
     from emcee_tools import LnLikelihood, runmcmc
-    gm = GetModel(emu_name, binning, iz, params_free_name, params_fixed_value, params_fixed_name, data_vector=data_vector, survey_area=survey_area)
+    gm = GetModel(emu_name, binning, iz, survey, params_free_name, params_fixed_value, params_fixed_name, data_vector=data_vector, survey_area=survey_area)
     lnlike = LnLikelihood(data_vec, cov, gm.model, params_range,
                                  params_free_name, params_fixed_value, params_fixed_name)
 
