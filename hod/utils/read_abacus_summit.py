@@ -15,6 +15,8 @@ class ReadAbacusSummit(object):
         cosmo_para = get_cosmo_para(cosmo_id)
         self.hubble = cosmo_para['hubble']
         self.OmegaM = cosmo_para['OmegaM']
+        self.w0 = cosmo_para['w0']
+        self.wa = cosmo_para['wa']
 
         if redshift == 0.3: z_str = '0p300'
         if redshift == 0.4: z_str = '0p400'

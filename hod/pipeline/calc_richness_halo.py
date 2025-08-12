@@ -57,10 +57,6 @@ else:
         tau_miscen = para['tau_miscen']
 
 
-
-
-
-
 out_path = f'{output_loc}/model_{model_name}/'
 
 if os.path.isdir(out_path)==False:
@@ -129,11 +125,16 @@ readcat.read_halos(Mmin, pec_vel=pec_vel)#, cluster_only=True)
 boxsize = readcat.boxsize
 OmegaM = readcat.OmegaM
 hubble = readcat.hubble
+w0 = readcat.w0 # only works for AbacusSummit right now
+wa = readcat.wa # same as above
 hid_in = readcat.hid
 mass_in = readcat.mass
 
 OmegaDE = 1 - OmegaM
-Ez = np.sqrt(OmegaM * (1+redshift)**3 + OmegaDE)
+
+a = 1/(1+redshift)
+OmegaDEz = OmegaDE * a**(-3*(1+w0+wa)) * np.exp(-3*wa*(1-a))
+Ez = np.sqrt(OmegaM * a**(-3) + OmegaDEz)
 
 if los == 'z':
     x_halo_in = readcat.xh
