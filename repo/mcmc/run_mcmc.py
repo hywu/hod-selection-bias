@@ -7,17 +7,20 @@ import emcee
 from get_model import GetModel
 from get_data_vector import get_data_vector
 
+# ./run_mcmc.py s8Omhod all desy1 redmapper lam counts_lensing desy1 0 0 
+# ./run_mcmc.py s8Omnsashod all abacus_summit q180_bg_miscen lam counts_lensing 5k10 0 0 
 # ./run_mcmc.py s8Omhod all abacus_summit q180_bg_miscen abun lensing desy1thre 0 0 
 para_name = sys.argv[1] #'s8Omhod'
 emu_name = sys.argv[2]  #'all' # 'narrow'
 data_name = sys.argv[3] #'abacus_summit' #'flamingo'
 rich_name = sys.argv[4] #'q180_bg_miscen'
 binning = sys.argv[5] # 'lam', 'abun'
-data_vector_name = sys.argv[6] # 'counts', 'lensing'
-cov_name = sys.argv[7] # 'desy1', 'area10k', 'nsrc50', 'desy1thre'
+data_vector_name = sys.argv[6] # 'counts', 'lensing', 'counts_lensing'
+#cov_name = sys.argv[7] # 'desy1', 'area10k', 'nsrc50', 'desy1thre'
+survey = sys.argv[7] # 'desy1', 'area10k', 'nsrc50', 'desy1thre'
 iz = int(sys.argv[8])
 run_id = int(sys.argv[9])
-survey = cov_name
+cov_name = survey # cov_name should be deprecated
 
 if data_vector_name == 'counts':
     data_vector = ['counts']

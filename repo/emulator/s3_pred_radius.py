@@ -16,10 +16,10 @@ class PredDataVector(object):
         train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/{survey}_{binning}/'
         self.train_loc = train_loc
 
-        if survey == 'desy1':
-            self.nbins = 4
         if survey == 'desy1thre':
             self.nbins = 1
+        else:
+            self.nbins = 4
 
         if 'counts' in data_vector:
             # emulator for abundance 

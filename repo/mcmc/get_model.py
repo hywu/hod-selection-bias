@@ -39,8 +39,9 @@ class GetModel(object):
         OmegaB = params['OmegaB']
         w0 = params['w0']
         wa = params['wa']
+        alpha_s = params['alpha_s']
         #sigma8, OmegaM, ns, Ob0, w0, wa, Nur, alpha_s
-        cosmo_para = np.array([sigma8, OmegaM, ns, OmegaB, w0, wa, 2.0328, 0])
+        cosmo_para = np.array([sigma8, OmegaM, ns, OmegaB, w0, wa, 2.0328, alpha_s])
         
         alpha = params['alpha']
         lgM1 = params['lgM1']
@@ -57,7 +58,7 @@ class GetModel(object):
         #     model = np.append(self.pdv.pred_abundance(X_input), self.pdv.pred_lensing(X_input))
 
         model = []
-        area_factor = self.survey_area / 1437.
+        area_factor = self.survey_area / 1437. # emultor was trained on 1437
         if 'counts' in self.data_vector:
             model.extend(self.pdv.pred_abundance(X_input) * area_factor)
         if 'lensing' in self.data_vector:
