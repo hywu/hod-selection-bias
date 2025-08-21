@@ -131,9 +131,9 @@ class PlotLensing(object):
         print('lens saved at', self.fname5)
 
 
-    def set_up_abundance_matching(self, match_to='desy1'):
+    def set_up_abundance_matching(self):
         # calculate expected counts in Abacus, assuming current cosmology
-        if match_to == 'desy1' and self.survey == 'desy1' or self.survey == 'desy1thre':
+        if self.survey == 'desy1' or self.survey == 'desy1thre':
             survey_area_sq_deg = 1437
             if self.redshift == 0.3:
                  zmin = 0.2 
@@ -155,10 +155,11 @@ class PlotLensing(object):
         self.counts_min_list = counts_list[0:-1]
         self.counts_max_list = counts_list[1:]
         
-        if match_to == 'flamingo':
+        if self.survey == 'flamingo':
             pass
-            ##TODO
-
+            #### Y1 volume
+            
+            #### get flamingo counts
 
 
     def read_particles(self):
