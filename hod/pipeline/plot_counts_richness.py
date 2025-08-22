@@ -39,7 +39,7 @@ class PlotCountsRichness(object):
         self.rich_name = self.para['rich_name'] #+ f'{self.depth}'
         self.out_path = f'{output_loc}/model_{model_name}'
         redshift = self.para['redshift']
-        self.survey = self.para.get('survey', 'desy1')
+        self.observation = self.para.get('observation', 'desy1')
 
         #los = self.para.get('los', 'z')
         # if los == 'xyz':
@@ -69,7 +69,7 @@ class PlotCountsRichness(object):
 
         # if os.path.isdir(f'{self.out_path}/obs_{self.rich_name}/')==False: 
         #     os.makedirs(f'{self.out_path}/obs_{self.rich_name}/')
-        self.obs_path = f'{self.out_path}/obs_{self.rich_name}_{self.survey}/'
+        self.obs_path = f'{self.out_path}/obs_{self.rich_name}_{self.observation}/'
         #print('obs_path', self.obs_path)
         if os.path.isdir(self.obs_path)==False: 
             os.makedirs(self.obs_path)

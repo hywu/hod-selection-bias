@@ -43,24 +43,24 @@ class PlotLensing(object):
         self.redshift = para['redshift']
         self.scale_factor = 1./ (1. + self.redshift)
 
-        self.survey = para.get('survey', 'desy1')
+        self.observation = para.get('observation', 'desy1')
 
-        if self.survey == 'desy1':
+        if self.observation == 'desy1':
             self.lam_min_list = np.array([20, 30, 45, 60])
             self.lam_max_list = np.array([30, 45, 60, 1000])
             self.nbins = len(self.lam_min_list)
 
-        if self.survey == 'desy1thre':
+        if self.observation == 'desy1thre':
             self.lam_min_list = np.array([20])
             self.lam_max_list = np.array([1000])
             self.nbins = len(self.lam_min_list)
 
-        if self.survey == 'sdss':
+        if self.observation == 'sdss':
             self.lam_min_list = np.array([5])
             self.lam_max_list = np.array([140])
             self.nbins = len(self.lam_min_list)
 
-        if self.survey == 'sdssbins':
+        if self.observation == 'sdssbins':
             self.lam_min_list = np.array([20, 30, 45, 60])
             self.lam_max_list = np.array([30, 45, 60, 1000])
             self.nbins = len(self.lam_min_list)
@@ -119,7 +119,7 @@ class PlotLensing(object):
         else:
             self.outname += '_bin'
 
-        self.obs_path = f'{self.out_path}/obs_{self.rich_name}_{self.survey}/'
+        self.obs_path = f'{self.out_path}/obs_{self.rich_name}_{self.observation}/'
         if os.path.isdir(self.obs_path)==False: 
             os.makedirs(self.obs_path)
 
@@ -133,7 +133,7 @@ class PlotLensing(object):
 
     def set_up_abundance_matching(self):
         # calculate expected counts in Abacus, assuming current cosmology
-        if self.survey == 'desy1' or self.survey == 'desy1thre':
+        if self.observation == 'desy1' or self.observation == 'desy1thre':
             survey_area_sq_deg = 1437
             if self.redshift == 0.3:
                  zmin = 0.2 
@@ -155,7 +155,7 @@ class PlotLensing(object):
         self.counts_min_list = counts_list[0:-1]
         self.counts_max_list = counts_list[1:]
         
-        if self.survey == 'flamingo':
+        if self.observation == 'flamingo':
             pass
             #### Y1 volume
             

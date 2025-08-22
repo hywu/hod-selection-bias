@@ -71,14 +71,14 @@ else:
 
 #if los == 'z':
 #obs_path = out_path+f'obs_{rich_name}/'
-survey = para.get('survey', 'desy1')
-obs_path = f'{out_path}/obs_{rich_name}_{survey}/'
+observation = para.get('observation', 'desy1')
+obs_path = f'{out_path}/obs_{rich_name}_{observation}/'
 
 #else:
 #    obs_path = out_path+f'obs_d{depth}_{los}/'
-if survey == 'desy1':
+if observation == 'desy1':
     lens_fname = obs_path+'DS_abun_bin_3.dat'
-if survey == 'sdss':
+if observation == 'sdss':
     lens_fname = obs_path+'DS_abun_bin_0.dat'
 
 if os.path.exists(lens_fname):
