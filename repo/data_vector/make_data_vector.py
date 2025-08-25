@@ -3,9 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 import os
+import fitsio
 
 # make the fake data
-# !!!Note!!!  Not scaled by survey area!  For emulator purpuse
+# !!!Note!!!  Counts are for desy1 area. Counts not scaled by survey area!  For emulator purpuse
 # area scaling is done when running MCMC
 
 #observation = 'flamingo' #
@@ -73,12 +74,20 @@ for observation in ['flamingo', 'abacus_summit']:
     DS_data = np.array(DS_data)
     np.savetxt(f'data_vector_{observation}/lensing_{rich_name}_z{redshift}.dat', DS_data)
     
-    #### counts data ####
+    #### counts data (4 bins) ####
     x, x, NC_data = np.loadtxt(data_loc+'abundance.dat',unpack=True)
     np.savetxt(f'data_vector_{observation}/counts_{rich_name}_z{redshift}.dat', NC_data)
 
-    #### counts ####
+    #### cumulative cluster counts (4 thresholds) ####
+    #print(NC_data)
+    cumNC = np.cumsum(NC_data[::-1])
+    #print(cumNC)
+    cumNC = cumNC[::-1]
+    #print(cumNC)
+    np.savetxt(f'data_vector_{observation}/cum_counts_{rich_name}_z{redshift}.dat', cum_NC)
+
+    #### galaxy density ####
     ngal = np.atleast_1d(ngal)
     np.savetxt(f'data_vector_{observation}/ngal_z{redshift}.dat', ngal)
 
-    #### cumulative density ####
+

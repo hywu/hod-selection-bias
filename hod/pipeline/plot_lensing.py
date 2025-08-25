@@ -133,34 +133,33 @@ class PlotLensing(object):
 
     def set_up_abundance_matching(self):
         # calculate expected counts in Abacus, assuming current cosmology
+
+        if self.observation == 'flamingo' or self.observation == 'abacus_summit':
+            cum_counts = np.loadtxt(f'../../repo/data_vector/data_vector_{self.observation}/cum_counts_{rich_name}_z{redshift}.dat')
+
         if self.observation == 'desy1' or self.observation == 'desy1thre':
-            survey_area_sq_deg = 1437
-            if self.redshift == 0.3:
-                 zmin = 0.2 
-                 zmax = 0.35
-            #### Y1 volume assuming this cosmology ####
-            fsky = survey_area_sq_deg/41253.
-            Ode0 = 1 - self.Om0
-            cosmo = w0waCDM(H0=100, Om0=self.Om0, Ode0=Ode0, w0=self.w0, wa=self.wa)
-            desy1_vol = fsky * 4. * np.pi/3. * (cosmo.comoving_distance(zmax).value**3 - cosmo.comoving_distance(zmin).value**3) # (Mpc/h)**3
-            # TODO: use redmapper area to get the accurate volume
-            BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-            out_loc = os.path.join(BASE_DIR, '../y1/data/')
-            #if self.redshift == 0.3: 
             cum_counts = np.loadtxt(out_loc+f'cluster_cumulative_counts_no_miscen_z_{zmin}_{zmax}.dat')
-            cum_den = cum_counts/desy1_vol
+
+        #### all uses 1437 deg2 ####
+        survey_area_sq_deg = 1437
+        if self.redshift == 0.3:
+             zmin = 0.2 
+             zmax = 0.35
+        #### Y1 volume assuming this cosmology ####
+        fsky = survey_area_sq_deg/41253.
+        Ode0 = 1 - self.Om0
+        cosmo = w0waCDM(H0=100, Om0=self.Om0, Ode0=Ode0, w0=self.w0, wa=self.wa)
+        desy1_vol = fsky * 4. * np.pi/3. * (cosmo.comoving_distance(zmax).value**3 - cosmo.comoving_distance(zmin).value**3) # (Mpc/h)**3
+        # TODO: use redmapper area to get the accurate volume
+        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+        out_loc = os.path.join(BASE_DIR, '../y1/data/')
+        #if self.redshift == 0.3: 
+        cum_den = cum_counts/desy1_vol
 
         counts_list = np.array(np.around(cum_den * self.vol)+1e-4, dtype=int)
         counts_list = np.append(counts_list, 0)
         self.counts_min_list = counts_list[0:-1]
         self.counts_max_list = counts_list[1:]
-        
-        if self.observation == 'flamingo':
-            pass
-            #### Y1 volume
-            
-            #### get flamingo counts
-
 
     def read_particles(self):
         print_memory('before reading particles')

@@ -17,7 +17,7 @@ from astropy.cosmology import w0waCDM
 #### comoving density * comoving volume => observed counts
 
 class PlotAbundance(object):
-    def __init__(self, yml_fname, zmin, zmax, survey_area_sq_deg):
+    def __init__(self, yml_fname, zmin, zmax): #, survey_area_sq_deg
 
         with open(yml_fname, 'r') as stream:
             try:
@@ -57,9 +57,9 @@ class PlotAbundance(object):
         self.rich_name = self.para['rich_name']
         self.out_path = f'{output_loc}/model_{model_name}'
         redshift = self.para['redshift']
-        self.survey = self.para.get('survey', 'desy1')
+        self.observation = self.para.get('observation', 'desy1')
 
-        self.obs_path = f'{self.out_path}/obs_{self.rich_name}_{self.survey}/'
+        self.obs_path = f'{self.out_path}/obs_{self.rich_name}_{self.observation}/'
 
         if os.path.isdir(self.obs_path)==False: 
             os.makedirs(self.obs_path)
@@ -77,13 +77,14 @@ class PlotAbundance(object):
             self.ofname = f'{self.obs_path}/abundance_AB.dat'
         print('abundance saved at:', self.ofname)
 
+        survey_area_sq_deg = 1437  #### fixed at DESY1 area!
         fsky = survey_area_sq_deg/41253.
         #cosmo = w0waCDM(H0=100, Om0=Om0)
         Ode0 = 1 - Om0
         cosmo = w0waCDM(H0=100, Om0=Om0, Ode0=Ode0, w0=w0, wa=wa)
-        self.survey_vol = fsky * 4. * np.pi/3. * (cosmo.comoving_distance(zmax).value**3 - cosmo.comoving_distance(zmin).value**3) #* h**3  # (h/Mpc)**3
+        self.observation_vol = fsky * 4. * np.pi/3. * (cosmo.comoving_distance(zmax).value**3 - cosmo.comoving_distance(zmin).value**3) #* h**3  # (h/Mpc)**3
         #print('sim_vol', self.sim_vol)
-        #print('survey_vol', self.survey_vol)
+        #print('survey_vol', self.observation_vol)
 
 
     def calc_abundance(self, rich_fname=None): # allow intput fits file name directly
@@ -104,7 +105,7 @@ class PlotAbundance(object):
         counts_list = []
         for ilam in range(len(lambda_min_list)):
             sel = (lam >= lambda_min_list[ilam]) * (lam < lambda_max_list[ilam])
-            counts_list.append(len(lam[sel]) / self.sim_vol * self.survey_vol)
+            counts_list.append(len(lam[sel]) / self.sim_vol * self.observation_vol)
 
         data = np.array([lambda_min_list, lambda_max_list, counts_list]).transpose()
         np.savetxt(self.ofname, data, fmt='%-12g', header='lam_min, lam_max, counts')
@@ -112,6 +113,6 @@ class PlotAbundance(object):
 
 if __name__ == "__main__":
     yml_fname = sys.argv[1]
-    ccr = PlotAbundance(yml_fname, zmin=0.2, zmax=0.35, survey_area_sq_deg=1437)
+    ccr = PlotAbundance(yml_fname, zmin=0.2, zmax=0.35)
     ccr.calc_abundance()
 
