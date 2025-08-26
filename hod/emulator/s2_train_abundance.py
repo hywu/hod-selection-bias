@@ -13,13 +13,14 @@ loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
 
 emu_name = sys.argv[1]
 binning = sys.argv[2]  #'AB' # 'lam' # 'abun'
-survey = sys.argv[3] #'desy1thre' # 'desy1'
+observation = sys.argv[3] #'desy1thre' # 'desy1'
+rich_name = 'q180_bg_miscen' #'q180_miscen'
 
 iz = 0
 
 zid = 3+iz
-train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/{survey}_{binning}/'
-plot_loc = f'../../plots/emulator_train/{emu_name}/z0p{zid}00/{survey}_{binning}/'
+train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/{observation}_{binning}/'
+plot_loc = f'../../plots/emulator_train/{emu_name}/z0p{zid}00/{observation}_{binning}/'
 
 if os.path.isdir(plot_loc) == False:
     os.makedirs(plot_loc)
@@ -125,7 +126,7 @@ plt.title(f'LOSOE, '+ r'$\alpha$=%.e'%alpha)
 #plt.ylim(-0.025, 0.025)
 
 #### add data error bars
-data_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_data/base_c000_ph000/z0p{zid}00/model_hod000000/obs_q180_{survey}/'
+data_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_data/base_c000_ph000/z0p{zid}00/model_hod000000/obs_{rich_name}_{observation}/'
 #x, x, NC_data = np.loadtxt(data_loc+'abundance.dat',unpack=True)
 if zid == 3:
     Nc_data = np.array([762, 376, 123, 91]) # DES Y1 counts (no miscen)

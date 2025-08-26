@@ -14,7 +14,8 @@ loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
 
 emu_name = sys.argv[1]
 binning = sys.argv[2]
-survey = sys.argv[3] #'desy1thre' # 'desy1'
+observation = sys.argv[3] #'desy1thre' # 'desy1'
+rich_name = 'q180_bg_miscen' #'q180_miscen'
 iz = 0
 ilam = int(sys.argv[4])
 
@@ -29,8 +30,8 @@ if emu_name == 'iter1':
 #alpha = 1e-3 # for miscen
 
 zid = 3+iz
-train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/{survey}_{binning}/'
-plot_loc = f'../../plots/emulator_train/{emu_name}/z0p{zid}00/{survey}_{binning}/'
+train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/{observation}_{binning}/'
+plot_loc = f'../../plots/emulator_train/{emu_name}/z0p{zid}00/{observation}_{binning}/'
 
 if os.path.isdir(plot_loc) == False:
     os.makedirs(plot_loc)
@@ -127,8 +128,7 @@ plt.title(f'LOSOE, bin {ilam}, '+ r'$\alpha$=%.e'%alpha)
 #plt.ylim(-0.025, 0.025)
 
 #### add data error bars
-rich_name = 'q180_bg_miscen' #'q180_miscen'
-data_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_data/base_c000_ph000/z0p{zid}00/model_hod000000/obs_{rich_name}_{survey}/'
+data_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_data/base_c000_ph000/z0p{zid}00/model_hod000000/obs_{rich_name}_{observation}/'
 rp_rad = np.loadtxt(train_loc + f'rp_rad.dat')
 rp_in, DS_in = np.loadtxt(data_loc + f'DS_phys_noh_{binning}_bin_{ilam}.dat', unpack=True)
 from scipy.interpolate import interp1d

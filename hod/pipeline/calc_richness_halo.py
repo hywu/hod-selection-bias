@@ -125,7 +125,7 @@ readcat.read_halos(Mmin, pec_vel=pec_vel)#, cluster_only=True)
 boxsize = readcat.boxsize
 OmegaM = readcat.OmegaM
 hubble = readcat.hubble
-w0 = readcat.w0 # only works for AbacusSummit right now
+w0 = readcat.w0 # only works for AbacusSummit and Mini Uchuu right now
 wa = readcat.wa # same as above
 hid_in = readcat.hid
 mass_in = readcat.mass

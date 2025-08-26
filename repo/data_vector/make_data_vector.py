@@ -84,7 +84,7 @@ for observation in ['flamingo', 'abacus_summit']:
     #print(cumNC)
     cumNC = cumNC[::-1]
     #print(cumNC)
-    np.savetxt(f'data_vector_{observation}/cum_counts_{rich_name}_z{redshift}.dat', cum_NC)
+    np.savetxt(f'data_vector_{observation}/cum_counts_{rich_name}_z{redshift}.dat', cumNC, fmt='%g')
 
     #### galaxy density ####
     ngal = np.atleast_1d(ngal)

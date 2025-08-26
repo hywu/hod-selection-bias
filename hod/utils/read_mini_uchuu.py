@@ -12,6 +12,8 @@ class ReadMiniUchuu(object):
 
         self.hubble = 0.6774 #snap_header.HubbleParam 
         self.OmegaM = 0.3089 #snap_header.Omega0
+        self.w0 = -1
+        self.wa = 0
         self.boxsize = 400. #snap_header.BoxSize
         self.mpart = 3.270422e+11 #snap_header.mass[1] * 1e10 * 1000
         self.redshift = redshift

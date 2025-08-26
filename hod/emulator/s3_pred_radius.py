@@ -6,17 +6,14 @@ import os
 import joblib
 
 loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
-#emu_name = 'fixhod'
-#emu_name = 'fixcos'
 
 class PredDataVector(object):
-    def __init__(self, emu_name, binning, iz, survey, data_vector=['lensing']): #'counts',
-        #, survey='desy1thre'
+    def __init__(self, emu_name, binning, iz, observation, data_vector=['lensing']):
         zid = 3+iz
-        train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/{survey}_{binning}/'
+        train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/{observation}_{binning}/'
         self.train_loc = train_loc
 
-        if survey == 'desy1thre':
+        if observation == 'desy1thre':
             self.nbins = 1
         else:
             self.nbins = 4
@@ -57,23 +54,20 @@ class PredDataVector(object):
         return np.exp(pred_list)
 
 if __name__ == "__main__":
-    # load some cosmo parameters
-    #emu_name='fixcos'
     emu_name = 'all'
     binning = 'abun'
     iz = 0
+    observation = 'flamingo'
     zid = 3
-    pdv = PredDataVector(emu_name, binning, iz)
+    pdv = PredDataVector(emu_name, binning, iz, observation)
     train_loc = pdv.train_loc
-    #train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/{binning}/'
 
+    # load some cosmo parameters
     data = np.loadtxt(f'{train_loc}/parameters_all.dat')
     X_all = data[:,1:]
     itest = 0
     X_test = np.atleast_2d(X_all[itest]) # just one set of parameters
 
-    ####
-    
     #### lensing
     DS_pred = pdv.pred_lensing(X_test)
     DS_test = []
@@ -82,6 +76,7 @@ if __name__ == "__main__":
         DS_test.extend(np.exp(data[itest]))
     #print('len(DS_test)', len(DS_test))
     print('DS err', (DS_pred - DS_test)/DS_test)
+    
     '''
     #### abundance
     abun_pred = pdv.pred_abundance(X_test)

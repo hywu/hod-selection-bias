@@ -18,7 +18,6 @@ from hod.utils.sample_matching_mass import sample_matching_mass
 from hod.utils.print_memory import print_memory
 from hod.utils.get_para_abacus_summit import get_cosmo_para, get_hod_para
 
-
 class PlotLensing(object):
     def __init__(self, yml_fname, binning, thresholded=False):
         # binning: 'abun', 'lam', 'AB'
@@ -45,7 +44,7 @@ class PlotLensing(object):
 
         self.observation = para.get('observation', 'desy1')
 
-        if self.observation == 'desy1':
+        if self.observation in ['desy1', 'flamingo', 'abacus_summit']:
             self.lam_min_list = np.array([20, 30, 45, 60])
             self.lam_max_list = np.array([30, 45, 60, 1000])
             self.nbins = len(self.lam_min_list)
@@ -132,28 +131,26 @@ class PlotLensing(object):
 
 
     def set_up_abundance_matching(self):
-        # calculate expected counts in Abacus, assuming current cosmology
+        print('self.redshift', self.redshift)
+        if self.redshift == 0.3:
+            zmin = 0.2 
+            zmax = 0.35
 
+        # calculate expected counts in Abacus, assuming current cosmology
         if self.observation == 'flamingo' or self.observation == 'abacus_summit':
-            cum_counts = np.loadtxt(f'../../repo/data_vector/data_vector_{self.observation}/cum_counts_{rich_name}_z{redshift}.dat')
+            cum_counts = np.loadtxt(f'../../repo/data_vector/data_vector_{self.observation}/cum_counts_{self.rich_name}_z{self.redshift}.dat')
 
         if self.observation == 'desy1' or self.observation == 'desy1thre':
-            cum_counts = np.loadtxt(out_loc+f'cluster_cumulative_counts_no_miscen_z_{zmin}_{zmax}.dat')
+            cum_counts = np.loadtxt(f'../../observations/y1/data/cluster_cumulative_counts_no_miscen_z_{zmin}_{zmax}.dat')
 
         #### all uses 1437 deg2 ####
         survey_area_sq_deg = 1437
-        if self.redshift == 0.3:
-             zmin = 0.2 
-             zmax = 0.35
-        #### Y1 volume assuming this cosmology ####
+
+        #### Y1 volume assuming this box's cosmology ####
         fsky = survey_area_sq_deg/41253.
         Ode0 = 1 - self.Om0
         cosmo = w0waCDM(H0=100, Om0=self.Om0, Ode0=Ode0, w0=self.w0, wa=self.wa)
         desy1_vol = fsky * 4. * np.pi/3. * (cosmo.comoving_distance(zmax).value**3 - cosmo.comoving_distance(zmin).value**3) # (Mpc/h)**3
-        # TODO: use redmapper area to get the accurate volume
-        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-        out_loc = os.path.join(BASE_DIR, '../y1/data/')
-        #if self.redshift == 0.3: 
         cum_den = cum_counts/desy1_vol
 
         counts_list = np.array(np.around(cum_den * self.vol)+1e-4, dtype=int)
@@ -380,7 +377,7 @@ class PlotLensing(object):
         DS_all = []
         for ibin in range(self.nbins):
 
-            fname = f'../y1/data/y1_DS_bin_z_0.2_0.35_lam_{ibin}.dat'
+            fname = f'../../observations/y1/data/y1_DS_bin_z_0.2_0.35_lam_{ibin}.dat'
             rp_y1 = np.loadtxt(fname)[:,0]
 
             if self.binning == 'lam':
@@ -429,7 +426,7 @@ class PlotLensing(object):
 
 if __name__ == "__main__":
 
-    #./plot_lensing.py ../yml/mini_uchuu/mini_uchuu_fid_hod.yml
+    #./plot_lensing.py ../yml/mini_uchuu/mini_uchuu_fid_hod.yml abun False
 
     yml_fname = sys.argv[1]
     binning = sys.argv[2]

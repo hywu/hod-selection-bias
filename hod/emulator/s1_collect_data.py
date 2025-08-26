@@ -11,16 +11,15 @@ data_loc = loc + 'emulator_data/'
 
 emu_name = sys.argv[1]
 binning = sys.argv[2]  #'AB' # 'lam' # 'abun'
-survey = sys.argv[3] #'desy1thre' # 'desy1'
+observation = sys.argv[3] #'desy1thre' # 'desy1'
+rich_name = 'q180_bg_miscen' #'q180_miscen'
 iz = 0
+phase = 0
+
 
 zid = 3+iz
-train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/{survey}_{binning}/'
+train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/{observation}_{binning}/'
 
-#### data vector specs ####
-emu_name = 'rad'
-rich_name = 'q180_bg_miscen' #'q180_miscen'
-phase = 0
 
 cosmo_id_list, hod_id_list = np.loadtxt(train_loc+'models_done.dat', unpack=True, dtype=int)
 
@@ -37,8 +36,6 @@ outfile_all = open(f'{train_loc}/parameters_all.dat', 'w')
 outfile_all.write('# master_id, sigma8, Om0, ns, Ob0, w0, wa, Nur, alpha_s, ')
 outfile_all.write('alpha, lgM1, lgkappa, lgMcut, sigmalogM \n')
 
-#for cosmo_id in cosmo_id_list:
-#    for hod_id in hod_id_list:
 for imodel in range(n_models):
     cosmo_id = cosmo_id_list[imodel]
     hod_id = hod_id_list[imodel]
@@ -58,14 +55,10 @@ for imodel in range(n_models):
 #### no train-test split.  Use LOOE later
 #### all units are phys, no-h.  
 
-### training set for pca: many radial bins
-### training set for bin: DES radial bins
-
+# training set for pca: many radial bins
 rp_master_pca = np.logspace(-2,2,100)
-#rp_master_rad, DS, DS_err = np.loadtxt(f'../../hod/y1/data/y1_DS_bin_z_0.2_0.35_lam_20_30.dat', unpack=True)
 
-# rp_master_rad = np.logspace(np.log10(0.03), np.log10(30), 15)
-# rp_master_rad = rp_master_rad[rp_master_rad>0.2]
+# training set for bin: DES radial bins
 rp_list = np.logspace(np.log10(0.03), np.log10(30), 15+1)
 rpmin_list = rp_list[:-1]
 rpmax_list = rp_list[1:]
@@ -73,9 +66,9 @@ rpmid_list = np.sqrt(rpmin_list*rpmax_list)
 rp_master_rad = rpmid_list[rpmid_list>0.2]
 print('len(rp_rad) = ', len(rp_master_rad))
 
-if survey == 'desy1':
+if observation in ['desy1', 'flamingo', 'abacus_summit']:
     nlam = 4
-if survey == 'desy1thre':
+if observation == 'desy1thre':
     nlam = 1
     
 for ilam in range(nlam):
@@ -91,7 +84,7 @@ for ilam in range(nlam):
 
         model_name = f'hod{hod_id:0>6d}'
         out_path = data_loc + f'base_c{cosmo_id:0>3d}_ph{phase:0>3d}/z0p{zid}00/model_{model_name}/'
-        lens_fname = f'{out_path}/obs_{rich_name}_{survey}/DS_phys_noh_{binning}_bin_{ilam}.dat'
+        lens_fname = f'{out_path}/obs_{rich_name}_{observation}/DS_phys_noh_{binning}_bin_{ilam}.dat'
         rp, DS = np.loadtxt(lens_fname, unpack=True)
         x = np.log(rp)
         y = np.log(DS)
@@ -125,7 +118,7 @@ for imodel in range(n_models):
 
     model_name = f'hod{hod_id:0>6d}'
     out_path = data_loc + f'base_c{cosmo_id:0>3d}_ph{phase:0>3d}/z0p{zid}00/model_{model_name}/'
-    abun_fname = f'{out_path}/obs_{rich_name}_desy1/abundance.dat'
+    abun_fname = f'{out_path}/obs_{rich_name}_{observation}/abundance.dat'
     lam_min, lam_max, abun = np.loadtxt(abun_fname, unpack=True)
     for x in abun:
         outfile_abun.write('%12g \t'%np.log(x))

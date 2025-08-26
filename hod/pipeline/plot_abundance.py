@@ -51,6 +51,9 @@ class PlotAbundance(object):
 
         else:
            output_loc = self.para['output_loc']
+           Om0 = self.para['OmegaM']
+           w0 = self.para['w0']
+           wa = self.para['wa']
 
         model_name = self.para['model_name']
 

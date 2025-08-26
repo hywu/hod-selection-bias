@@ -6,8 +6,6 @@ import os
 import sys
 import yaml
 
-# Note!  Aways run the enire pipeline when 
-
 #./pipeline.py ../yml/mini_uchuu/mini_uchuu_fid_hod.yml
 
 yml_fname = '../yml/mini_uchuu/mini_uchuu_fid_hod.yml'  #sys.argv[1]
@@ -38,6 +36,8 @@ else:
 model_name = para['model_name']
 rich_name = para['rich_name']
 out_path = f'{output_loc}/model_{model_name}/'
+binning = para['binning']
+
 # los_in = para.get('los', 'z')
 # if los_in == 'xyz':
 #     los_list = ['x', 'y', 'z']
@@ -53,6 +53,8 @@ else:
     print('need galaxies')
     os.system(f'./make_gal_cat.py {yml_fname}')
 
+#### calculate galaxy density ####
+os.system(f'./calc_gal_den.py {yml_fname}')
 
 
 #### calculate richness ####
@@ -66,17 +68,24 @@ if os.path.exists(fname):
 else:
     print('need richness')
     os.system(f'./calc_richness_halo.py {yml_fname}')
-
-#### calculate lensing ####
+    miscen = para.get('miscen', False)
+    if miscen == True: # one more iteration
+        os.system(f'./calc_richness_halo.py {yml_fname}')
 
 #if los == 'z':
 #obs_path = out_path+f'obs_{rich_name}/'
+#else:
+#    obs_path = out_path+f'obs_d{depth}_{los}/'
+
 observation = para.get('observation', 'desy1')
 obs_path = f'{out_path}/obs_{rich_name}_{observation}/'
 
-#else:
-#    obs_path = out_path+f'obs_d{depth}_{los}/'
-if observation == 'desy1':
+#### calculate cluster counts ####
+os.system(f'./plot_abundance.py {yml_fname}')
+
+#### calculate lensing ####
+
+if observation in ['desy1', 'flamingo', 'abacus_summit']:
     lens_fname = obs_path+'DS_abun_bin_3.dat'
 if observation == 'sdss':
     lens_fname = obs_path+'DS_abun_bin_0.dat'
@@ -85,11 +94,11 @@ if os.path.exists(lens_fname):
     print('lensing done')
 else:
     print('need lensing')
-    os.system(f'./plot_lensing.py {yml_fname}')
-    #from plot_lensing import PlotLensing
-    #plmu = PlotLensing(yml_fname, abundance_matching=True, thresholded=False)
-    #plmu.calc_lensing()
+    thresholded = False
+    os.system(f'./plot_lensing.py {yml_fname} {binning} {thresholded}')
 
+
+'''
 #### calculate counts vs. richness ####
 if os.path.exists(obs_path+'/counts_richness.dat'):
     print('counts done')
@@ -99,7 +108,7 @@ else:
     # from plot_counts_richness import PlotCountsRichness
     # ccr = PlotCountsRichness(yml_fname)#, model_id, depth)
     # ccr.calc_counts_richness()
-
+'''
 
 # if los_in == 'xyz':
 #     os.system(f'./avg_xyz_lensing.py {yml_fname}')
