@@ -6,9 +6,7 @@ import os
 import sys
 import yaml
 
-#./pipeline.py ../yml/mini_uchuu/mini_uchuu_fid_hod.yml
-
-yml_fname = '../yml/mini_uchuu/mini_uchuu_fid_hod.yml'  #sys.argv[1]
+yml_fname = 'yml/mini_uchuu/mini_uchuu_fid_hod.yml'
 
 with open(yml_fname, 'r') as stream:
     try:

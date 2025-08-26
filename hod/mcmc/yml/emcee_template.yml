@@ -41,6 +41,16 @@ params:
           type: "TopHat"
           values: [0.901200, 1.024900]
 
+    - name: "alpha_s"
+      label: $\alpha_s$
+      vary: False
+      value: 0
+      truth: 0
+      lsteps: 0.001
+      prior:
+          type: "TopHat"
+          values: [-0.1, 0.1] # TODO
+
     - name: "OmegaB"
       label: $\Omega_b$
       vary: False

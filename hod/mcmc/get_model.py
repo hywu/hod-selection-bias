@@ -7,17 +7,17 @@ sys.path.append('../emulator')
 from s3_pred_radius import PredDataVector
 
 class GetModel(object): 
-    def __init__(self, emu_name, binning, iz, survey, params_free_name, params_fixed_value,
-                 params_fixed_name, data_vector=['counts','lensing'], survey_area=1437, **kwargs):
+    def __init__(self, emu_name, binning, iz, observation, 
+        params_free_name, params_fixed_value,
+        params_fixed_name, data_vector=['counts','lensing'], survey_area=1437, **kwargs):
         self.binning = binning
         
         self.data_vector = data_vector
         self.survey_area = survey_area
-        self.pdv = PredDataVector(emu_name, binning, iz, survey, data_vector)
+        self.pdv = PredDataVector(emu_name, binning, iz, observation, data_vector)
         self.params_fixed_name = params_fixed_name
         self.params_free_name = params_free_name
         self.params_fixed_value = params_fixed_value
-        
 
     def get_kw(self, params):
         kw = {} # if there's extra keyword
@@ -58,7 +58,7 @@ class GetModel(object):
         #     model = np.append(self.pdv.pred_abundance(X_input), self.pdv.pred_lensing(X_input))
 
         model = []
-        area_factor = self.survey_area / 1437. # emultor was trained on 1437
+        area_factor = self.survey_area / 1437. # emultor was based on 1437
         if 'counts' in self.data_vector:
             model.extend(self.pdv.pred_abundance(X_input) * area_factor)
         if 'lensing' in self.data_vector:
@@ -70,7 +70,7 @@ class GetModel(object):
 if __name__ == "__main__":
     emu_name = 'all'
     binning = 'abun'#'lam'
-    survey = 'desy1thre'
+    observation = 'flamingo' # = 'desy1thre'
     iz = 0
     zid = 3
     yml_name = f'yml/emcee_template.yml'
@@ -79,6 +79,6 @@ if __name__ == "__main__":
     nsteps, nwalkers, lsteps, burnin, params_free_name, params_free_ini, params_range,\
         params_fixed_name, params_fixed_value = parse.parse_yml()
 
-    gm = GetModel(emu_name, binning, iz, survey, params_free_name, params_fixed_value, params_fixed_name, data_vector=['lensing'])
+    gm = GetModel(emu_name, binning, iz, observation, params_free_name, params_fixed_value, params_fixed_name, data_vector=['lensing'])
     
 

@@ -1,4 +1,4 @@
-model_name: fid_hod #fid_hod_z0.1
+model_name: test #fid_hod #fid_hod_z0.1
 rich_name: q180_bg_miscen
 observation: flamingo # desy1 # abacus_summit
 
