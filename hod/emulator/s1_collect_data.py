@@ -85,6 +85,10 @@ for ilam in range(nlam):
         model_name = f'hod{hod_id:0>6d}'
         out_path = data_loc + f'base_c{cosmo_id:0>3d}_ph{phase:0>3d}/z0p{zid}00/model_{model_name}/'
         lens_fname = f'{out_path}/obs_{rich_name}_{observation}/DS_phys_noh_{binning}_bin_{ilam}.dat'
+
+        if binning == 'lam': # all observations share the same training set
+            lens_fname = f'{out_path}/obs_{rich_name}_abacus_summit/DS_phys_noh_{binning}_bin_{ilam}.dat'
+
         rp, DS = np.loadtxt(lens_fname, unpack=True)
         x = np.log(rp)
         y = np.log(DS)
@@ -118,7 +122,7 @@ for imodel in range(n_models):
 
     model_name = f'hod{hod_id:0>6d}'
     out_path = data_loc + f'base_c{cosmo_id:0>3d}_ph{phase:0>3d}/z0p{zid}00/model_{model_name}/'
-    abun_fname = f'{out_path}/obs_{rich_name}_{observation}/abundance.dat'
+    abun_fname = f'{out_path}/obs_{rich_name}_abacus_summit/abundance.dat'
     lam_min, lam_max, abun = np.loadtxt(abun_fname, unpack=True)
     for x in abun:
         outfile_abun.write('%12g \t'%np.log(x))

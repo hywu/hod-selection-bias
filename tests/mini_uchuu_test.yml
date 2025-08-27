@@ -4,7 +4,8 @@ observation: flamingo # desy1 # abacus_summit
 
 nbody: mini_uchuu
 nbody_loc: /projects/hywu/cluster_sims/cluster_finding/data/MiniUchuu/
-output_loc: /projects/hywu/cluster_sims/cluster_finding/data/hod-selection-bias/output_mini_uchuu/
+output_loc: ./
+#/projects/hywu/cluster_sims/cluster_finding/data/hod-selection-bias/output_mini_uchuu/
 redshift: 0.3 #0.1
 
 # HOD parameters 

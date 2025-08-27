@@ -126,13 +126,13 @@ plt.title(f'LOSOE, '+ r'$\alpha$=%.e'%alpha)
 #plt.ylim(-0.025, 0.025)
 
 #### add data error bars
-data_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_data/base_c000_ph000/z0p{zid}00/model_hod000000/obs_{rich_name}_{observation}/'
-#x, x, NC_data = np.loadtxt(data_loc+'abundance.dat',unpack=True)
-if zid == 3:
-    Nc_data = np.array([762, 376, 123, 91]) # DES Y1 counts (no miscen)
+data_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_data/base_c000_ph000/z0p{zid}00/model_hod000000/obs_{rich_name}_abacus_summit/'
+x, x, NC_data = np.loadtxt(data_loc+'abundance.dat',unpack=True)
+# if zid == 3:
+#     NC_data = np.array([762, 376, 123, 91]) # DES Y1 counts (no miscen)
 
 
-cov_loc = '/users/hywu/work/cluster-lensing-cov-public/examples/abacus_summit_analytic/'
+cov_loc = '/users/hywu/work/cluster-lensing-cov-public/examples/abacus_summit_analytic_desy1/'
 #cov_NC = np.diag(NC_data)
 lam = [20, 30, 45, 60, 1000]
 z = [0.2, 0.35, 0.5, 0.65]

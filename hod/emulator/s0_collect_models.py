@@ -58,7 +58,11 @@ for cosmo_id in cosmo_id_list_check:
     for hod_id in hod_id_list_check:
         model_name = f'hod{hod_id:0>6d}'
         out_path = data_loc + f'base_c{cosmo_id:0>3d}_ph{phase:0>3d}/z0p{zid}00/model_{model_name}/'
+
+
         obs_path = f'{out_path}/obs_{rich_name}_{observation}/'
+        if binning == 'lam': # all observations share the same training set
+            obs_path = f'{out_path}/obs_{rich_name}_abacus_summit/'
 
         if observation in ['desy1', 'flamingo', 'abacus_summit']:
             lens_fname = f'{obs_path}/DS_phys_noh_{binning}_bin_3.dat'
