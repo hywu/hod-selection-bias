@@ -61,8 +61,6 @@ for cosmo_id in cosmo_id_list_check:
 
 
         obs_path = f'{out_path}/obs_{rich_name}_{observation}/'
-        if binning == 'lam': # all observations share the same training set
-            obs_path = f'{out_path}/obs_{rich_name}_abacus_summit/'
 
         if observation in ['desy1', 'flamingo', 'abacus_summit']:
             lens_fname = f'{obs_path}/DS_phys_noh_{binning}_bin_3.dat'

@@ -11,7 +11,6 @@ from sklearn.gaussian_process.kernels import RBF
 
 loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
 
-
 emu_name = sys.argv[1]
 binning = sys.argv[2]
 observation = sys.argv[3] #'desy1thre' # 'desy1'
@@ -135,7 +134,7 @@ from scipy.interpolate import interp1d
 DS_interp = interp1d(np.log(rp_in), np.log(DS_in))
 DS_data = (np.exp(DS_interp(np.log(rp_rad))))
 #rp_in, DS_in = np.loadtxt(data_loc + f'DS_phys_noh_lam_bin_{ilam}.dat', unpack=True)
-cov_loc = '/users/hywu/work/cluster-lensing-cov-public/examples/abacus_summit_analytic_desy1/'
+cov_loc = '/users/hywu/work/cluster-lensing-cov-public/examples/abacus_summit_analytic_5k10/'
 lam = [20, 30, 45, 60, 1000]
 z = [0.2, 0.35, 0.5, 0.65]
 rp_cov = np.loadtxt(cov_loc + f'rp_phys_noh_{z[iz]}_{z[iz+1]}_{lam[ilam]}_{lam[ilam+1]}.dat')
