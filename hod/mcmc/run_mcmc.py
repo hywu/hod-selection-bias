@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.style.use('MNRAS')
 import os, sys
+from pathlib import Path
 import emcee
 from get_model import GetModel
 from get_data_vector import get_data_vector
@@ -13,7 +14,7 @@ AttributeError: 'EnsembleSampler' object has no attribute '_previous_state'
 ==> delete the old h5 file!
 '''
 
-# ./run_mcmc.py s8Omhod all abacus_summit q180_bg_miscen abun lensing 5k10 0 0 
+# ./run_mcmc.py s8Omhod all flamingo q180_bg_miscen lam counts 5k10 0 0 
 
 para_name = sys.argv[1] # 's8Omhod'
 emu_name = sys.argv[2]  # 'all', 'narrow'
@@ -47,6 +48,15 @@ plot_loc = f'../../plots/mcmc/{observation}_{rich_name}_{binning}_{data_vector_n
 chain_name = f'{para_name}_{emu_name}_{cov_name}_z{redshift}_run{run_id}'
 out_file = f'{out_loc}/mcmc_{chain_name}.h5'
 print('output: ', out_file)
+
+### check if it's done
+if os.path.exists(out_file):
+    file_size = Path(out_file).stat().st_size
+    if file_size >  200 * 1024 * 1024: # 200 MB in bytes
+        print('MCMC done')
+        sys.exit()
+
+
 
 if os.path.isdir(out_loc) == False:
     os.makedirs(out_loc)

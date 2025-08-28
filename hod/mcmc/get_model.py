@@ -14,7 +14,10 @@ class GetModel(object):
         
         self.data_vector = data_vector
         self.survey_area = survey_area
-        self.pdv = PredDataVector(emu_name, binning, iz, observation, data_vector)
+        if binning == 'lam': # all obsevations sharing the same emulator
+            self.pdv = PredDataVector(emu_name, binning, iz, 'abacus_summit', data_vector)
+        else:
+            self.pdv = PredDataVector(emu_name, binning, iz, observation, data_vector)
         self.params_fixed_name = params_fixed_name
         self.params_free_name = params_free_name
         self.params_fixed_value = params_fixed_value
