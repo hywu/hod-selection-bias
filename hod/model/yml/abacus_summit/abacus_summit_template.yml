@@ -1,0 +1,49 @@
+cosmo_id: 0
+hod_id: 0
+rich_name: q180
+model_name: hodtest
+
+nbody: abacus_summit
+nbody_loc: /projects/hywu/cluster_sims/cluster_finding/data/AbacusSummit_base/
+output_loc: /projects/hywu/cluster_sims/cluster_finding/data/emulator_data/
+redshift: 0.3
+phase: 0
+
+# galaxies 
+mdef: vir
+sat_from_part: False
+
+# richness
+perc: True
+use_rlambda: True
+save_members: False
+use_pmem: True
+which_pmem: quad
+depth: 180
+subtract_background: False
+
+Mmin: 1.e+14 # TODO! Save time for now
+
+
+#### Results are here ####
+#/projects/hywu/cluster_sims/cluster_finding/data/emulator_data/base_c000_ph000/z0p300/model_hodtest
+
+#### Read from CSV ####
+# HOD parameters
+# read from the csv
+# alpha: 1
+# lgM1: 12.9
+# lgkappa: 0
+# lgMcut: 11.7
+# sigmalogM: 0.1
+# sigmaintr: 0
+# Cosmology
+# it will read from the CSV
+#https://abacussummit.readthedocs.io/en/latest/cosmologies.html
+# OmegaM: 0.31519
+# OmegaL: 0.68481
+# hubble: 0.6736
+# sigma8: 0.807952
+# OmegaB: 0.04930
+# ns: 0.9649
+

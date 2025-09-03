@@ -14,7 +14,7 @@ AttributeError: 'EnsembleSampler' object has no attribute '_previous_state'
 ==> delete the old h5 file!
 '''
 
-# ./run_mcmc.py s8Omhod all flamingo q180_bg_miscen lam counts 5k10 0 0 
+# ./run_mcmc.py s8Omhod all flamingo q180_bg_miscen lam counts_lensing desy1 0 0 
 
 para_name = sys.argv[1] # 's8Omhod'
 emu_name = sys.argv[2]  # 'all', 'narrow'
