@@ -6,7 +6,10 @@ import glob
 #### cosmo_c***_ph***_z0p***.param files seem unreliable. 
 #### read directly from the csv file
 def get_cosmo_para(cosmo_id_wanted):
-    df = pd.read_csv('/projects/hywu/cluster_sims/cluster_finding/data/AbacusSummit_base/cosmologies.csv', sep=',')
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    loc = os.path.join(BASE_DIR, '../../repo/latin_hypercube/')
+
+    df = pd.read_csv(loc+'parameters/cosmologies.csv', sep=',')
     df.columns = df.columns.str.replace(' ', '')
     #print(df.columns)
     nrows = df.shape[0]
@@ -53,7 +56,7 @@ def get_hod_para(hod_id_wanted):#, miscen=False):
     #     fname_list = glob.glob(loc+'parameters_miscen/*.csv')
     # else:
     #     fname_list = glob.glob(loc+'parameters/*.csv')
-    fname_list = glob.glob(loc+'parameters/hod_rich_AB*.csv')
+    fname_list = glob.glob(loc+'parameters/hod_*.csv')
     # put all of them in a big data frame
     df_list = []
     for fname in fname_list:
@@ -73,10 +76,10 @@ def get_hod_para(hod_id_wanted):#, miscen=False):
     return row_output.to_dict() # converting a data frame to a dictionary
     
 if __name__ == "__main__":
-    print(get_cosmo_para(5))
+    print(get_cosmo_para(0))
 
 
-    # print(get_hod_para(0))
+    print(get_hod_para(0))
     # print(get_hod_para(14))
     # print(get_hod_para(18))
     #print(get_hod_para(201))
