@@ -44,7 +44,8 @@ if para['nbody'] == 'abacus_summit':
     from hod.utils.get_para_abacus_summit import get_hod_para
     hod_id = para['hod_id']
     hod_para = get_hod_para(hod_id)
-    depth = hod_para['depth']
+    #depth = hod_para['depth']
+    depth = para['depth']
     if miscen == True:
         f_miscen = hod_para['f_miscen']
         tau_miscen = hod_para['tau_miscen']
