@@ -132,7 +132,7 @@ class PlotLensing(object):
 
     def set_up_abundance_matching(self):
         print('self.redshift', self.redshift)
-        if self.redshift == 0.3:
+        if self.redshift == 0.3: # TODO: make a dictionary
             zmin = 0.2 
             zmax = 0.35
         if self.redshift == 0.4:
