@@ -135,6 +135,10 @@ class PlotLensing(object):
         if self.redshift == 0.3:
             zmin = 0.2 
             zmax = 0.35
+        if self.redshift == 0.4:
+            zmin = 0.35
+            zmax = 0.5
+
 
         # calculate expected counts in Abacus, assuming current cosmology
         if self.observation == 'flamingo' or self.observation == 'abacus_summit':
