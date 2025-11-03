@@ -88,9 +88,9 @@ fig = c.plotter.plot()
 #### Plot the emulator range
 loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
 #train_loc = loc + f'emulator_train/{emu_name}/z0p{3+iz}00/{binning}/'
-train_loc = loc + f'emulator_train/{emu_name}/z0p{3+iz}00/{observation}_{binning}/'
+train_loc = loc + f'emulator_train//z0p{3+iz}00_{emu_name}/{observation}_{binning}/'
 if binning == 'lam':
-    train_loc = loc + f'emulator_train/{emu_name}/z0p{3+iz}00/abacus_summit_lam/'
+    train_loc = loc + f'emulator_train//z0p{3+iz}00_{emu_name}/abacus_summit_lam/'
 
 df = pd.read_csv(f'{train_loc}/parameters.csv')
 df = df[parse.params_free_name]

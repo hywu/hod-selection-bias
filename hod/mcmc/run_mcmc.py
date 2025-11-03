@@ -15,7 +15,7 @@ AttributeError: 'EnsembleSampler' object has no attribute '_previous_state'
 '''
 
 # ./run_mcmc.py s8Omhod all flamingo q180_bg_miscen lam counts_lensing desy1 0 0 
-# ./run_mcmc.py s8Omhod iter1 abacus_summit q180_bg_miscen lam counts_lensing 5k30 0 0
+# ./run_mcmc.py s8Omhod all abacus_summit q180_bg_miscen lam counts_lensing 5k10 0 0
 
 para_name = sys.argv[1] # 's8Omhod'
 emu_name = sys.argv[2]  # 'all', 'iter1'
