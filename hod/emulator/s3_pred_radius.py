@@ -10,7 +10,8 @@ loc = '/projects/hywu/cluster_sims/cluster_finding/data/'
 class PredDataVector(object):
     def __init__(self, emu_name, binning, iz, observation, data_vector=['lensing']):
         zid = 3+iz
-        train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/{observation}_{binning}/'
+        train_loc = loc + f'emulator_train/z0p{zid}00_{emu_name}/{observation}_{binning}/'
+
         self.train_loc = train_loc
 
         if observation == 'desy1thre':

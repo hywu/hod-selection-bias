@@ -18,7 +18,7 @@ phase = 0
 
 
 zid = 3+iz
-train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/{observation}_{binning}/'
+train_loc = loc + f'emulator_train/z0p{zid}00_{emu_name}/{observation}_{binning}/'
 
 
 cosmo_id_list, hod_id_list = np.loadtxt(train_loc+'models_done.dat', unpack=True, dtype=int)

@@ -29,8 +29,8 @@ if emu_name == 'iter1':
 #alpha = 1e-3 # for miscen
 
 zid = 3+iz
-train_loc = loc + f'emulator_train/{emu_name}/z0p{zid}00/{observation}_{binning}/'
-plot_loc = f'../../plots/emulator_train/{emu_name}/z0p{zid}00/{observation}_{binning}/'
+train_loc = loc + f'emulator_train/z0p{zid}00_{emu_name}/{observation}_{binning}/'
+plot_loc = f'../../plots/emulator_train/z0p{zid}00_{emu_name}/{observation}_{binning}/'
 
 if os.path.isdir(plot_loc) == False:
     os.makedirs(plot_loc)
