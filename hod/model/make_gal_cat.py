@@ -160,7 +160,7 @@ def calc_one_layer(pz_min, pz_max):
     for ih in range(nhalo):
         Ncen, Nsat = Ngal_S20_poisson(mass_sub[ih], alpha=alpha, lgM1=lgM1, kappa=kappa, lgMcut=lgMcut, sigmalogM=sigmalogM, sigmaintr=sigmaintr, fcen=fcen)
         # first, take care of the central
-        if np.isclose(Ncen, 1): # Ncen > 0.5:
+        if np.isclose(Ncen, 1): # more readible # Ncen > 0.5:
             hid_out.append(hid_sub[ih])
             iscen_out.append(1)
             m_out.append(mass_sub[ih])
@@ -184,7 +184,7 @@ def calc_one_layer(pz_min, pz_max):
 
             # then take care of the satellites
             # if mass >= Mmin_part, draw particles; otherwise, draw random numbers
-            if if np.isclose(Nsat, 1) or Nsat > 1: # Nsat > 0.5:
+            if np.isclose(Nsat, 1) or Nsat > 1: #more readible # Nsat > 0.5:
                 if sat_from_part == True and mass_sub[ih] >= Mmin_part:
                     px, py, pz, vx, vy, vz = dsp_part.draw_sats(mass_sub[ih], Nsat, px_halo_sub[ih], py_halo_sub[ih], pz_halo_sub[ih])
                     px_out.extend(px)
