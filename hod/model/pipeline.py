@@ -6,7 +6,8 @@ import os
 import sys
 import yaml
 
-yml_fname = 'yml/mini_uchuu/mini_uchuu_fid_hod.yml'
+#yml_fname = 'yml/mini_uchuu/mini_uchuu_fid_hod.yml'
+yml_fname = 'yml/abacus_summit/richness_misspec.yml'
 
 with open(yml_fname, 'r') as stream:
     try:
@@ -28,13 +29,12 @@ else:
    output_loc = para['output_loc']
    redshift = para['redshift']
 
-
-
-#depth = para['depth']
 model_name = para['model_name']
 rich_name = para['rich_name']
 out_path = f'{output_loc}/model_{model_name}/'
 binning = para['binning']
+
+
 
 # los_in = para.get('los', 'z')
 # if los_in == 'xyz':
@@ -84,9 +84,9 @@ os.system(f'./plot_abundance.py {yml_fname}')
 #### calculate lensing ####
 
 if observation in ['desy1', 'flamingo', 'abacus_summit']:
-    lens_fname = obs_path+'DS_abun_bin_3.dat'
+    lens_fname = obs_path+f'DS_{binning}_bin_3.dat'
 if observation == 'sdss':
-    lens_fname = obs_path+'DS_abun_bin_0.dat'
+    lens_fname = obs_path+f'DS_{binning}_bin_0.dat'
 
 if os.path.exists(lens_fname):
     print('lensing done')

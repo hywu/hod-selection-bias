@@ -130,6 +130,9 @@ class PlotLensing(object):
         print('lens saved at', self.fname5)
 
 
+        #if self.binning == 'abun':
+        #    self.set_up_abundance_matching()
+
     def set_up_abundance_matching(self):
         print('self.redshift', self.redshift)
         if self.redshift == 0.3: # TODO: make a dictionary
@@ -142,7 +145,8 @@ class PlotLensing(object):
 
         # calculate expected counts in Abacus, assuming current cosmology
         if self.observation == 'flamingo' or self.observation == 'abacus_summit':
-            cum_counts = np.loadtxt(f'../../repo/data_vector/data_vector_{self.observation}/cum_counts_{self.rich_name}_z{self.redshift}.dat')
+            #cum_counts = np.loadtxt(f'../../repo/data_vector/data_vector_{self.observation}/cum_counts_{self.rich_name}_z{self.redshift}.dat')
+            cum_counts = np.loadtxt(f'../../repo/data_vector/data_vector/{self.observation}_{binning}/cum_counts_q180_bg_miscen_z{self.redshift}.dat') # always use q180_bg_miscen
 
         if self.observation == 'desy1' or self.observation == 'desy1thre':
             cum_counts = np.loadtxt(f'../../observations/y1/data/cluster_cumulative_counts_no_miscen_z_{zmin}_{zmax}.dat')
@@ -324,7 +328,7 @@ class PlotLensing(object):
                 else:
                     lam_max = self.lam_max_list[ibin]
                     title = r'$%g < \lambda < %g$'%(lam_min, lam_max)
-
+            '''
             if self.binning == 'abun':
                 counts_min = self.counts_min_list[ibin]
                 if self.thresholded == True:
@@ -335,7 +339,7 @@ class PlotLensing(object):
                     space_density_min = counts_min / self.vol
                     space_density_max = counts_max / self.vol
                     title = f'space density: {space_density_min:.2e} to {space_density_max:.2e}'
-
+            '''
             if plot_bias == False:
                 try:
                     rp, DS_sel, DS_matched = np.loadtxt(f'{self.fname2}_{ibin}.dat', unpack=True)
@@ -344,7 +348,7 @@ class PlotLensing(object):
                     ax = axes[ibin]
                     ax.plot(rp, rp*DS_sel, label=label, color=color, lw=lw)
                     ax.set_xscale('log')
-                    ax.set_title(title)
+                    #ax.set_title(title)
                     if ibin == 0 and label!=None: # self.nbins - 1: 
                         ax.legend()
                     ax.set_xlabel(r'$\rm r_p \ [pMpc]$')

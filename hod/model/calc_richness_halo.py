@@ -17,7 +17,7 @@ from hod.utils.merge_files import merge_files
 
 yml_fname = sys.argv[1]
 ##srun -A hywu_cluster_sims_0001 -p dev -c 1 --mem=8GB -t 120 --pty /bin/bash
-##./calc_richness_halo.py ../yml/abacus_summit/abacus_summit_template.yml
+##./calc_richness_halo.py yml/abacus_summit/abacus_summit_template.yml
 
 with open(yml_fname, 'r') as stream:
     try:
@@ -29,33 +29,36 @@ redshift = para['redshift']
 
 model_name = para['model_name']
 rich_name = para['rich_name']
-miscen = para.get('miscen', False)
 
+miscen = para.get('miscen', False)
+f_miscen = para.get('f_miscen', None)
+tau_miscen = para.get('tau_miscen', None)
+depth = para.get('depth', None)
 
 #### For AbacusSummit ####
 if para['nbody'] == 'abacus_summit':
     cosmo_id = para.get('cosmo_id', None)
-    #hod_id = para.get('hod_id', None)
+    hod_id = para.get('hod_id', None)
     phase = para.get('phase', None)
     if redshift == 0.3: z_str = '0p300'
     if redshift == 0.4: z_str = '0p400'
     if redshift == 0.5: z_str = '0p500'
     output_loc = para['output_loc']+f'/base_c{cosmo_id:0>3d}_ph{phase:0>3d}/z{z_str}/'
-    from hod.utils.get_para_abacus_summit import get_hod_para
-    hod_id = para['hod_id']
-    hod_para = get_hod_para(hod_id)
-    depth = hod_para['depth']
-    #depth = para['depth']
-    if miscen == True:
-        f_miscen = hod_para['f_miscen']
-        tau_miscen = hod_para['tau_miscen']
+
+    if depth == None: # if depth not set, read from cvs
+        from hod.utils.get_para_abacus_summit import get_hod_para
+        hod_para = get_hod_para(hod_id)
+        depth = hod_para['depth']
+        if miscen == True:
+            f_miscen = hod_para['f_miscen']
+            tau_miscen = hod_para['tau_miscen']
 
 else:
     output_loc = para['output_loc']
-    depth = para['depth']
-    if miscen == True:
-        f_miscen = para['f_miscen']
-        tau_miscen = para['tau_miscen']
+    # depth = para['depth']
+    # if miscen == True:
+    #     f_miscen = para['f_miscen']
+    #     tau_miscen = para['tau_miscen']
 
 
 out_path = f'{output_loc}/model_{model_name}/'
@@ -84,7 +87,6 @@ pec_vel = para.get('pec_vel', True)
 print('use pmem:', use_pmem)
 print('pec vel:', pec_vel)
 
-#Mmin = 10**12.5 # TODO
 Mmin = para.get('Mmin', 10**12.5)
 
 n_parallel_z = 1 # NOTE! cannot do more than one yet.
@@ -95,31 +97,6 @@ n_parallel = n_parallel_z * n_parallel_x * n_parallel_y
 
 z_padding_halo = 0
 z_padding_gal = 0
-
-
-# read in halos
-# if para['nbody'] == 'mini_uchuu':
-#     from read_mini_uchuu import ReadMiniUchuu
-#     readcat = ReadMiniUchuu(para['nbody_loc'], redshift)
-
-# if para['nbody'] == 'uchuu':
-#     from read_uchuu import ReadUchuu
-#     readcat = ReadUchuu(para['nbody_loc'], redshift)
-
-# if para['nbody'] == 'abacus_summit':
-#     #sys.path.append('../abacus_summit')
-#     from read_abacus_summit import ReadAbacusSummit
-#     readcat = ReadAbacusSummit(para['nbody_loc'], redshift, cosmo_id=cosmo_id)
-
-# if para['nbody'] == 'flamingo':
-#     from read_flamingo import ReadFlamingo
-#     readcat = ReadFlamingo(para['nbody_loc'], redshift)
-
-# if para['nbody'] == 'tng_dmo':
-#     from read_tng_dmo import ReadTNGDMO
-#     halofinder = para.get('halofinder', 'rockstar')
-#     readcat = ReadTNGDMO(para['nbody_loc'], halofinder, redshift)
-#     print('halofinder', halofinder)
 
 readcat = read_sim(para)
 readcat.read_halos(Mmin, pec_vel=pec_vel)#, cluster_only=True)

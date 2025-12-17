@@ -49,7 +49,8 @@ class DrawSatPosition(object):
         cosmo = cosmology.setCosmology('MyCosmo', params)
         mass_interp = 10**np.linspace(11, 16, 20)
 
-        c_interp = concentration.concentration(mass_interp, z=self.redshift, mdef=self.mdef, model='bhattacharya13')
+        c_interp = concentration.concentration(mass_interp, z=self.redshift, mdef=self.mdef, model='bhattacharya13', range_warning=False) 
+        ##'Some masses or redshifts are outside the validity of the concentration model.'
         self.c_lnM_interp = interp1d(np.log(mass_interp), c_interp)
 
     def draw_sat_position(self, mass, Nsat):

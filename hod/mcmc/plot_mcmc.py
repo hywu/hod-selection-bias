@@ -40,6 +40,8 @@ nsteps, nwalkers, lsteps, burnin, params_free_name, params_free_ini, params_rang
 out_loc = f'/projects/hywu/cluster_sims/cluster_finding/data/emulator_mcmc/{observation}_{rich_name}_{binning}_{data_vector_name}/'
 
 plot_loc = f'../../plots/mcmc/{observation}_{rich_name}_{binning}_{data_vector_name}/'
+if os.path.isdir(plot_loc) == False:
+    os.makedirs(plot_loc)
 
 chain_name = f'{para_name}_{emu_name}_{cov_name}_z{redshift}_run{run_id}'
 out_file = f'{out_loc}/mcmc_{chain_name}.h5'

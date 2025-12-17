@@ -21,14 +21,15 @@ from hod.utils.draw_sat_position import DrawSatPosition
 
 #### read in the yaml file  ####
 yml_fname = sys.argv[1]
-#./make_gal_cat.py ../yml/mini_uchuu/mini_uchuu_fid_hod.yml
-#./make_gal_cat.py ../yml/abacus_summit/abacus_summit_template.yml
+#./make_gal_cat.py yml/mini_uchuu/mini_uchuu_fid_hod.yml
+#./make_gal_cat.py yml/abacus_summit/abacus_summit_template.yml
 
 with open(yml_fname, 'r') as stream:
     try:
         para = yaml.safe_load(stream)
     except yaml.YAMLError as exc:
         print(exc)
+
 
 #print_memory(message='after open yml')
 
@@ -54,30 +55,35 @@ if os.path.isdir(out_path)==False:
 if os.path.isdir(out_path+'/temp/')==False: 
     os.makedirs(out_path+'/temp/')
 
-with open(f'{out_path}/para.yml', 'w') as outfile:
+with open(f'{out_path}/para_gal_cat.yml', 'w') as outfile:
     yaml.dump(para, outfile, default_flow_style=False)
 
 print('output is at ' + out_path)
 
 
-alpha = para.get('alpha', None)
-if alpha != None:
+alpha = para.get('alpha', None) 
+if alpha != None: # if parameters are set, use them
+    print('read HOD from the yml')
     alpha = para['alpha']
     lgkappa = para['lgkappa']
     lgMcut = para['lgMcut']
     sigmalogM = para['sigmalogM']
     sigmaintr = para['sigmaintr']
     lgM1 = para['lgM1']
-else:
+    fcen = para.get('fcen', 1)
+else: # if parameters are not set, read from CSV files
+    print('read HOD from the csv')
     hod_id = para['hod_id']
     hod_para = get_hod_para(hod_id)
+    
     alpha = hod_para['alpha']
     lgkappa = hod_para['lgkappa']
     lgMcut = hod_para['lgMcut']
     sigmalogM = hod_para['sigmalogM']
     sigmaintr = hod_para['sigmaintr']
     lgM1 = hod_para['lgM1']
-
+    fcen = para.get('fcen', 1)
+    
 kappa = 10**lgkappa
 # lgM20 = para.get('lgM20', None)
 # if lgM20 == None:
@@ -104,27 +110,6 @@ if sat_from_part == True:
 
 dsp_mc = DrawSatPosition(yml_fname)
 
-
-#print_memory(message='before readcat')
-'''
-if para['nbody'] == 'mini_uchuu':
-    from read_mini_uchuu import ReadMiniUchuu
-    readcat = ReadMiniUchuu(para['nbody_loc'], redshift)
-
-if para['nbody'] == 'uchuu':
-    from read_uchuu import ReadUchuu
-    readcat = ReadUchuu(para['nbody_loc'], redshift)
-
-if para['nbody'] == 'abacus_summit':
-    from read_abacus_summit import ReadAbacusSummit
-    readcat = ReadAbacusSummit(para['nbody_loc'], redshift, cosmo_id=cosmo_id)
-
-if para['nbody'] == 'tng_dmo':
-    from read_tng_dmo import ReadTNGDMO
-    halofinder = para.get('halofinder', 'rockstar')
-    readcat = ReadTNGDMO(para['nbody_loc'], halofinder, redshift)
-    print('halofinder', halofinder)
-'''
 readcat = read_sim(para)
 readcat.read_halos(Mmin, pec_vel=pec_vel)
 boxsize = readcat.boxsize
@@ -143,7 +128,6 @@ if pec_vel == True:
 print_memory(message='done readcat')
 
 def calc_one_layer(pz_min, pz_max):
-    #print_memory(message='before calc_one_layer')
     if sat_from_part == True:
         dsp_part.particle_in_one_layer(pz_min, pz_max)
 
@@ -201,7 +185,6 @@ def calc_one_layer(pz_min, pz_max):
             # then take care of the satellites
             # if mass >= Mmin_part, draw particles; otherwise, draw random numbers
             if Nsat > 0.5:
-                
                 if sat_from_part == True and mass_sub[ih] >= Mmin_part:
                     px, py, pz, vx, vy, vz = dsp_part.draw_sats(mass_sub[ih], Nsat, px_halo_sub[ih], py_halo_sub[ih], pz_halo_sub[ih])
                     px_out.extend(px)
