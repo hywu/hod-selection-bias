@@ -70,7 +70,7 @@ if alpha != None: # if parameters are set, use them
     sigmalogM = para['sigmalogM']
     sigmaintr = para['sigmaintr']
     lgM1 = para['lgM1']
-    fcen = para.get('fcen', 1)
+    fcen = para.get('fcen', 1.)
 else: # if parameters are not set, read from CSV files
     print('read HOD from the csv')
     hod_id = para['hod_id']
@@ -82,7 +82,7 @@ else: # if parameters are not set, read from CSV files
     sigmalogM = hod_para['sigmalogM']
     sigmaintr = hod_para['sigmaintr']
     lgM1 = hod_para['lgM1']
-    fcen = para.get('fcen', 1)
+    fcen = para.get('fcen', 1.)
     
 kappa = 10**lgkappa
 # lgM20 = para.get('lgM20', None)
@@ -158,9 +158,9 @@ def calc_one_layer(pz_min, pz_max):
     from_part_out = []
 
     for ih in range(nhalo):
-        Ncen, Nsat = Ngal_S20_poisson(mass_sub[ih], alpha=alpha, lgM1=lgM1, kappa=kappa, lgMcut=lgMcut, sigmalogM=sigmalogM, sigmaintr=sigmaintr)
+        Ncen, Nsat = Ngal_S20_poisson(mass_sub[ih], alpha=alpha, lgM1=lgM1, kappa=kappa, lgMcut=lgMcut, sigmalogM=sigmalogM, sigmaintr=sigmaintr, fcen=fcen)
         # first, take care of the central
-        if Ncen > 0.5:
+        if np.isclose(Ncen, 1): # Ncen > 0.5:
             hid_out.append(hid_sub[ih])
             iscen_out.append(1)
             m_out.append(mass_sub[ih])
@@ -184,7 +184,7 @@ def calc_one_layer(pz_min, pz_max):
 
             # then take care of the satellites
             # if mass >= Mmin_part, draw particles; otherwise, draw random numbers
-            if Nsat > 0.5:
+            if if np.isclose(Nsat, 1) or Nsat > 1: # Nsat > 0.5:
                 if sat_from_part == True and mass_sub[ih] >= Mmin_part:
                     px, py, pz, vx, vy, vz = dsp_part.draw_sats(mass_sub[ih], Nsat, px_halo_sub[ih], py_halo_sub[ih], pz_halo_sub[ih])
                     px_out.extend(px)
