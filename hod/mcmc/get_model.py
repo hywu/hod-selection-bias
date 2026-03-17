@@ -4,7 +4,7 @@ import sys
 
 #### Define the model class
 sys.path.append('../emulator')
-from s3_pred_radius import PredDataVector
+from hod.emulator.s3_pred_radius import PredDataVector
 
 class GetModel(object): 
     def __init__(self, emu_name, binning, iz, observation, 

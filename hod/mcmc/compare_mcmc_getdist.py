@@ -55,6 +55,7 @@ def compare_mcmc_getdist(yml_name, outfile_list, label_list, color_list, filled_
             sample_list.append(samples)
             line_args_list.append({'color': color})
 
+
     # dictionary for the truth value (called 'markers')
     truth_loc = dict(zip(parse.params_free_name, parse.params_free_truth.astype(float)))
     #print(parse.params_free_truth)
@@ -67,10 +68,14 @@ def compare_mcmc_getdist(yml_name, outfile_list, label_list, color_list, filled_
     g = plots.get_subplot_plotter()
     g.settings.figure_legend_frame = False
     #g.settings.alpha_filled_add = 0.4
-    g.settings.title_limit_fontsize = 18
-    g.settings.axes_fontsize = 20
-    g.settings.axes_labelsize = 30
-    g.settings.legend_fontsize = 30
+
+    if len(parse.params_free_name) > 4: # use bigger font
+        g.settings.title_limit_fontsize = 18
+        g.settings.axes_fontsize = 20
+        g.settings.axes_labelsize = 30
+        g.settings.legend_fontsize = 30
+
+
     g.triangle_plot(sample_list, 
         legend_labels=label_list,
         legend_loc="upper right",

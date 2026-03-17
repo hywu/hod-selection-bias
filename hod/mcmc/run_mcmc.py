@@ -8,20 +8,22 @@ import emcee
 from get_model import GetModel
 from get_data_vector import get_data_vector
 
-
 '''
 AttributeError: 'EnsembleSampler' object has no attribute '_previous_state'
 ==> delete the old h5 file!
 '''
 
-# ./run_mcmc.py s8Omhod all flamingo q180_bg_miscen lam counts_lensing desy1 0 0 
 # fiducial
-# ./run_mcmc.py s8Omhod all abacus_summit q180_bg_miscen lam counts_lensing 5k10 0 0
+# ./run_mcmc.py s8Omhod all abacus_summit q180_bg_miscen lam counts_lensing 1k50 0 0
+
+# ./run_mcmc.py s8Omhod all flamingo q180_bg_miscen lam counts_lensing desy1 0 0 
+
 # mis-spec
 # ./run_mcmc.py s8Omhod all abacus_summit d30_bg_miscen lam counts_lensing 5k10 0 0
 # ./run_mcmc.py s8Omhod all abacus_summit q180_bg_miscen_R1 lam counts_lensing 5k10 0 0
 
-# ./run_mcmc.py OmMmin all abacus_summit q180_bg_miscen lam counts 15k10 0 0
+# OmegaM-Mmin only chains (sanity checks)
+# ./run_mcmc.py OmMmin all abacus_summit q180_bg_miscen lam counts 1k50 0 0
 
 para_name = sys.argv[1] # 's8Omhod'
 emu_name = sys.argv[2]  # 'all'

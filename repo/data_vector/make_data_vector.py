@@ -10,7 +10,7 @@ import fitsio
 # area scaling is done when running MCMC
 
 observation = 'abacus_summit' # 'desy1thre' 'flamingo'
-rich_name = 'q180_bg_miscen_R1' #'d30_bg_miscen' #'q180_bg_miscen'
+rich_name = 'q180_bg_miscen' #'q180_bg_miscen_R1' #'d30_bg_miscen' #
 
 
 lam = [20, 30, 45, 60, 1000]
